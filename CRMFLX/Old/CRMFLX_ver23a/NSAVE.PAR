@@ -1,0 +1,8 @@
+C
+C     MAXKP = number of Kp bins in the data file.
+C
+C     NSAVE = the number of range sorted data cells to save before
+C     removing the highest & lowest flux values.
+      PARAMETER (NSAVE = 10)
+C
+C

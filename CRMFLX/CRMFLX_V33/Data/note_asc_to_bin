@@ -1,0 +1,5 @@
+gfortran -std=legacy -ffixed-form -fd-lines-as-comments -ffixed-line-length-none SolWA2B.f -o SolWA2B
+
+gfortran -std=legacy -ffixed-form -fd-lines-as-comments -ffixed-line-length-none MSheathA2B.f -o MSheathA2B
+
+gfortran -std=legacy -ffixed-form -fd-lines-as-comments -ffixed-line-length-none MSPHA2B.f -o MSPHA2B

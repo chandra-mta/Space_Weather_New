@@ -1,0 +1,8 @@
+C
+C     NUMSEC - number of spatial sectors.
+C     (Maximum used in magnetosphere, magnetosheath, or solar wind)
+      INTEGER NUMSEC
+      PARAMETER (NUMSEC = 10)
+C
+C
+

@@ -1,0 +1,41 @@
+
+++++++++++++++++++++++++++++++++++++++++++++
+process TLE ephemeris files for XMM and CXO
+++++++++++++++++++++++++++++++++++++++++++++
+
+create_orbital_warp_script
+create_orbital_main_script  --- environment setting and control scripts
+
+create_orbital_data_files.py
+----------------------------
+using the orbital elements data, create several orbital data files
+
+    input: http://www.celestrak.com/NORAD/elements/science.txt
+    output: <tle_dir>/Data/cxo.spctrk
+            <tle_dir>/Data/xmm.spctrk
+            <tle_dir>/Data/cxo.j2000
+            <tle_dir>/Data/xmm.j2000
+            <tle_dir>/Data/cxo.gsme
+            <tle_dir>/Data/cxo.gsme_in_Re
+            <tle_dir>/Data/xmm.gsme
+            <tle_dir>/Data/xmm.gsme_in_Re
+
+this script uses the following two fortran codes.
+
+Two python library is used:
+
+1. A function to read NORAD ephemeris data and converts to (x, y, z) and (vx, vy, vz) data 
+   for the given data period. 
+        Ref: https://pypi.org/project/sgp4/
+
+2. A function to convert coordindate systems. Specifically for here, D1950 system to J2000 system.
+        Refs:   http://astlib.sourceforge.net/
+                http://astlib.sourceforge.net/docs/astLib/astLib.astCoords-module.html#convertCoords
+
+
+cron job
+--------
+han-v as mta
+
+22 2 * * *  cd /data/mta4/Space_Weather/TLE/Scripts/;/data/mta4/Space_Weather/TLE/Scripts/create_orbital_warp_script > /data/mta4/Space_Weather/Test_Logs/tle_get.cron 2>&1
+

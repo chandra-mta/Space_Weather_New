@@ -1,0 +1,41 @@
+########################
+Create GSM and GSE plots
+########################
+
+Scripts
+========
+gsm_wrap_script
+gsm_main_script     --- environment setting scripts
+
+create_gsm_gse_orbit_plots.py
+-----------------------------
+create gsm and gse orbit plots
+
+input:  <ephem_dir>/Data/PE.EPH.gsme_in_Re
+
+output: <html_dir>/Orbit/Plots/GSMORBIT.png
+        <html_dir>/Orbit/Plots/GSEORBIT.png
+
+create_lon_and_lat_orbit_plot.py
+--------------------------------
+create gsm and gse orbit plots in londitude and latitude
+
+input: <ephem_dir>/Data/PE.EPH.gsme_spherical_short     ---- orbital info
+       <comm_dir>/Data/dsn_summary.dat                  ---- DSN contact info
+       <crm3_dir>/Data/CRM3_p.dat30                     ---- satellite region info
+
+output: <html_dir>/Orbit/Plots/GSM.png
+        <html_dir>/Orbit/Plots/GSE.png
+
+
+web page:
+    cxc.cfa.harvard.edu/mta/RADIATION_new/Orbit/orbit.html (top four plots)
+
+
+cronjob:
+--------
+han-v as mta
+
+2,17,32,47 * * * * cd /data/mta4/Space_Weather/GSM_plots/Scripts/; /data/mta4/Space_Weather/GSM_plots/Scripts/gsm_wrap_script > /data/mta4/Space_Weather/Test_Logs/gsm_plot.cron 2>&1
+
+

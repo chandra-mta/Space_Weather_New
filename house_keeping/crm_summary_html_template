@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CRM Summary Page</title>
+</head>
+
+<body style="width:95%;margin-left:10px; margin-right;10px;background-color:#FAEBD7;font-family:Georgia, "Times New Roman", Times, serif">
+
+<h3>Current Data</h3>
+<b>
+<pre style='font-size:110%;'>
+#TEXT#
+</pre>
+</b>
+
+</body>
+</html>
+

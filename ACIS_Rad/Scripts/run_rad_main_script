@@ -1,0 +1,5 @@
+cd /data/mta4/Space_Weather/ACIS_Rad/Scripts
+
+setenv PYTHONPATH "/data/mta/Script/Python3.6/envs/ska3/lib/python3.6/site-packages:/data/mta/Script/Python3.6/lib/python3.6/site-packages/"
+
+/data/mta4/Space_Weather/ACIS_Rad/Scripts/create_radiation_realted_plots.py

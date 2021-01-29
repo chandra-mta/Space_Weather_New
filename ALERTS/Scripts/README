@@ -1,0 +1,40 @@
+
+##############################
+Radiation Environment Summary
+##############################
+
+Update MTA Radiation Environment Summary page: https://cxc.cfa.harvard.edu/mta/alerts/rad_summ.html
+
++++++++++
+Scripts:
++++++++++
+rad_summ_wrap_script
+rad_summ_main_script    --- environment setting scripts
+
+run_goes_fluence_extract.py
+---------------------------
+compute the goes fluence of this orbital period 
+input:  https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json
+        https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-3-day.json
+        <ephem_dir>/Data/PE.EPH.gsme_spherical
+output: <alert_dir>/Data/goes_fluence.dat
+
+create_radiation_summary_page.py
+--------------------------------
+create Chandra Radiation Environment Summary page
+input:  /pool14/chandra/chandra_psi.snapshot
+        <crm3_dir>/Data/CRMsummary.dat
+        <alerts_dir>/Data/goes_fluence.dat
+        <ace_dir>/Data/fluace.dat.good
+        <comm_dir>/Data/dsn_summary.dat
+        /data/mta/Script/Interrupt/house_keeping/rad_zone_info
+        /proj/sot/acis/FLU-MON/FPHIST-2001.dat
+        /proj/web-cxc/htdocs/acis/Fluence/current.dat
+output: <html_dir>/Alerts/rad_comm.html
+
+cron job
+han-v as mta
+
+2,12,22,32,42,52 * * * * cd /data/mta4/Space_Weather/ALERTS/Scripts ; /data/mta4/Space_Weather/ALERTS/Scripts/rad_summ_wrap_script > /data/mta4/Space_Weather/Test_Logs/alert_summary.cron 2>&1
+
+

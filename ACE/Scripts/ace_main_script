@@ -1,0 +1,11 @@
+cd /data/mta4/Space_Weather/ACE/Scripts
+
+setenv PYTHONPATH "/data/mta/Script/Python3.6/envs/ska3/lib/python3.6/site-packages:/data/mta/Script/Python3.6/lib/python3.6/site-packages/"
+
+/data/mta4/Space_Weather/ACE/Scripts/update_ace_data_files.py
+
+/data/mta4/Space_Weather/ACE/Scripts/plot_p3_data.py
+
+/data/mta4/Space_Weather/ACE/Scripts/create_ace_html_page.py
+
+/data/mta4/Space_Weather/ACE/Scripts/compute_fluence_cxo70.py

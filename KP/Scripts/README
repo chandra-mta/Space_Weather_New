@@ -1,0 +1,32 @@
+
+###############
+Extract k index 
+###############
+
+Download k index from:
+
+http://www-app3.gfz-potsdam.de/kp_index/qlyymm.tab
+https://services.swpc.noaa.gov/text/3-day-geomag-forecast.txt
+https://services.swpc.noaa.gov/text/27-day-outlook.txt
+
+and update k_index_data
+
+Script:
+-------
+
+update_k_index.py           --- script to downland and update the data file
+
+update_solor_wind_data.py   --- convert the format of k index and put into:
+                                local solar wind data file: "solar_wind_data.txt"
+                                (copied from /data/mta/Script/Ephem/Scripts).
+
+get_kp.py                   --- create a summary file kp.dat
+
+cron job
+--------
+
+han-v as mta
+
+14 0,3,6,9,12,15,18,21 * * * /data/mta4/Space_Weather/KP/Scripts/kp_wrap_script  > /data/mta4/Space_Weather/Test_Logs/kp_index_update.cron 2>&1
+
+

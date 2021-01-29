@@ -1,0 +1,108 @@
+
+Lian's crm3
+
+ /data/mta4/proj/rac/ops/CRM3/crm.pl
+
+  /data/mta4/proj/rac/ops/ephem/ephem.pl
+
+
+Lina:
+f77 runcrm.f ./crmflx_v1.2_25jan2001/CRMFLX_V12_EXP.f -o runcrm
+CRMFLX  --- 2001
+
+Takashi:
+gfortran -std=legacy -ffixed-form -fd-lines-as-comments -ffixed-line-length-none runcrm.f
+/data/mta4/Space_Weather/CRMFLX/CRMFLX_ver23a/CRMFLX_V23A_EXP.f -o runcrm
+
+CRMFLX  --- 2004
+
+
+email to Lina 03/19/20
+----------------------
+
+I did a quick check. The main difference is due to the differences in CRM models you and I create. These models are created by a Fortran code runcrm.f. I found that differences between us is a package linked to it.
+
+Lina uses:         CRMFLX_V12_EXP.f          year 2001 version
+Takashi uses:   CRMFLX_V23A_EXP.f       year 2004 version
+
+Both of us use the same old geopack which is totally out of date, but a newer one seems not to be compatible with CRMFLX code; so we need to use the older version.
+
+Another one possibly causes the difference is cocochan.f. It is compiled with geopack, too. I thought that this was  also a reason but both of us are using the newest geopack; so it should not create any difference.
+
+Anyway, could you confirm that you are using year 2001 version of crmflx model? If so, I will compile my runcrm.f with it and see whether I can get the same results as you get. 
+
+
+
+
+
+I compared four different versions of CRMFLX model creation codes. Except, the earliest one (CRMFLX_ver12_2001), they generate the same CRM3_p.dat* data as far as I use the same BIN data (MSheath_Kp_PROT.BIN, MSPH_Kp_PROT.BIN, SolWind_Kp_PROT.BIN).
+
+Models created depend on the BIN data provided. There are two different sets of bin data. Depending on which set I use, the results are quite different. For example, two sets of BIN data of CRM3p.dat30 give:
+
+Set 1:
+701451236.0 3 0.410655E+06 0.130477E+07 0.190447E+06 0.528801E+06
+701451536.0 3 0.425666E+06 0.135206E+07 0.197836E+06 0.547895E+06
+701451836.0 3 0.229420E+06 0.728294E+06 0.107076E+06 0.295049E+06
+701452136.0 3 0.154807E+06 0.491290E+06 0.724047E+05 0.199008E+06
+701452436.0 3 0.154831E+06 0.491223E+06 0.725672E+05 0.198954E+06
+701452736.0 3 0.297947E+06 0.945302E+06 0.139621E+06 0.382869E+06
+701453036.0 3 0.296346E+06 0.939956E+06 0.139153E+06 0.380656E+06
+701453336.0 3 0.301361E+06 0.955579E+06 0.141807E+06 0.386932E+06
+
+Set 2:
+701451236.0 3 0.126569E+05 0.402105E+05 0.587430E+04 0.162958E+05
+701451536.0 3 0.127211E+05 0.404025E+05 0.591676E+04 0.163715E+05
+701451836.0 3 0.125296E+05 0.397828E+05 0.583979E+04 0.161183E+05
+701452136.0 3 0.125485E+05 0.398311E+05 0.586089E+04 0.161358E+05
+701452436.0 3 0.122749E+05 0.389515E+05 0.574499E+04 0.157775E+05
+701452736.0 3 0.115509E+05 0.366437E+05 0.541739E+04 0.148408E+05
+701453036.0 3 0.115514E+05 0.366348E+05 0.542866E+04 0.148353E+05
+701453336.0 3 0.116327E+05 0.368822E+05 0.547783E+04 0.149336E+05
+
+
+where the columns are:
+<time> <sol wind region> <mean flux> <95% flux> <50% flux> <SD of flux>
+
+
+I tried both of them, but either did not agree with the CRM3_p.dat* Lina created.
+
+701451236.0 3 0.215516E+05 0.684665E+05 0.100047E+05 0.277466E+05
+701451836.0 3 0.217669E+05 0.691102E+05 0.101474E+05 0.280002E+05
+701452436.0 3 0.217325E+05 0.689612E+05 0.101733E+05 0.279327E+05
+701453036.0 3 0.210191E+05 0.666597E+05 0.987938E+04 0.269937E+05
+701453636.0 3 0.210268E+05 0.666474E+05 0.992194E+04 0.269821E+05
+
+
+These BIN data are created from *.ASC files are readable, but BIN data generated from these *.ASC files are machine-dependent. There is a Fortran code to reproduce ACS files from BIN data, but the same machine that created BIN data must be used. It seems that the BIN data Lina is using is from the older machine since I could not decode them back on vodata.     
+
+Note that ASC data files located in /data/mta4/proj/rac/ops/CRM3/RUNCRM are the same as I used to create BIN data.
+
+BIN data size are quite different, too:
+Lina:
+-rw-r--r-- 1 mta head  609969 Feb 18  2015 MSheath_Kp_PROT.BIN
+-rw-r--r-- 1 mta head 1601169 Feb 18  2015 MSPH_Kp_PROT.BIN
+-rw-r--r-- 1 mta head  823329 Feb 18  2015 SolWind_Kp_PROT.BIN
+
+Takashi:
+-rw-r--r-- 1 mta head 16206017 Mar 20 09:25 MSheath_Kp_PROT.BIN
+-rw-r--r-- 1 mta head 19749609 Mar 20 09:25 MSPH_Kp_PROT.BIN
+-rw-r--r-- 1 mta head 19749609 Mar 20 09:25 SolWind_Kp_PROT.BIN
+
+which probably contributed to skipping lines on Lina's CRM3_p.dat* data set.
+
+
+Although I cannot verify, it is quite possible that CRM model computation is a system-dependent (regarding the compilation of Fortran codes), and the Fortran code could be designed to use the capacity of the older machine and may not provide a correct model output on the newer machine. However, there is no way to verify it at this moment.
+
+It is really nice to have an updated version of ASC data files, but I assume that there are none.
+
+
+Although less prominent, if it causes the difference between Lina's and mine is geopck. Lina is using the
+most recent version of Fortran geopack. I am using a slightly out of date python version of geopack. The difference could be a few percents, but it can contribute to the difference between the two models. However, compared to the difference created by the BIN data, it is quite small.
+
+
+
+
+
+
+
+

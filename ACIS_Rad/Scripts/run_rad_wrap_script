@@ -1,0 +1,1 @@
+TERM=dummy; export TERM; /bin/tcsh < /data/mta4/Space_Weather/ACIS_Rad/Scripts/run_rad_main_script

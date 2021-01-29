@@ -1,0 +1,64 @@
+
+GOES proton/particle monitoring system 
+
+
+Currently:  dir_list: /data/mta4/Space_Weather/hose_keeping/dir_list
+            goes_dir: /data/mta4/Space_Weather/GOES/
+
+
+goes_wrap_script
+goes_main_script    --- environment setting scripts
+
+
+get_goes_data.py    --- read data from noaa site and created GOES data files and plots
+
+    input:      ftp://ftp.swpc.noaa.gov/pub/lists/pchan/*_pchan_5m.txt
+                ftp://ftp.swpc.noaa.gov/pub/lists/particle/*_part_5m.txt
+
+    output:     <data_dir>/Gs_pchan_5m.txt
+                <data_dir>/Gs_part_5m.txt
+                <data_dir>/Gp_pchan_5m.txt
+                <data_dir>/Gp_part_5m.txt
+
+                <plot_dir>/goes_protons.gif
+                <plot_dir>/goes_particles.gif
+
+Note: we assume that ftp data file stractures won't change even the satellites change.
+      we read the satellite names from the data files. 
+
+
+update_goes_proton_page.py      --- update goes prton page
+
+    intput:     <data_dir>/Gp_pchan_5m.txt
+                <data_dir>/Gs_pchan_5m.txt
+
+    output:     <web_dir/GOES/goes_pchan_<p/s>.html
+
+update_goes_electron_page.py    --- update goes particle page
+
+    intput:     <data_dir>/Gp_part_5m.txt
+                <data_dir>/Gs_part_5m.txt
+
+    output:     <web_dir/GOES/goes_part_<p/s>.html
+
+update_long_term_goes_data.py   --- update a long term goes data
+
+    input:  ftp://ftp.swpc.noaa.gov/pub/lists/pchan/*_pchan_5m.txt
+    output: <data_dir>/goes_data.txt
+
+web address:
+------------
+http://cxc.cfa.harvard.edu/mta/RADIATION_new/GOES/goes_part_p.html
+http://cxc.cfa.harvard.edu/mta/RADIATION_new/GOES/goes_part_s.html
+http://cxc.cfa.harvard.edu/mta/RADIATION_new/GOES/goes_pchan_p.html
+http://cxc.cfa.harvard.edu/mta/RADIATION_new/GOES/goes_pchan_s.html
+
+
+Cron job
+--------
+han-v  as mta
+
+2,7,12,17,22,27,32,37,42,47,52,57 * * * * /data/mta4/Space_Weather/GOES/Scripts/goes_wrap_script      > /data/mta4/Space_Weather/Test_Logs/goes_main.cron 2>&1
+14 2 * * *                                /data/mta4/Space_Weather/GOES/Scripts/goes_long_wrap_script > /data/mta4/Space_Weather/Test_Logs/goes_long_term.cron 2>&1
+14 * * * *                                /data/mta4/Space_Weather/GOES/Scripts/get_goes_xray_plot.py > /data/mta4/Space_Weather/Test_Logs/goes_x_ray_plot.cron 2>&1
+

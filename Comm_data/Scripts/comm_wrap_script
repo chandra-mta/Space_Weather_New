@@ -1,0 +1,1 @@
+TERM=dummy; export TERM; /bin/tcsh  </data/mta4/Space_Weather/Comm_data/Scripts/comm_main_script

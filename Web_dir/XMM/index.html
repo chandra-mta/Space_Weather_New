@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+   <title>XMM Radiation Observations </title>
+</head>
+<!--
+<body text="#DDDDDD" bgcolor="#000000" link="#FF0000" vlink="#FFFF22" alink="#7500FF">
+-->
+<body style="width:95%;margin-left:10px; margin-right;10px;background-color:#FAEBD7;font-family:Georgia, "Times New Roman", Times, serif">
+
+
+<div style='float:right;'>
+<a href="../../sot.html">SOT home page</a>
+<br />
+<a href="../index.html">Radiation Main Page</a>
+</div>
+
+<h2 style='text-align:center;padding-bottom:20px;'>REALTIME XMM-NEWTON RADIATION OBSERVATIONS</h2>
+
+<pre style='text-align:center;'>
+                                        Most recent XMM radiation observations
+                                 Differential Flux particles/cm2-s-ster-MeV
+ 
+ UT Date   Time    ---------------------------------- Protons MeV -------------------------------
+                          LE1          LE2         HES1         HES2         HESC
+  YR MO DA HHMM          1-1.5       1.5-4.5       2.7-9        9-37       12.5-100
+<!--#include file="xmm_2day.dat" -->
+</pre>
+
+<div style='text-align:center;'>
+<img src="./Plots/mta_xmm_plot_p1.png" style='padding-bottom:20px;width:65%;'>
+<img src="./Plots/mta_xmm_plot_p2.png" style='padding-bottom:20px;width:65%;'>
+</div>
+
+<p style='margin-left:30px;margin-right:30px'>
+The following plots show the orbits of CXO and XMM in GSM coordinates.
+The left plot is in X-Y plane, and the right plot is in X-Z plane.
+If the orbit is in <span style='color:lime'>green</span>, the satellite is in the solar wind area,
+if it is in <span style='color:aqua'>light blue</span>, the satellite is in
+magnetosheath, and  if it is in  <span style='color:yellow'>yellow</span>, the satellite
+is in magnetosphere.
+</p>
+
+<p style='margin-left:30px;margin-right:30px'>
+The periods of the plotted orbits are +/-1.35 days from the current satellite positions 
+(<span style='color:green'>*</span>), 
+and the orange pentagon (<span style='color:orange'>*</span>) mark the positions of one day ago.
+</p>
+
+<div style='text-align:center;'>
+<img src="./Plots/mta_xmm_plot_gsm.png"    style='padding-bottom:20px;width:48%;'></center>
+<img src="./Plots/mta_xmm_plot_gsm_xz.png" style='padding-bottom:20px;width:48%;'></center>
+</div>
+
+<p style='margin-left:30px;margin-right:30px'>
+<span style='color:orange;'>XMM</span> and <span style='color:aqua;'>CXO</span> orbits in GSM coordinates.
+</p>
+<div style='text-align:center;'>
+<img src="./Plots/mta_plot_xmm_comp.png" style='padding-bottom:20px;width:65%;'>
+</div>
+
+<hr />
+<h3>XMM-Newton Links</h3>
+<a href="http://xmm.vilspa.esa.es/external/xmm_obs_info/radmon/radmon_details/index.php">Information on XMM-Newton radiation monitoring</a><br />
+<a href="http://xmm.vilspa.esa.es/external/xmm_obs_info/radmon/index.php">Real-time XMM-Newton radiation plots</a>
+<div style='padding-bottom:20px;'></div>
+
+<hr />
+
+<a href="../ACE/ace.html">Real-time ACE observations</a>
+<br >
+<a href="../index.html">Radiation Main Page</a>
+<br >
+<a href="../../sot.html">SOT home page</a>
+
+<hr>
+<p style='padding-bottom:30px;'>
+<a HREF="mailto:swolk@cfa.harvard.edu">Email problems to: swolk</a>
+(<a HREF="https://hea-www.harvard.edu/~swolk/">Scott Wolk</a>) <BR>
+...it is all his fault <BR>
+</p>
+
+<script>
+setTimeout('location.reload()',300000)
+</script>
+
+</body>
+</html>

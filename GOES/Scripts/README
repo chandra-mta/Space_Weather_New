@@ -1,0 +1,103 @@
+
+GOES proton/particle monitoring system for Chandra.
+===================================================
+
+
+Currently:  dir_list: /data/mta4/Space_Weather/hose_keeping/dir_list
+            goes_dir: /data/mta4/Space_Weather/GOES/
+            web_dir:  /data/mta4/www/RADIATION_new/GOES/
+
+
+Scripts:
+--------
+goes_wrap_script
+goes_main_script        --- environment setting scripts
+
+goes_long_warp_script   --- environment setting scripts for the long term data 
+goes_long_main_script
+
+update_goes_differential_page.py
+---------------------------------
+Update: <web_dir>/goes_pchan_p.html
+
+input: https://services.swpc.noaa.gov/json/goes/primary/differential-protons-1-day.json
+
+"energy"    = ['1020-1860 keV',   '1900-2300 keV',   '2310-3340 keV',    '3400-6480 keV',\
+               '5840-11000 keV',  '11640-23270 keV', '25900-38100 keV',  '40300-73400 keV',\
+               '83700-98500 keV', '99900-118000 keV','115000-143000 keV','160000-242000 keV',\
+               '276000-404000 keV']
+
+output: <web_dir>/goes_pchan_p.html
+
+update_goes_integrate_page.py
+-----------------------------
+Update: <web_dir>/goes_part_p.html
+
+input: https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json
+       https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-1-day.json
+
+"energy" (particles)  = ['>=1 MeV', '>=5 MeV', '>=10 MeV', '>=30 MeV', '>=50 MeV',\
+                         '>=60 MeV', '>=100 MeV', '>=500 MeV']
+"energy" (electron)   = ['>=2 MeV',]
+
+output: <web_dir>/goes_part_p.html
+
+plot_goes_data.py
+-----------------
+plot goes data
+
+input: https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json
+       https://services.swpc.noaa.gov/json/goes/primary/integral-protons-3-day.json
+
+differential
+"energy"    = ['1020-1860 keV',   '1900-2300 keV',   '2310-3340 keV',    '3400-6480 keV',\
+               '5840-11000 keV',  '11640-23270 keV', '25900-38100 keV',  '40300-73400 keV',\
+               '83700-98500 keV', '99900-118000 keV','115000-143000 keV','160000-242000 keV',\
+               '276000-404000 keV']
+integral
+"energy"    = ['>=1 MeV', '>=5 MeV', '>=10 MeV', '>=30 MeV', '>=50 MeV',\
+               '>=60 MeV', '>=100 MeV', '>=500 MeV']
+
+output: <html_dir>/Plots/goes_protons.png
+        <html_dir>/Plots/goes_particles.png 
+
+
+collect_goes_long.py
+----------------------
+update a long term goes data
+
+input:  https://services.swpc.noaa.gov/json/goes/primary/differential-protons-7-day.json
+output: <data_dir>/goes_data_r.txt
+        note there is goes_data.txt which is from older goes satellites and have 2001 - early Mar 2020
+
+web address:
+------------
+http://cxc.cfa.harvard.edu/mta/RADIATION_new/GOES/goes_part_p.html
+http://cxc.cfa.harvard.edu/mta/RADIATION_new/GOES/goes_pchan_p.html
+( /data/mta4/www/RADIATION_new/GOES/)
+
+
+Cron job
+--------
+han-v  as mta
+
+2,7,12,17,22,27,32,37,42,47,52,57 * * * * /data/mta4/Space_Weather/GOES/Scripts/goes_wrap_script      > /data/mta4/Space_Weather/Test_Logs/goes_main.cron 2>&1
+14 2 * * *                                /data/mta4/Space_Weather/GOES/Scripts/goes_long_wrap_script > /data/mta4/Space_Weather/Test_Logs/goes_long_term.cron 2>&1
+14 2 * * *                                /data/mta4/Space_Weather/GOES/Scripts/get_goes_xray_plot.py > /data/mta4/Space_Weather/Test_Logs/goes_x_ray_plot.cron 2>&1
+
+
+Note: Goes proton channel name and the energy band:
+
+P1          1020-1860 keV
+P2A         1900-2300 keV
+P2B         2310-3340 keV
+P3          3400-6480 keV
+P4          5840-11000 keV
+P5          11640-23270 keV
+P6          25900-38100 keV
+P7          40300-73400 keV
+P8A         83700-98500 keV
+P8B         99900-118000 keV
+P8C         115000-143000 keV
+P9          160000-242000 keV
+P10         276000-404000 keV

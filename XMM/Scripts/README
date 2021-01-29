@@ -1,0 +1,115 @@
+##########################################
+REALTIME XMM-NEWTON RADIATION OBSERVATIONS
+##########################################
+
+This directory holds scripts related to XMM real time radiation observation
+page http://cxc.cfa.harvard.edu/mta/RADIATION_new/XMM/index.html.
+
+Directory:
+==========
+tle_dir  = /data/mta4/Space_Weather/TLE/
+xmm_dir  = /data/mta4/Space_Weather/XMM/
+data_dir = <xmm_dir>/Data
+web_dir  = /data/mta4/www/RADIATION_new/XMM/
+
+Scripts:
+========
+xmm_wrap_script
+xmm_main_script     ---- environment setting/control scripts
+
+add_region_info.py
+-------------------
+add region information to the crm data
+
+input:  <kp_dir>Data/k_index_data
+        <tle_dir>Data/xmm.gsme_in_Re
+        <tle_dir>Data/cxo.gsme_in_Re
+output: <xmm_dir>/Data/crmreg_xmm.dat
+        <xmm_dir>/Data/crmreg_cxo.dat
+
+this uses locreg function from <ephem_dir>/Scripts/convert_coord.py
+
+update_xmm_rad_data.py
+----------------------
+update xmm radiation flux database
+
+input:  /stage/xmmops_ftp/radmon_02h.dat    --- flux info
+        <tle_dir>/Data/xmm.spctrk           --- orbital info
+output: <xmm_dir>/Data/xmm_7day.archive2
+        <xmm_dir>/Data/mta_xmm_db.dat
+        <xmm_dir>/DAta/xmm.archive
+        <html_dir>/XMM/xmm_2day.dat
+
+check_mta_xmm_alert_page.py
+---------------------------
+check the latest count Il count rate and xmm orbital altitude and
+send out warning if mta_XMM_alert file does not exist.
+
+intput: <xmm_dir>/Data/xmm_7day.archive2
+        <tle_dir>/Data/xmm.spctrk
+output: <xmm_dir>/Data/l1_alt_records
+        <xmm_dir>/Data/alt_trip_records
+        email sent out when the conditions are violated
+
+plot_gsm_orbits.py
+------------------
+plot xmm and cxo orbits in gsm coordinates of xy plane
+
+input:  <tle_dir>/Data/xmm.spctrk
+        <tle_dir>/Data/cxo.spctrk
+        <xmm_dir>/Data/crmreg_xmm.dat
+        <xmm_dir>/Data/crmreg_cxo.dat
+output: <html_dir>/XMM/Plots/mta_xmm_plot_gsm.png
+
+
+plot_gsm_orbits_xz_plane.py
+------------------
+plot xmm and cxo orbits in gsm coordinates of xz plane
+
+input:  <tle_dir>/Data/xmm.spctrk
+        <tle_dir>/Data/cxo.spctrk
+        <xmm_dir>/Data/crmreg_xmm.dat
+        <xmm_dir>/Data/crmreg_cxo.dat
+output: <html_dir>/XMM/Plots/mta_xmm_plot_gsm_xz.png
+
+plot_xmm_cxo_comp.py
+---------------------
+plot xmm and cxo gsm orbits and compare
+
+input:  <xmm_dir>/Data/xmm_7day.archive2
+        <tle_dir>/Data/xmm.spctrk
+        <tle_dir>/Data/cxo.spctrk
+output: <html_dir>/XMM/Plots/mta_plot_xmm_comp.png
+
+plot_xmm_rad.py
+---------------
+plot xmm radiation flux and environment
+
+input:  <xmm_dir>/Data/xmm_7day.archive2
+        <tle_dir>/Data/xmm.spctrk
+        <tle_dir>/Data/cxo.spctrk
+output: <html_dir>/XMM/Plots/mta_xmm_plot.png
+
+Data
+----
+crmreg_xmm.dat/crmreg_cxo.dat
+<Chandra Time>  <altitude> < xgsm>  <ygsm>  <zgsm>  <region>
+
+xmm_7day.archive2/xmm.archive
+<Chandra Time>  <le0>   <le1>  <le2>  <hse0>  <hes1>  <hes2>   <hesc>
+
+mta_xmm_db.dat
+<Chandra Time>  <le0>   <le1>  <le2>  <hse0>  <hes1>  <hes2>   <hesc>
+                <altitude>   <x>  <y>  <z>  <vx>  <vy>  <vz>
+
+alt_trip_records
+<time>  <altitude>   <le1 flux>
+
+l1_alt_records
+<time>  <Chandra Time>  <le1 flux>  <altitude>
+
+Cron job
+--------
+han-v as mta
+2,12,22,32,42,52 * * * * cd /data/mta4/Space_Weather/XMM/Scripts ; /data/mta4/Space_Weather/XMM/Scripts/xmm_wrap_script > /data/mta4/Space_Weather/Test_Logs/xmm_main.cron  2>&1
+

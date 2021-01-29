@@ -1,0 +1,22 @@
+</table>
+<br />The current fluence is calculated from the beginning on the current orbit. 
+The ACE P3 external fluence starts integrating above 10 kkm.
+
+<br />* EPHIN "fluxes" are raw counts as of the last support [
+#LAST_SUPPORT#
+], not averaged.
+<br /><br />
+
+<div style="text-align:center;">
+<h4>Attenuated CRM Proton Fluence</h4>
+    <img src="../Orbit/Plots/crmplatt.png" style="width:60%;"> 
+    <p>
+     <span style='color:lime;'><b>Green liness</b></span> indicates fluence estimates 
+     based on the current KP value.
+    </p>
+
+</div>
+<div style="padding-bottom:30px;"></div>
+</body>
+</html>
+

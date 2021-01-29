@@ -1,0 +1,96 @@
+
+############################
+ACIS Radiation Correlations
+############################
+
+This set of scripts creates ACIS radiation related plots. 
+
+
+Scripts
+++++++++
+
+run_rad_wrap_script         ----    a wrapping script to set environment for the script
+
+run_rad_main_script         ----    a main script to run a python script
+
+create_radiation_realted_plots.py     ----    a control script to create radiation plot and config plot
+
+create_rad_cnt_plots.py     ---     a script to create radiation plot
+
+extract_radiation_data.py   ----    a script to extract radiatioin related data
+
+create_config_plot.py       ----    a script to cretea configulation plot
+
+update_html_wrap_script     ----    a wrapping script to set environment for the script
+
+update_html_main_script     ----    a main script to run a python script
+
+update_html_page.py         ----    create and/or update html pages
+
++++++++++++++++++++++++
+Environmental Settings
++++++++++++++++++++++++
+
+setenv PYTHONPATH "/data/mta/Script/Python3.6/envs/ska3/lib/python3.6/site-packages:/data/mta/Script/Python3.6/lib/python3.6/site-packages/"
+
+        (done in *main_script)
+
+++++++++++++
+Data Needed
+++++++++++++
+
+config_files(**):   '/data/mta_www/mta_temp/mta_states/MJ/<yyyy>/comprehensive_data_summary<yyyy>'
+
+ephfile:            '/data/mta4/www/DAILY/mta_rad/Data/mk_eph_avg_2010.out'
+
+ephscafile:         '/data/mta4/www/DAILY/mta_rad/Data/ephsca.fits' (this file is not updated any more)
+
+ctifile:            '/data/mta4/www/DAILY/mta_rad/cti_data.txt'
+
+goesfile:           '/data/mta4/Space_Weather/GOES/Data/goes_data.txt'
+                    '/data/mta4/Space_Weather/GOES/Data/goes_data_r.txt'
+
+acefile:            '/data/mta4/Space_Weather/ACE/Data/longterm/ace_data.txt'
+
+ephemfile:          '/data/mta/DataSeeker/data/repository/dephem.rdb'
+
++++++++++++++++++++
+HTML page templates
++++++++++++++++++++
+In the directory: ./Template
+
+index_top
+monthly_template
+rad_time_template
+yearly_template
+
+++++++
+Output
+++++++
+
+Directory:      /data/mta4/www/RADIATION_new/ACIS_Rad/Plots/
+
+rad_cnts_curr.png
+rad_use_curr.png
+rad_cnts_<mmyy>.png
+rad_use_<mmyy>.png
+Note: older plots are in gif format.
+
+Directory:  /data/mta4/www/RADIATION_new/ACIS_Rad/Html/
+
+all<yy>.html
+<mmyy>.html
+rad_time_<mmyy>.html
+
+Directory:  /data/mta4/www/RADIATION_new/ACIS_Rad/
+
+index.html
+
++++++++++
+cron jobs
++++++++++
+r2d2-v as mta
+
+45 1 * * * /data/mta4/Space_Weather/ACIS_Rad/Scripts/run_rad_wrap_script     > $HOME/Logs/acis_rad_run_rad_new.cron   2>&1
+43 1 1 * * /data/mta4/Space_Weather/ACIS_Rad/Scripts/update_html_wrap_script > $HOME/Logs/acis_rad_html_page_new.cron 2>&1
+

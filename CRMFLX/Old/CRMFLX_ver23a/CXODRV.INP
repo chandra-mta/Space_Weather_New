@@ -1,0 +1,226 @@
+#
+#------------ CXORAD Driver Input Deck  (9-22-00) ----------------------
+#
+#
+#-----------------------------------------------------------------------
+#  *** BLOCK #1: Run start/stop times ***
+#
+#  Input IYR1     - year (YYYY) of start time (INTEGER).
+1999
+#
+#  Input IMON1    - month (MM) of start time (INTEGER).
+6
+#
+#  Input IDAYM1   - day of month (DD) of start time (INTEGER).
+15
+#
+#  Input IHR1     - hour of day (HH) of start time (INTEGER).
+10
+#
+#  Input IMINIT1  - minute of hour (MM) of start time (INTEGER).
+0
+#
+#  Input ISEC1    - second of minute (SS) of start time (INTEGER).
+0
+#
+#  Input IYR2     - year (YYYY) of stop time (INTEGER).
+2000
+#
+#  Input IMON2    - month (MM) of stop time (INTEGER).
+3
+#
+#  Input IDAYM2   - day of month (DD) of stop time (INTEGER).
+10
+#
+#  Input IHR2     - hour of day (HH) of stop time (INTEGER).
+1
+#
+#  Input IMINIT2  - minute of hour (MM) of stop time (INTEGER).
+0
+#
+#  Input ISEC2    - second of minute (SS) of stop time (INTEGER).
+0
+#
+#
+#-----------------------------------------------------------------------
+#  *** BLOCK #2: Ion flux calculation control inputs ***
+#
+#       ISPECI  - ion species selection flag:
+#                 ISPECI = 1 for protons
+#                 ISPECI = 2 for Helium
+#                 ISPECI = 3 for CNO
+#  Input ISPECI (INTEGER):
+1
+#
+#       FLUTHR  - fluence per orbit threshold (ions/cm^2-sr-MeV).
+#  Input FLUTHR (REAL):
+1.0E+9
+#
+#       FLUTOL  - fluence calculation tolerance (% of fluence threshold).
+#  Input FLUTOL (REAL):
+5.0
+#
+#       FLULVL  - Percentile level (e.g., 50%, 95%) of particle flux
+#                 environment used in fluence calculation.
+#                 FLULVL = 1  -> mean flux used
+#                 FLULVL = 2  -> 95% flux used
+#                 FLULVL = 3  -> 50% flux used
+#  Input FLULVL (INTEGER):
+1
+#
+#       REARTH  - radius of the Earth (km) (double precision).
+#  Input REARTH (REAL):
+6371.
+#
+#       RNGMIN  - minimum geocentric range that ion flux
+#                 calculations are performed (Re)
+#  Input RNGMIN (REAL):
+10.
+#
+#       LUNIT  - Array of unit numbers used in opening CRM's database files.
+#                LUNIT(1) = solar wind database unit number
+#                LUNIT(2) = magnetosheath database unit number
+#                LUNIT(3) = magnetosphere database unit number
+#  Input LUNIT (INTEGER):
+40 41 42
+#
+#       IUSESW  - flag for control of solar wind flux calculation:
+#               IUSESW = 0 if (uniform flux) analytic solar wind model used.
+#               IUSESW = 1 if user supplied uniform flux value used.
+#               IUSESW = 2 if solar wind database used.
+#               IUSESW = 3 if sum of solar wind database value and user
+#                          supplied uniform flux value used.
+#               IUSESW = 4 if sum of (uniform flux) analytic solar wind model
+#                          and user supplied uniform flux value used.
+#  Input IUSESW (INTEGER):
+0
+#
+#       FSWIMN  - user supplied mean uniform solar wind flux for the
+#                 selected species (#/[cm^2-sec-sr-MeV]).
+#  Input FSWIMN (REAL):
+1.0E+3
+#
+#       FSWI95  - user supplied 95% level uniform solar wind flux for
+#                 the selected species (#/[cm^2-sec-sr-MeV]).
+#  Input FSWI95 (REAL):
+1.0E+3
+#
+#       FSWI50  - user supplied 50% level uniform solar wind flux for
+#                 the selected species (#/[cm^2-sec-sr-MeV]).
+#  Input FSWI50 (REAL):
+1.0E+3
+#
+#       FSWISD  - user supplied std. dev. of uniform solar wind flux
+#                 for the selected species (#/[cm^2-sec-sr-MeV]).
+#  Input FSWISD (REAL):
+1.0E+3
+#
+#       IUSEMSH - flag for control of magnetosheath flux calculation:
+#                 IUSEMSH = 0 if (uniform flux) analytic magnetosheath model used.
+#                 IUSEMSH = 1 if user supplied uniform solar wind flux value used.
+#                 IUSEMSH = 2 if magnetosheath database used.
+#                 IUSEMSH = 3 if sum of magnetosheath database value and user
+#                             supplied uniform solar wind flux value used.
+#                 IUSEMSH = 4 if sum of (uniform flux) analytic magnetosheath model
+#                             and user supplied uniform solar wind flux value used.
+#  Input IUSEMSH (INTEGER):
+4
+#
+#
+#-----------------------------------------------------------------------
+#  *** BLOCK #3: Magnetic activity (Kp) distribution ***
+#
+#       NUMKPS  - number of Kp index intervals used as input 
+#                 distribution.
+#  Input NUMKPS (INTEGER):
+1
+#
+#       XKPIN     array of Kp interval midpoint values. Data for XKPIN
+#                 must be entered on one line with spaces or commas
+#                 between values.  For example, if NUMKPS = 4, XKPIN
+#                 can be entered on one line as: 1.0 2.3 5.2 7.1).
+#  Input XKPIN (REAL)
+3.0
+#
+#       FRACKP  - array containing the fraction (value between 0. & 1.)
+#                 of the corresponding Kp interval. Data for FRACKP
+#                 must be entered on one line with spaces or commas
+#                 between values.  For example, if NUMKPS = 4, FRACKP
+#                 can be entered on one line as: 0.1 0.4 0.3 0.2).
+#       CAUTION!  The sum of FRACKP's elements must total to 1.
+#  Input FRACKP (REAL)
+1.0
+#
+#
+#-----------------------------------------------------------------------
+#  *** BLOCK #4: Smoothing Algorithm Control ***
+#
+#       SMOOTH1  - flag for control of database smoothing filter:
+#                 SMOOTH1 = 0 if no data smoothing is used.
+#                 SMOOTH1 = 1 if spike rejection and near neighbor flux.
+#                 SMOOTH1 = 2 if spike rejection with range weighted scaling of flux.
+#                 SMOOTH1 = 3 if spike rejection with average flux.
+#                 SMOOTH1 = 4 if spatial average of flux in volume specified by RNGTOL.
+#                 SMOOTH1 = 5 if spatial average of flux in volume specified by
+#                             RNGTOL, with the specified number of high and low
+#                             flux values inside the volume dropped first.
+#                 SMOOTH1 = 6 if spatial averaging of flux in volume specified by
+#                             RNGTOL, with percentile threshold limits on flux values.
+#  Input SMOOTH1 (INTEGER):
+2
+#
+#       NFLXGET  -  number of flux values to get for smoothing filter.
+#                                 (used if SMOOTH1 = 1,2, or 3)
+#  Input NFLXGET (INTEGER)
+5
+#
+#       NDROPHI  -  number of high flux values to drop for smoothing filter.
+#                                 (used if SMOOTH1 = 1,2,3, or 5)
+#  Input NDROPHI (INTEGER)
+1
+#
+#       NDROPLO  -  number of low flux values to drop for smoothing filter.
+#                                 (used if SMOOTH1 = 1,2,3, or 5)
+#  Input NDROPLO (INTEGER)
+1
+#
+#       LOGFLG   -  flag controlling how flux average is performed.
+#                                 LOGFLG = 1 if log10 of flux values used.
+#                                 LOGFLG = 2 if linear flux values used.
+#                                 (used if SMOOTH1 = 2,3,4,5, or 6)
+#  Input LOGFLG (INTEGER)
+2
+#
+#       RNGTOL   -  range tolerance from near-neigbor used in spatial averaging of
+#                                 database (Re).
+#                                 (used if SMOOTH1 = 4,5 or 6)
+#  Input RNGTOL (REAL)
+2.0
+#
+#       FPCHI    -  upper percentile limit for spatial averaging of flux.
+#                                 (used if SMOOTH1 = 6)
+#  Input FPCHI (INTEGER)
+80
+#
+#       FPCLO    -  upper percentile limit for spatial averaging of flux.
+#                                 (used if SMOOTH1 = 6)
+#  Input FPCLO (INTEGER)
+20
+#
+#       SMOOTH2  -  flag for control of flux smoothing along orbit.
+#                  SMOOTH2 = 0 if no data smoothing is used along orbit.
+#                  SMOOTH2 = 1 if data smoothing is used along orbit.
+#  Input SMOOTH2 (INTEGER)
+0
+#
+#
+#-----------------------------------------------------------------------
+#  *** BLOCK #5: File names ***
+#
+#  Input EPHFIL  - ephemeris data file name (up to 32 characters).
+DE_99219_00249.erp
+#
+#  Input FILOUT  - output data file name (up to 32 characters).
+CXORAD_1.OUT
+#
+

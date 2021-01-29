@@ -1,0 +1,13 @@
+
+Geopack in this site is 2008 version but updated for IGRF coefficients updated 
+
+    GEOPACK Site: http://geo.phys.spbu.ru/~tsyganenko/modeling.html
+
+all fortran functions are modified for gfrtran compilation
+
+    gfortran cocochan.f geopack.f supple.f -o cocochan
+
+
+
+
+How to debug fortran:   http://infohost.nmt.edu/tcc/help/lang/fortran/gdb.html

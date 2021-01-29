@@ -1,0 +1,8 @@
+'/data/mta4/Space_Weather/EPHEM/Scripts/'           : bin_dir
+'/data/mta4/Space_Weather/EPHEM/house_keeping/'     : house_keeping
+'/data/mta4/Space_Weather/EPHEM/Exc/'               : exc_dir
+'/data/mta4/Space_Weather/EPHEM/Data/'              : data_dir
+'/data/mta4/Space_Weather/EPHEM/Data/'              : eph_dir
+'/data/mta/DataSeeker/data/repository/'             : ds_rep
+'/data/mta/Script/Python3.6/MTA/'                   : mta_dir
+'/data/mta4/Space_Weather/KP/'                      : kp_dir

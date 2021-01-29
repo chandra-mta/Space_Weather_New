@@ -1,0 +1,69 @@
+Date: Fri, 23 May 2003 10:08:11 -0500
+From: M. Newhouse <Marilyn.Newhouse@msfc.nasa.gov>
+To: "Rob Cameron (E-mail)" <rcameron@cfa.harvard.edu>, "Ken Gage (E-mail)" <KGage@ipa.harvard.edu>
+Cc: "Dave Johnson (E-mail)" <David.Johnson@msfc.nasa.gov>, "Larry Felton (E-mail)" <Larry.Felton@msfc.nasa.gov>,
+     "Bill Davis (E-mail)" <wsdavis@ipa.harvard.edu>, "Steve O'Dell (E-mail)" <Steve.O'Dell@msfc.nasa.gov>,
+     "Bill Blackwell (E-mail)" <Bill.Blackwell@msfc.nasa.gov>, "Chris Eagan (E-mail)" <ceagan@ipa.harvard.edu>,
+     "Kevin Marsh (E-mail)" <kmarsh@ipa.harvard.edu>
+Subject: New CRMFLX 2.3 Database
+Parts/Attachments:
+   1 Shown     31 lines  Text
+   2   OK     894 KB     Application
+----------------------------------------
+
+
+Rob and Ken,
+
+Because there is currently no MSFC FTP site with anonymous access, I have
+placed Bill Blackwell's new CRMFLX database files on lucky in
+/home/mnewhouse.  You will find the following files:
+
+ - magnetosheath and magnetosphere datafiles (XYZmap_MagSph_ACE_Limit.prot
+and XYZmap_MagSheath_ACE_Limit.prot)
+ - conversion routines (MSPA2B_MAP.f and MSHA2B_MAP.f)
+ - verification routines (MSPH_Verify23_B.txt and MSHE_Verify23_B.txt)
+
+As usual, you will need to compile and run the conversion routines to
+convert the ASCII data files to binary.  Then compile and link to the
+verification routines to CRMFLX 2.3, and run the program to verify correct
+binary file conversion.  The binary file conversion process was successfl on
+our system, and both the ASCII and binary versions of these files will be
+included with the OFLS delivery, along with the database files delivered
+previously with CRMFLX 2.3.
+
+I have attached a description from Bill of the new databases and their
+differences from the databases delivered with CRMFLX 2.3.  If you have any
+questions about the databases or their verification, please contact Bill at
+(256) 544-6741.  If you have any problems accessing the files, please
+contact me at (256) 885-7238.
+
+Marilyn
+
+Date: Fri, 23 May 2003 11:42:27 -0500
+From: "O'Dell, Steve" <Steve.O'Dell@nasa.gov>
+To: "'Marilyn.Newhouse@msfc.nasa.gov'" <Marilyn.Newhouse@msfc.nasa.gov>,
+     "Rob Cameron (E-mail)" <rcameron@cfa.harvard.edu>, "Ken Gage (E-mail)" <KGage@ipa.harvard.edu>
+Cc: "Dave Johnson (E-mail)" <David.Johnson@msfc.nasa.gov>, "Felton, Larry" <Larry.Felton@msfc.nasa.gov>,
+     "Bill Davis (E-mail)" <wsdavis@ipa.harvard.edu>, "Steve O'Dell (E-mail)" <Steve.O'Dell@msfc.nasa.gov>,
+     "Blackwell, Bill" <Bill.Blackwell@msfc.nasa.gov>, "Chris Eagan (E-mail)" <ceagan@ipa.harvard.edu>,
+     "Kevin Marsh (E-mail)" <kmarsh@ipa.harvard.edu>
+Subject: RE: New CRMFLX 2.3 Database
+
+Dear Rob et al.,
+
+We recommend using the new database for CRMFLX 2.3.  It differs from the
+previous database in that it uses only data from periods of low solar-proton
+flux [ACE EPAM-P3 < 100 p/(cm^2 s sr MeV)]. Thus, the solar-proton flux
+needs to be added back in, as described in Bill Blackwell's note.  For now,
+the recommended combinations are these:
+Region 1 (Solar wind): Solar protons only
+Region 2 (Magnetosheath): Kp-driven CRM + 2 X Solar protons
+Region 3 (Magnetosphere): Kp-driven CRM + (1/2) X Solar protons
+
+Regards,
+Steve
+
+Steve O'Dell
+NASA Marshall Space Flight Center, SD50
+Huntsville, AL  35812  USA
+Phone +1 (256) 961-7776    Fax +1 (256) 961-7522

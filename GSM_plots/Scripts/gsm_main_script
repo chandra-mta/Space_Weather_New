@@ -1,0 +1,15 @@
+cd /data/mta4/Space_Weather/GSM_plots/Scripts/
+
+setenv PYTHONPATH "/data/mta/Script/Python3.6/envs/ska3/lib/python3.6/site-packages:/data/mta/Script/Python3.6/lib/python3.6/site-packages/"
+
+/data/mta4/Space_Weather/GSM_plots/Scripts/create_gsm_gse_orbit_plots.py
+/data/mta4/Space_Weather/GSM_plots/Scripts/create_lon_and_lat_orbit_plot.py
+
+
+
+convert /data/mta4/www/RADIATION_new/Orbit/Plots/GSMORBIT.png -trim /data/mta4/www/RADIATION_new/Orbit/Plots/GSMORBIT.png
+convert /data/mta4/www/RADIATION_new/Orbit/Plots/GSEORBIT.png -trim /data/mta4/www/RADIATION_new/Orbit/Plots/GSEORBIT.png
+convert /data/mta4/www/RADIATION_new/Orbit/Plots/GSM.png -trim /data/mta4/www/RADIATION_new/Orbit/Plots/GSM.png
+convert /data/mta4/www/RADIATION_new/Orbit/Plots/GSE.png -trim /data/mta4/www/RADIATION_new/Orbit/Plots/GSE.png
+
+

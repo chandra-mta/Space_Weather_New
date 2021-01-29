@@ -1,0 +1,46 @@
+############################
+Collecting Comm Contact Data
+############################
+
+This directory holds scripts which collect comm contact data
+
+collect_comm_data.py    --- collect comm contact data for +/- 3days
+    data needed:
+            /proj/sot/ska/data/arc/iFOT_events/comm/*.rdb
+    output:
+            comm_data
+            col_names = ['Type Description', 'TStart (GMT)',  'TStop (GMT)', 
+                         'DSN_COMM.bot',     'DSN_COMM.eot',  'DSN_COMM.station', 
+                         'DSN_COMM.config',  'DSN_COMM.site', 'DSN_COMM.sched_support_time',
+                         'DSN_COMM.activity','DSN_COMM.lga',  'DSN_COMM.soe']
+
+            the data are tabs delimited.
+
+
+The following two are copied from: /proj/sot/ska/share/
+Prorbably the following scripts are not necessary but just in a case, keep running them.
+
+dsn_summary.pl          --- SKA version of comm contact data extraction script
+                            this is out of date and not recommended to use
+
+    data needed:
+            /proj/sot/ska/data/arc/iFOT_events/comm/*.rdb
+    output:
+            <out_dir>/*
+    usage: dsn_summary.py -out_dir<out_dir>
+            note that you need to create <out_dir> before running this script
+
+read_summary.pl         --- print out on screen about the comm related information
+
+    data needed:
+            /data/mta4/Space_Weather/ephem/Data/dsn_summary.dmp
+    output:
+            print out on screen about the comm related information
+
+
+Cron Job
+---------
+han-v as mta
+
+23 * * * * /data/mta4/Space_Weather/Comm_data/Scripts/comm_wrap_script > /data/mta4/Space_Weather/Test_Logs/comm_collect_comm.cron 2>&1
+

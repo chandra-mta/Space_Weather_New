@@ -1,0 +1,11 @@
+cd /data/mta4/Space_Weather/SOHO/Scripts
+
+setenv PYTHONPATH "/data/mta/Script/Python3.6/envs/ska3/lib/python3.6/site-packages:/data/mta/Script/Python3.6/lib/python3.6/site-packages/"
+
+/data/mta4/Space_Weather/SOHO/Scripts/create_predicted_solar_wind_plot.py
+
+convert /data/mta4/www/RADIATION_new/Orbit/Plots/solwin.png -trim /data/mta4/www/RADIATION_new/Orbit/Plots/solwin.png
+
+
+convert /data/mta4/www/RADIATION_new/SOHO/Plot/solwin.png -trim /data/mta4/www/RADIATION_new/SOHO/Plot/solwin.png
+

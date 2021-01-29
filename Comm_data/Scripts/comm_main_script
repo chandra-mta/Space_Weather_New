@@ -1,0 +1,10 @@
+cd /data/mta4/Space_Weather/Comm_data/Scripts
+
+
+setenv PYTHONPATH "/data/mta/Script/Python3.6/envs/ska3/lib/python3.6/site-packages:/data/mta/Script/Python3.6/lib/python3.6/site-packages/"
+
+/data/mta4/Space_Weather/Comm_data/Scripts/collect_comm_data.py
+
+/data/mta4/Space_Weather/Comm_data/Scripts/dsn_summary.pl
+
+

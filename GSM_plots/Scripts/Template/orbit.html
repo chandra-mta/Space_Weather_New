@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chandra Orbit </title>
+</head>
+
+<body style="width:95%;margin-left:10px; margin-right;10px;background-color:#FAEBD7;font-family:Georgia, "Times New Roman", Times, serif">
+
+<div style='text-align: center;'>
+    <h2>The Current Orbital Profile</h2>
+    <h4>All dates 00 hours UT</h4>
+</div>
+
+
+<div style=text-align:right;padding-bottom:20px;'>
+<a href="../index.html">Back to Radiation Monitoring central page. </a><br>
+<a href="../../sot.html"> SOT home page. </a><br>
+</div>
+
+<hr /> 
+<p>
+Please see: 
+<a href="https://www.spenvis.oma.be/help/background/coortran/coortran.html">SPENVIS </a> 
+for the coordinate systems and transformations used here.
+</p>
+
+
+<div style='text-align:center;'>
+<h3>
+GSE Orbit and 
+Geocentric Solar Ecliptic Coords + DSN Contact Schedule
+</h3>
+<img src="./Plots/GSEORBIT.png" style='width:40%;padding-bottom:15px;padding-right:10px;'>
+<img src="./Plots/GSE.png" style='width:50%;'>
+</div>
+<div style='text-align:right;'>
+    <table border=0, style='background-color:black;color:white;'>
+    <tr>
+    <th> <span style='color:white'>white dashed line</span>:</th><td> DSN Contact Time Period</td>
+    </tr><tr>
+    <th> <span style='color:aqua'>aqua color area</span>:</th><td>Solar Wind</td>
+    </tr><tr>
+    <th> <span style='color:fuchsia'>fuchsia color area</span>:</th><td>Magnetoshearth</td>
+    </tr><tr>
+    <th> <span style='color:yellow'>yellow color area</span>:</th><td>Magnetosphere</td>
+    </tr>
+    </table>
+</div>
+
+<hr />
+<div style='text-align:center;'>
+<h3>
+GSM Orbit and
+Geocentric Solar Magnetospheric Coords + DSN Contact Schedule
+</h3>
+<img src="./Plots/GSMORBIT.png" style='width:40%;padding-bottom:15px;padding-right:10px;'>
+<img src="./Plots/GSM.png" style='width:50%;'>
+</div>
+<div style='text-align:right;'>
+    <table border=0 style='background-color:black;color:white;'>
+    <tr>
+    <th> <span style='color:white'>white dashed line</span>:</th><td> DSN Contact Time Period</td>
+    </tr><tr>
+    <th> <span style='color:aqua'>aqua color area</span>:</th><td>Solar Wind</td>
+    </tr><tr>
+    <th> <span style='color:fuchsia'>fuchsia color area</span>:</th><td>Magnetoshearth</td>
+    </tr><tr>
+    <th> <span style='color:yellow'>yellow color area</span>:</th><td>Magnetosphere</td>
+    </tr>
+    </table>
+</div>
+
+<hr />
+
+<!--
+<div style='text-align:center;'><h4>Planar projection of GSM Orbit is no longer available.</h4> <img src="./GSMKP71.gif"> </div>
+<hr />
+-->
+<div style='text-align:center;'> 
+    <h4>
+    Plot of predicted future Chandra radiation, with SI config and DSN schedule plots
+    <br />
+    Exteranl CRM Proton Fluence (left) and Attenuated CRM Proton Fluence (right) plots
+    </h4>
+    <div>
+    <img src="./Plots/crmpl.png" style='width:45%;'>
+
+    <img src="./Plots/crmplatt.png" style='width:45%;padding-left:10px;' >
+    </div>
+    <p>
+    <span style='color:lime;'><b>Green liness</b></span> indicates fluence estimates based on the current
+    KP value.
+    <br/>
+    (Updated every 5 minutes, WITHOUT radiation attenuation appropriate for SIM and OTG positions).
+    </p>
+</div>
+
+<div style='padding-bottom:20px;'>
+<hr />
+</div>
+
+<div style='text-align:center; padding-bottom:30px;'>
+    <h3>Solar Wind Prediction</h3>
+    <p style='text-align:left;margin-left:40px;margin-right:40px;'>
+    The solar wind speed and desity predictions are made assuming that the particle density 
+    and the speed of the the same spot of the sun faces to the Earth are about same and
+    it comes every 27 days. The uncertainty is basically a difference between
+    the last two periods of the same spot of the sun faced the Earth. 
+    </p>
+    <img src="./Plots/solwin.png" style='width:60%;'>
+</div>
+
+<hr />
+
+
+<div style='text-align:center; margin-right:auto;margin-left:auto;'>
+<h3>DSN Contact</h3>
+<pre style='width:90%; font-size:90%;'>
+#COMM_DATA#
+</pre>
+</div>
+
+<hr />
+<p>
+If you have any questions about this page, please contact <a href='mailto:tisobe@cfa.harvard.edu'>tisobe@cfa.harvard.edu</a>.
+</p>
+
+<p>
+<em>Last Update: Mar 27, 2020</em>
+</p>
+
+<script> setTimeout('location.reload()',1000000) </script>
+
+</body>
+</html>

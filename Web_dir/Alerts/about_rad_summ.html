@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+   <title>About the Chandra Radiation Environment Summary </title>
+</head>
+<body style="witdh:95%;margin-left:10px; margin-right;10px;background-color:#FAEBD7;font-family:Georgia, "Times New Roman", Times, serif">
+<H2 style='text-align:center;padding-bottom:30px;'>
+About the Chandra Radiation Environment Summary
+</h2>
+
+<div style='margin-left:40px;margin-right:40px;'>
+<ul style='line-height:180%;'>
+<li>
+Current orbit start, configuration, and current fluxes/orbital (CRM and Goes) fluences come from:<br />
+<em>/data/mta4/Space_Weather/CRM/Data/CRMsummary.dat</em>
+</li>
+
+<li>
+EPHIN rates come from: <em>/pool14/chandra/chandra_psi.snapshot</em>
+</li>
+
+<li>
+Current unattenuated ACE comes from: <em>/data/mta4/Space_Weather/ACE/Data/fluace.dat</em>
+</li>
+
+<li>
+Current ACE attenuated data comes from: <em>/export/acis-flight/FLU-MON/current.dat</em>
+</li>
+
+<li>
+Upcoming spacecraft configuration and radzones come from: <em>/proj/sot/ska/data/arc/iFOT_events files</em>
+</li>
+
+<li>
+We calculate the attenuation factors to be used for GOES calculations from the CRM data:<br />
+
+    <div style='padding-left:20px;padding-right:20px;'>
+    <table border=0>
+        <tr style='font-style:italic;font-weight:600;'>
+            <td>att_factor= </td><td>crm_flx_att/crm_flx</td>
+        </tr>
+        <tr style='font-style:italic;font-weight:600;'>
+            <td>att_flu_factor= </td><td>crm_flu_att/crm_flu</td>
+        </tr>
+        <tr style='line-height:100%;font-style:italic;font-weight:600;'>
+            <td>future_attenuated_fluence=</td> 
+            <td>current_attenuated_fluence </br>+ (curr_unattenuated_flux * future_attenuation_factor)</td>
+        </tr>
+        <tr style='line-height:100%;'>
+            <td colspan=2>where:</td>
+        </tr>
+        <tr style='line-height:100%;font-style:italic;font-weight:600;'>
+            <td> future_attenuation_factor= </td>
+            <td>hrc_time*0 + acis_bare_time*1 + acis_hetg_time*0.2<br /> + acis_letg_time*0.5</td>
+        </tr>
+    </table>
+    </div>
+
+</li>
+</ul>
+</div>
+
+<p style='padding-top:20px;padding-bottom:20px;'>
+See also:
+</p>
+<ul>
+    <li><a href="http://cxc.cfa.harvard.edu/acis/reb/OnRadiation.html"> ACIS Ops Response to Radiation Events</a><br /></li>
+    <li><a href="../ACE/about_ace_page.html"> About ACE Monitoring</a><br /></li>
+</ul>
+
+
+<hr />
+
+
+
+
+Last updated: 04/20/11
+</body>
+</html>

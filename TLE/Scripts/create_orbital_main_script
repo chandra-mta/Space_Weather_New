@@ -1,0 +1,6 @@
+
+cd /data/mta4/Space_Weather/TLE/Scripts/
+
+setenv PYTHONPATH "/data/mta/Script/Python3.6/envs/ska3/lib/python3.6/site-packages:/data/mta/Script/Python3.6/lib/python3.6/site-packages/"
+
+/data/mta4/Space_Weather/TLE/Scripts/create_orbital_data_files.py

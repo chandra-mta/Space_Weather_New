@@ -1,0 +1,29 @@
+########
+Cocochan
+########
+
+Convert Chandra ECI linear coords to GSE, GSE coords
+
+
+
+To compile the fortran code:
+
+gfortran cocochan.f geopack.f supple.f -o cocochan
+
+if this does not work, try:
+
+gfortran -std=legacy -ffixed-form -fd-lines-as-comments 
+         -ffixed-line-length-none  cocochan.f geopack.f supple.f -o cocochan
+
+
+
+Please check geopack site for the most recent update, especially IGRF coefficients.
+The curren version is Year 2008 but with Jan 01, 2020 ocefficient update.
+
+http://geo.phys.spbu.ru/~tsyganenko/Geopack-2008.html
+
+
+Note, geopack is also available in python package. 
+
+https://pypi.org/project/geopack/
+

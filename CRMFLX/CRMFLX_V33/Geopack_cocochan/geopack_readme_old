@@ -1,0 +1,726 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+A SET OF FORTRAN SUBROUTINES FOR COMPUTATIONS OF THE GEOMAGNETIC FIELD
+                  IN THE EARTH'S MAGNETOSPHERE
+
+             (GEOPACK;  release of April 16, 1996; updated and corrected
+                 August 29 1997, July 15, 1999)
+
+
+                     N.A. TSYGANENKO  and  M. PEREDO
+
+                     RAYTHEON ITSS CORPORATION
+                     CODE 690.2
+                     NASA GSFC
+                     GREENBELT, MD 20771
+                     USA
+
+
+
+                       INTRODUCTION
+
+     Recent studies in the solar-terrestrial physics led to recognizing
+the role of the geomagnetic field as one of the most important characte-
+ristics of human environment. The Earth's magnetic field links the inter-
+planetary medium  with the upper atmosphere and the ionosphere,  guides
+the energetic charged particles  ejected during solar flares,  channels
+the low-frequency electromagnetic waves and heat flux, confines the ra-
+diation belt and auroral plasma particles, and serves as a giant accumu-
+lator of the solar wind energy that eventually dissipates during the
+magnetic storms.  Investigations of these phenomena are closely related
+to the problem of forecasting the "weather" in the near-Earth space,
+conditions of the radiowave propagation,  safety of manned space flights,
+reliability of communication systems, etc.
+
+    For that reason, it is of great importance to have tools for compu-
+ting the structure of the geomagnetic field, capable of taking into ac-
+count the magnetospheric disturbance and other factors defining variati-
+ons of the near-Earth electric current systems. In many applications it
+is often necessary to evaluate the components of the geomagnetic field
+vector in a wide range of distances, trace the field lines far away from
+the Earth's surface,  calculate the geomagnetically conjugate points,
+and map a spacecraft position with respect to characteristic magneto-
+spheric/ionospheric boundaries.   This requires using quantitative mo-
+dels of the Earth's internal field as well as those for the external
+field produced by the magnetospheric electric current systems.
+
+    The present set of subroutines computes the geomagnetic field compo-
+nents at any point of space within the Earth's magnetosphere up to the
+Moon's orbit and traces the force lines starting at a given initial point.
+Upon specifying the universal time and day of year as input parameters, it
+automatically performs all the necessary rotations of coordinate axes and
+takes into account the tilt angle of the Earth's magnetic dipole axis.
+The Earth's internal magnetic field can be computed either in the dipole
+approximation or by taking into account any specified number of spherical
+harmonic terms in the DGRF/IGRF field model, updated for a given epoch.
+It also contains subsidiary codes for transformations between several
+coordinate systems most widely used in geophysics and space physics.
+
+     The present version of GEOPACK does not include subroutines for an
+external field model.  This area is now rapidly developing: there already
+exist several models, each of them has its own advantages and deficiencies
+and it is thus not easy to choose between them. Also, we expect better mo-
+dels to appear in the nearest future. Therefore, it has seemed to us reaso-
+nable to divide the software into two files;  the first one (GEOPACK) in-
+cludes only the most "stable" general-use codes, which are unlikely to be
+significantly changed in the future, while the external field models are
+provided separately in the second file.
+     A convenient way of using the GEOPACK subroutines is to compile them
+separately from the main user's code and include the corresponding object
+modules in the user's personal library.
+
+     The set of subroutines was developed originally in 1978 and since then
+had been used by researchers at the University of St.Petersburg and then by
+other geophysical institutions over the world. The present version of the
+GEOPACK is a result of amending and upgrading its earlier versions, based on
+the author's own experience and many critical comments from colleagues
+received during the last 20 years, and it proved to be a robust tool.
+However, there is certainly much room for further improvements. We would
+greatly appreciate any comments on the performance of the codes, possible
+problems, and any suggestions on how to make the GEOPACK subroutines clearer,
+simpler, faster, and more versatile.
+
+      Below is a kind of "manual guide" for using the subroutines, including
+the list of references and two examples of a typical main program for tracing
+model field lines, with the purpose to help users to debug their own codes and
+avoid typical mistakes.     The FORTRAN listings of the package subroutines
+are placed in the separate file GEOPACK.FOR.
+
+
+
+
+                DESCRIPTIONS OF THE SUBROUTINES
+
+
+
+     1. SUBROUTINE:   IGRF
+
+        FUNCTION:     Computes three spherical components of the main
+(internal) geomagnetic field in the geographical coordinate system (GEO).
+
+        FORTRAN STATEMENT:   CALL IGRF(IY,NM,R,T,F,BR,BT,BF)
+
+        INPUT PARAMETERS:    IY is year (four digits) which should 
+be specified in the interval 1965 <= IY <= 2000;  NM  is the maximal 
+order of spherical harmonics taken into account in the corresponding
+expansions (1<=NM<=10);  R,T,F  are spherical coordinates of the point
+(radial geocentric distance in Earth radii Re=6371.2 km,  colatitude,
+and east longitude in radians, respectively).
+
+        OUTPUT PARAMETERS:  BR, BT, BF are the spherical components of
+the main geomagnetic field in nanotesla: BR is the radial component
+(BR>0 corresponds to outward direction), BT is the southward component,
+and BP is the eastward component.
+
+        COMMON BLOCKS:  none.
+
+        REFERENCES TO OTHER SUBROUTINES: none.
+
+        COMMENTS:   The subroutine uses harmonic coefficients for seven
+epochs: 1965.0, 1970.0, 1975.0, 1980.0, 1985.0, 1990.0, and 1995.0; the
+appropriate values of coefficients are automatically calculated by means of
+linear interpolation between the nearest epochs.  If  1995 < IY < 2000, the
+subroutine extrapolates by using secular coefficients. If IY<1965 or IY>1995,
+the coefficients are assumed equal to those for IY=1965 or IY=2000, respec-
+tively. The subroutine can be easily upgraded, as soon as the coefficients
+for the next epochs become available in the future.  The parameter NM allows
+to save computer time when calculating the field at large geocentric distances
+where the contribution from higher-order multipole terms becomes negligible;
+in that case the parameter NM can be made quite small (see Tsyganenko [1990],
+p.81, for more details). Near Earth's surface, however, one has to use full
+IGRF expansions by setting NM=10.
+
+
+
+
+     2. SUBROUTINE:  DIP
+
+        FUNCTION:  Computes Cartesian solar-magnetospheric (GSM) com-
+ponents of the Earth's magnetic field corresponding to the first (dipo-
+lar) term in the spherical harmonic expansion.
+
+        FORTRAN STATEMENT:  CALL DIP(PS,X,Y,Z,BX,BY,BZ)
+
+        INPUT PARAMETERS:  PS is the angle in radians between the dipo-
+le moment axis and the ZGSM axis (PS<0 in winter and PS>0 in summer);
+X,Y,Z  are Cartesian GSM coordinates of the point in Earth's radii.
+
+        OUTPUT PARAMETERS: BX,BY,BZ are the GSM magnetic field compo-
+nents in nanotesla.
+
+        COMMON BLOCKS: none.
+
+        REFERENCES TO OTHER SUBROUTINES:  none.
+
+        COMMENTS: (1) The dipole is assumed to be centered at the
+origin; the value of its magnetic moment corresponds to the epoch
+1980.0 (N.W. Peddie, 1982).
+                  (2) The angle PS can either be specified directly,
+or calculated by using the subroutine RECALC; in the last case the
+COMMON block with the symbolic name /GEOPACK/ should be present in the
+user's module from which RECALC and DIP are called. The value of the dipole
+tilt angle (in radians) will be placed by RECALC in the 16-th element of the
+COMMON-block. The structure of the COMMON-block should be the same as in the
+subroutine RECALC (see examples in the end of this file).
+
+
+
+
+      3. SUBROUTINE: SUN
+
+         FUNCTION: This is a subsidiary subroutine which is usually
+called from the subroutine RECALC and computes the spherical angles
+of the Earth-Sun line in the geocentric inertial coordinate system,
+and the Greenwich mean sidereal time.
+
+      FORTRAN STATEMENT:  CALL SUN(IYR,IDAY,IHOUR,MIN,ISEC,GST,SLONG,
+                                SRASN,SDEC)
+
+      INPUT PARAMETERS:  IYR,IDAY,IHOUR,MIN,ISEC  are the year (four-
+digit number), the day, hour, minute, and second, respectively;
+
+      OUTPUT PARAMETERS:  GST is the Greenwich mean sidereal time, SLONG,
+SRASN,SDEC are the ecliptical longitude, right ascension, and declination
+of the Sun (all the output parameters are in radians), respectively.
+
+         COMMON BLOCKS:  none.
+
+         REFERENCES TO OTHER SUBROUTINES: none.
+
+         COMMENTS:  (1) 1901<IYR<2099
+                    (2) January 1 corresponds to IDAY=1
+                    (3) The subroutine, authored by G.D. Mead, was compiled
+(with minor changes) from the paper by C.T. Russell (1971).
+
+
+
+
+      4. SUBROUTINE:  SPHCAR
+
+         FUNCTION:  Computes spherical coordinates from Cartesian ones
+or vice versa.
+
+         FORTRAN STATEMENT:  CALL SPHCAR(R,TETA,PHI,X,Y,Z,J)
+
+         INPUT PARAMETERS:  J is the integer switch parameter: if J>0 then
+spherical coordinates R,TETA,PHI are the input quantities (colatitude
+TETA and longitude PHI are in radians); if J<0 then Cartesian coordinates
+X,Y,Z are the inputs.
+
+         OUTPUT PARAMETERS:  If J>0 then Cartesian coordinates X,Y,Z;
+if J<0 then R,TETA,PHI.
+
+         COMMON BLOCKS:  none.
+
+         REFERENCES TO OTHER SUBROUTINES: none.
+
+         COMMENTS:  If, for J<0, X=0.0 and Y=0.0, then PHI is set equal to 0.
+
+
+
+
+      5. SUBROUTINE:  BSPCAR
+
+         FUNCTION:  Calculation of Cartesian components of a vector from
+the spherical ones (e.g., provided by IGRF) and the spherical coordinates
+theta and phi.
+
+         FORTRAN STATEMENT:  CALL BSPCAR(TETA,PHI,BR,BTET,BPHI,BX,BY,BZ)
+
+         INPUT PARAMETERS:  TETA and PHI are the colatitude and longitude
+of the point in radians; BR,BTET, and BPHI are the vector components in
+the local coordinate system.
+
+         OUTPUT PARAMETERS: BX,BY,BZ are Cartesian components of the vector.
+         COMMON BLOCKS: none.
+
+         REFERENCES TO OTHER SUBROUTINES: none.
+
+
+
+
+
+      6. SUBROUTINE: RECALC
+
+         FUNCTION:  Computes the angles defining the geodipole orientati-
+on for a given UT moment as well as elements of matrices for transformati-
+ons between the following Cartesian geocentric coordinate systems:
+geographic (GEO), dipole geomagnetic (MAG), solar-magnetic (SM), solar-
+magnetospheric (GSM), and solar-ecliptical (GSE).
+
+         FORTRAN STATEMENT:  CALL RECALC(IYR,IDAY,IHOUR,MIN,ISEC)
+
+         INPUT PARAMETERS:  IYR,IDAY,IHOUR,MIN, and ISEC  are the same as
+those in the subroutine SUN.
+
+         OUTPUT PARAMETERS: none.
+
+         REFERENCES TO OTHER SUBROUTINES:  SUN, MAGSM, SMGSM.
+
+         COMMON BLOCKS:  the results are placed in the common block /GEOPACK/,
+containing 37 words.
+
+         COMMENTS:  If it is necessary to make calculations only in the
+coordinate systems GEO and MAG (no UT dependence) then the parameter
+IHOUR can be assigned any value larger than 24; in this case other matri-
+ces will not be defined.
+      The subroutine can be easily upgraded beyond the epoch 2000, as soon as
+the corresponding internal field coefficients become available.
+
+
+
+      7. SUBROUTINE:  GEOMAG.
+
+         FUNCTION:  Transformation of the geographic Cartesian coordina-
+tes into the dipolar geomagnetic ones and vica versa.
+
+         FORTRAN STATEMENT:  CALL GEOMAG(XGEO,YGEO,ZGEO,XMAG,YMAG,ZMAG,
+                                J,IYR)
+
+         INPUT PARAMETERS:  J is an integer switch parameter: if J>0 then
+the geographic Cartesian coordinates XGEO,YGEO,ZGEO are the inputs;
+if J<0 then the geomagnetic dipole coordinates XMAG,YMAG,ZMAG are the
+inputs; IYR is four-digit year number (the subroutine takes into account
+secular changes of the Earth's dipole moment).
+
+          OUTPUT PARAMETERS:  If J>0 then XMAG,YMAG,ZMAG; if J<0 then
+                               XGEO,YGEO,ZGEO.
+
+          COMMON BLOCKS:  The same as in RECALC.
+
+          REFERENCES TO OTHER SUBROUTINES:  RECALC.
+
+          COMMENTS: The subroutine can be easily upgraded beyond the epoch
+2000, as soon as the corresponding internal field coefficients become
+available.
+
+
+
+
+
+      8. SUBROUTINE:  GEIGEO.
+
+         FUNCTION:  Transformation of the Geocentric Equatorial Inertial
+coordinates into the Geographical ones and vica versa.
+
+         FORTRAN STATEMENT:  CALL GEIGEO(XGEI,YGEI,ZGEI,XGEO,YGEO,ZGEO,J)
+
+         INPUT PARAMETERS:  J is an integer switch parameter: if J>0 then
+the Geocentric Equatorial Inertial coordinates XGEI,YGEI,ZGEI are the inputs;
+if J<0 then the Geographical Coordinates XGEO,YGEO,ZGEO are the inputs;
+
+          OUTPUT PARAMETERS:  If J>0 then XGEO,YGEO,ZGEO; if J<0 then
+                               XGEI,YGEI,ZGEI.
+
+          COMMON BLOCKS:  The same as in RECALC.
+
+          REFERENCES TO OTHER SUBROUTINES:  NONE.
+
+
+
+       9. SUBROUTINE:  MAGSM.
+
+          FUNCTION:  Transformation of the Cartesian dipolar magnetic
+coordinates into the solar magnetic ones or vica versa.
+
+         FORTRAN STATEMENT:  CALL MAGSM(XMAG,YMAG,ZMAG,XSM,YSM,ZSM,J)
+
+         INPUT PARAMETERS:  J is an integer switch parameter: if J>0 then
+the dipolar magnetic coordinates XMAG,YMAG,ZMAG are the inputs; if J<0 then
+the solar magnetic coordinates XSM,YSM,ZSM are the inputs.
+
+          OUTPUT PARAMETERS:  If J>0 then XSM,YSM,ZSM; if J<0 then
+                               XMAG,YMAG,ZMAG.
+
+          COMMON BLOCKS:  The same as in RECALC.
+
+          REFERENCES TO OTHER SUBROUTINES:  none.
+
+
+
+
+
+     10. SUBROUTINE:  GSMGSE.
+
+          FUNCTION:  Transformation of the geocentric solar magnetosphe-
+ric coordinates into the geocentric solar ecliptical ones and vica versa.
+
+          FORTRAN STATEMENT: CALL GSMGSE(XGSM,YGSM,ZGSM,XGSE,YGSE,ZGSE,J)
+
+          INPUT PARAMETERS:  J is an integer switch parameter: if J>0 then
+the solar magnetospheric coordinates XGSM,YGSM,ZGSM are the inputs; if J<0
+then the solar ecliptical coordinates XGSE,YGSE,ZGSE are the inputs.
+
+          OUTPUT PARAMETERS:  If J>0 then XGSE,YGSE,ZGSE; if J<0 then
+                               XGSM,YGSM,ZGSM.
+
+          COMMON BLOCKS:  The same as in RECALC.
+
+          REFERENCES TO OTHER SUBROUTINES:  none.
+
+
+
+
+
+      11. SUBROUTINE:  SMGSM.
+
+          FUNCTION:  Transformation of the solar magnetic coordinates
+ into the solar magnetospheric ones and vica versa.
+
+          FORTRAN STATEMENT:  CALL SMGSM(XSM,YSM,ZSM,XGSM,YGSM,ZGSM,J)
+
+          INPUT PARAMETERS:  J is an integer switch parameter: if J>0
+then the solar magnetic coordinates XSM,YSM,ZSM are the inputs; if J<0 then
+the solar magnetospheric coordinates XGSM,YGSM,ZGSM are the inputs.
+
+           OUTPUT PARAMETERS:  If J>0 then XGSM,YGSM,ZGSM; if J<0 then
+                               XSM,YSM,ZSM.
+
+           COMMON BLOCKS:  The same as in RECALC.
+
+           REFERENCES TO OTHER SUBROUTINES:  none.
+
+
+
+
+
+       12. SUBROUTINE:  GEOGSM.
+
+           FUNCTION:  Transformation of the geographic Cartesian coordina-
+tes into the solar magnetospheric ones and vica versa.
+
+           FORTRAN STATEMENT:  CALL GEOGSM(XGEO,YGEO,ZGEO,XGSM,YGSM,ZGSM,J)
+
+           INPUT PARAMETERS:  J is the integer switch parameter: if J>0 then
+the geographic Cartesian coordinates XGEO,YGEO,ZGEO are the inputs; if J<0
+then the solar magnetospheric coordinates XGSM,YGSM,ZGSM are the inputs.
+
+           OUTPUT PARAMETERS:  If J>0 then XGSM,YGSM,ZGSM; if J<0 then
+                               XGEO,YGEO,ZGEO.
+
+           COMMON BLOCKS:  The same as in RECALC.
+
+           REFERENCES TO OTHER SUBROUTINES:  none.
+
+
+
+
+
+       13. SUBROUTINE:  RHAND.
+
+           FUNCTION: This is a subsidiary subroutine which computes the
+right-hand sides of the field line equations (that is, the components of
+the unit vector defining the local direction of B) which are necessary
+for making one step along the field line made by the subroutine STEP.
+
+          FORTRAN STATEMENT:  CALL RHAND(X,Y,Z,R1,R2,R3,IOPT,PARMOD,EXNAME)
+
+          INPUT PARAMETERS:  X,Y,Z  are GSM Cartesian coordinates of the
+current point of space;  IOPT is the number of the version of the external
+magnetic field model (in the case of T87 or T89 model, this number defines the
+range of the Kp-index value);  PARMOD is a 10-element array, reserved for other
+input parameters of the external field model (e.g., solar wind pressure and
+interplanetary magnetic field components;  in T87/T89 this parameter is not
+used);   EXNAME is the name of an external field model subroutine  (see below
+the description of the subroutine TRACE for more details).
+
+            OUTPUT PARAMETERS:  R1,R2,R3 are the right-hand-side quan-
+tities (the unit vector components).
+
+            COMMON BLOCKS: the same as in RECALC.
+
+            REFERENCES TO OTHER SUBROUTINES: DIP, IGRF, GEOGSM,
+                                SPHCAR, BSPCAR, and EXNAME (formal name to be
+                                  replaced by an actual one).
+
+
+
+
+
+        14. SUBROUTINE: STEP.
+
+           FUNCTION:  Makes one step along the force line of the magnetic
+field corresponding to the sum of contributions from internal and external
+sources computed by the subroutines IGRF (or DIP) and EXNAME, respectively.
+
+           FORTRAN STATEMENT:  CALL STEP(N,X,Y,Z,DS,ERRIN,IOPT,PARMOD,EXNAME)
+
+           INPUT PARAMETERS:  N is the maximal order of spherical harmo-
+nics in the main field expansions; X,Y,Z  are GSM coordinates of the
+initial point; DS is the step size; ERRIN is the estimate of the admis-
+sible error; IOPT is the number of the version of the external magnetic field
+model (in the case of T87 or T89 model, this number defines the range of the
+Kp-index value);  PARMOD is a 10-element array, reserved for other input
+parameters of the external field model (e.g., solar wind pressure and
+interplanetary magnetic field components;  in T87/T89 this parameter is not
+used);  EXNAME is the name of an external field model subroutine (see below
+the description of the subroutine TRACE for more details).
+
+           OUTPUT PARAMETERS:  X,Y,Z are GSM coordinates of the next
+point on the traced field line (after making one step).
+
+           COMMON BLOCKS: the same as in RECALC.
+
+           REFERENCES TO OTHER SUBROUTINES:  RHAND.
+
+           COMMENTS:  (1) If the subroutine is used separately (that is,
+called not via the subroutine TRACE), then it is necessary to specify
+the actual name of the subroutine EXNAME in the FORTRAN statement
+EXTERNAL in the module , from which STEP is to be called (see also com-
+ments 1-3 for the subroutine TRACE).
+                     (2) The parameter DS can change its value after
+having called STEP, since in case of too large actual error (that is,
+exceeding ERRIN) the step is repeated once again with the halved value
+of DS; if the actual error appears to be much smaller (less than 4 per-
+cent) than ERRIN, then the step is not repeated, but the value of DS
+for the next step is doubled.
+
+
+
+
+
+       15. SUBROUTINE:  TRACE.
+
+           FUNCTION:  Computation of GSM coordinates of points lying on
+the geomagnetic field line, beginning from a given initial point, up to
+its intersection  with the inner or the outer spherical boundaries of
+the tracing region.
+
+           FORTRAN STATEMENT:  CALL TRACE(XI,YI,ZI,DIR,RLIM,R0,IHARM,NP,
+                                  IOPT,PARMOD,EXNAME,XF,YF,ZF,XX,YY,ZZ,L)
+
+           INPUT PARAMETERS:  XI,YI,ZI, are the GSM coordinates of the
+initial point (in Earth's radii); DIR defines the tracing direction:
+for DIR=1.0 it is opposite to that of the B vector, and for DIR=-1.0
+it coincides with B direction. Parameter RLIM is the radius of spheri-
+cal outer boundary of the tracing region (in Earth's radii), so that
+the tracing is ceased once R>RLIM;  R0 is the radius of the inner sphe-
+rical boundary of the tracing region (usually R0=1.0, which corresponds
+to the Earth's surface; see also the comment No.4); IHARM is the maxi-
+mal order of spherical harmonics taken into account in computing the
+main part of the B-field (see the comment No.2); NP is the upper esti-
+mate for the expected number of steps along the field line segment;
+
+  IOPT is the number of the version of the external magnetic field model
+(in the case of T87 or T89 model, this number defines the range of the
+Kp-index value);  PARMOD is a 10-element array, reserved for other input
+parameters of the external field model (e.g., solar wind pressure and
+interplanetary magnetic field components;  in the case of T87/T89 models,
+this parameter array is not used);  EXNAME is a name of the subroutine that
+returns the components of the magnetic field contributed by the external
+sources. The corresponding actual parameter should have the type CHARACTER*n
+(n is the total number of symbols) and must be specified in the EXTERNAL
+statement of the main module. The list of formal parameters of the subroutine
+EXNAME must be as follows:  (IOPT, PARMOD, PS, X, Y, Z, BX, BY, BZ), where
+IOPT is an integer and PARMOD is a 10-element array of real type.
+   The other 6 parameters are identical to those in the subroutine DIP.
+
+   For more details, see an example of using this subroutine in the end of
+this file.
+
+           COMMON BLOCKS:  the same as in RECALC.
+
+           REFERENCES TO OTHER SUBROUTINES: STEP, RHAND.
+
+           COMMENTS:  (1) Before making field line computations for
+concrete geophysical situations it is necessary to specify some quan-
+tities defining relative orientation of geographical and solar-magne-
+tospheric coordinate systems. This should be done by calling the subroutine
+RECALC with appropriate values of parameters defining year (4-digit), day, and
+universal time of the day. In this case, it is recommended to set IHARM=10,
+having in mind that the actual length of the corresponding expansions will be
+defined automatically, depending on the current value of the geocentric radial
+distance.
+
+                      (2) If the dipolar approximation for the main B-
+field is sufficient, then it is possible to set IHARM=0; in this case
+the subroutine DIP will be used instead of IGRF, and the computations
+will run much more rapidly. The corresponding value of the dipole tilt
+angle (in radians) should be specified before tracing and put in the 16-th
+element of the COMMON-block /GEOPACK/. It can be done by setting IHARM=1
+and calling RECALC before tracing; in this case the tilt angle and other
+quantities necessary for coordinate transformations will be automatically
+found from the values of year, day, and UT.
+
+                     (3) Any other external field model subroutine
+can be used, provided it has the same list of formal parameters and its
+name is included in the EXTERNAL statement in the user's module which
+calls TRACE.
+
+                     (4) If the field line returns to the Earth, then
+the last (L-th) elements in the arrays XX,YY,ZZ as well as the triplet
+XF,YF,ZF  correspond to the intersection point of the line with the
+sphere of radius R0.
+
+                     (5) If L<NP, then the rest (NP-L) elements of
+XX,YY,ZZ are filled with the values of the final point coordinates
+(XF,YF,ZF). If L>NP (that is, not enough space reserved for the
+computation results) then the computation is aborted and a warning
+diagnostics is displayed. In most cases, it is enough to take NP of
+the order of 300.
+
+
+                      REFERENCES
+
+    Golovkov, V.P. and G.I. Kolomiytseva. The International Analytical
+Field and its secular trend for the 1980-1990 period. Geomagnetism
+and Aeronomy (Engl.Transl.), v.26, No.3, p.439, 1986.
+
+    Peddie, N.W. A third generation of International Geomagnetic Re-
+ference Field  models. J. Geomagn.Geoelectr., v.34, No.6, p.310, 1982.
+
+    Peredo, M., D.P. Stern and N.A. Tsyganenko, "Are Existing Magnetospheric
+Models Excessively Stretched?", J.Geophys.Res., v.98, No.A9, p.15343, 1993.
+
+    Russell, C.T. Geophysical coordinate transformations. Cosmic Elec-
+trodynamics, v.2, p.184, 1971.
+
+    Tsyganenko, N.A., A.V. Usmanov, V.O. Papitashvili, N.E. Papita-
+shvili, and V.A. Popov.  Software for computations of the geomagnetic
+field and related coordinate systems, Soviet Geophys.Committee, Mos-
+cow, 1987.
+
+    Tsyganenko, N.A.  A magnetospheric magnetic field model with a
+warped tail plasma sheet. Planet.Space Sci., v.37, p.5, 1989.
+
+    Tsyganenko, N.A.  Quantitative models of the magnetospheric magnetic
+field: methods and results. Space Sci. Rev., v.54, pp.75-186, 1990.
+
+    Tsyganenko, N.A. Modeling the Earth's magnetospheric magnetic field
+confined within a realistic magnetopause, J. Geophys.Res., v.100, p.5599,
+1995.
+-----------------------------------------------------------------------
+C
+
+APPENDIX:
+
+C
+C######################################################################
+C     THE CODES BELOW GIVE TWO EXAMPLES OF TRACING THE FIELD LINES    #
+C                   BY USING THE GEOPACK SOFTWARE                     #
+C   (just for illustration; do not include them in your code library) #
+C######################################################################
+C
+      PROGRAM EXAMPLE1
+C
+C    IN THIS EXAMPLE IT IS ASSUMED THAT WE KNOW GEOGRAPHIC COORDINATES
+C     OF A POINT AT THE EARTH'S SURFACE AND WANT TO TRACE THE CORRESPONDING
+C     FIELD LINE AT A SPECIFIED MOMENT OF UNIVERSAL TIME, TAKING INTO ACCOUNT
+C     THE HIGHER-ORDER MULTIPOLES IN THE INTERNAL FIELD EXPANSION.
+C
+      DIMENSION XX(500),YY(500),ZZ(500), PARMOD(10)
+c
+c  do not forget to include the following EXTERNAL statement in your codes !
+c
+      EXTERNAL EXTERN
+C
+c	Replace EXTERN in the last statement with the actual name
+c	of the external field routine you wish to use.
+c
+C   FIRST OF ALL WE DEFINE THE TIME MOMENT AND COMPUTE THE NECESSARY
+C   QUANTITIES FOR COORDINATE TRANSFORMATIONS BY USING THE SUBROUTINE
+C   RECALC: IN THIS PARTICULAR CASE WE NEED TO TRACE FIELD LINES
+C   FOR YEAR=1967, IDAY=350, UT HOUR = 21
+C
+      CALL RECALC(1967,350,21,0,0)
+C
+C  IOPT=1 CORRESPOND TO THE MOST QUIET EXTERNAL FIELD MODEL VERSION
+C
+      IOPT=1
+C
+C    THE LINE WILL BE TRACED FROM THE POINT HAVING GEOGRAPHICAL
+C    LONGITUDE 45 DEGREES AND LATITUDE 75 DEGREES:
+C
+      GEOLAT=75.
+      GEOLON=45.
+      COLAT=(90.-GEOLAT)*.01745329
+      XLON=GEOLON*.01745329
+C
+C   CONVERT SPHERICAL COORDS INTO CARTESIAN :
+C
+      CALL SPHCAR(1.,COLAT,XLON,XGEO,YGEO,ZGEO,1)
+C
+C   TRANSFORM GEOGRAPHICAL COORDS INTO SOLAR MAGNETOSPHERIC :
+C
+      CALL GEOGSM(XGEO,YGEO,ZGEO,XGSM,YGSM,ZGSM,1)
+C
+C   TRACE THE FIELD LINE (EXTERN IS THE NAME OF THE EXTERNAL FIELD MODEL
+C     SUBROUTINE, THAT SHOULD BE COMPILED AND LINKED WITH THE GEOPACK SUB-
+C     ROUTINES):
+C
+      CALL TRACE(XGSM,YGSM,ZGSM,1.,60.,1.,7,500,
+     *  IOPT,PARMOD,EXTERN,XF,YF,ZF,XX,YY,ZZ,M)    !  replace EXTERN by the
+C                                                       actual name
+C   WRITE THE RESULTS IN THE DATAFILE 'LINTEST1.DAT':
+C
+        OPEN(UNIT=1,FILE='LINTEST1.DAT',STATUS='NEW')
+        WRITE (1,20) (XX(L),YY(L),ZZ(L),L=1,M)
+ 20     FORMAT((2X,3F6.2))
+        CLOSE(UNIT=1)
+      STOP
+      END
+C-------------------------------------------------------------------
+C
+      PROGRAM EXAMPLE2
+C
+C   THIS IS AN EXAMPLE OF USING 'TRACE' SUBROUTINE FOR THE CASE,
+C    IN WHICH THE EARTH'S DIPOLE TILT ANGLE IS EXPLIICITLY SPECIFIED.
+C    IT IS ASSUMED THAT WE KNOW THE GSM LATITUDE AND LONGITUDE OF THE
+C    STARTING POINT AT THE EARTH'S SURFACE
+C      IT IS ALSO ASSUMED THAT THE MAIN (INTERNAL) FIELD IS PURELY DIPOLAR.
+C
+      COMMON /GEOPACK/ AA(10),SPS,CPS,BB(3),PS,CC(11),KK(2),DD(8)
+      DIMENSION XX(500),YY(500),ZZ(500), PARMOD(10)
+c
+c  do not forget to include the following EXTERNAL statement in your codes !
+c
+      EXTERNAL EXTERN
+
+c       Replace EXTERN in the last statement with the actual name
+c       of the external field routine you wish to use.
+c
+C
+      IOPT=1  !  THE MOST QUIET VERSION OF THE EXTERNAL FIELD MODEL.
+c
+      XLAT=75.
+      XLON=180.
+C
+c  we have defined the latitude (XLAT) and longitude (XLON) in the GSM system
+c
+       PS=0.
+       SPS=SIN(PS)
+       CPS=COS(PS)
+C
+C WE HAVE SPECIFIED THE DIPOLE TILT ANGLE (PS), ITS SINE (SPS) AND COSINE (CPS)
+C
+       T=(90.-XLAT)*.01745329
+       XL=XLON*.01745329
+      XGSM=SIN(T)*COS(XL)
+      YGSM=SIN(T)*SIN(XL)
+      ZGSM=COS(T)
+      CALL TRACE(XGSM,YGSM,ZGSM,1.,60.,1.,0,500,
+     *  IOPT,PARMOD,EXTERN,XF,YF,ZF,XX,YY,ZZ,M)
+C
+C    THE MEANING OF INPUT PARAMETERS FOR TRACE IS EXPLAINED IN
+C     THE FILE  GEOPACK.TXT
+C
+C   WRITE THE RESULTS IN THE DATAFILE 'LINTEST2.DAT':
+C
+       OPEN(UNIT=1, FILE='LINTEST2.DAT',STATUS='NEW')
+  1   WRITE (1,20) (XX(L),YY(L),ZZ(L),L=1,M)
+ 20   FORMAT((2X,3F6.2))
+       CLOSE(UNIT=1)
+      STOP
+      END
+
+
+Authors and curators:
+
+Nikolai Tsyganenko  - Raytheon ITSS Corporation / NASA GSFC
+(kolya@nssdca.gsfc.nasa.gov, ys2nt@lepvax.gsfc.nasa.gov)
+
+Mauricio Peredo - Raytheon ITSS Corporation
+(mperedo@stx.com)
+
+Last updated: July 15, 1999

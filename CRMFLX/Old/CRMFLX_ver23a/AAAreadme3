@@ -1,0 +1,62 @@
+Date: Tue, 3 Sep 2002 14:18:29 -0500
+From: Bill Blackwell <Bill.Blackwell@msfc.nasa.gov>
+To: rac@head-cfa.harvard.edu, Marilyn.Newhouse@msfc.nasa.gov
+Cc: Steve.O'Dell@msfc.nasa.gov, Rob.Suggs@msfc.nasa.gov, Leigh.Smith@msfc.nasa.gov, Joseph.Minow@msfc.nasa.gov
+Subject: CRMFLX Version 2.2 Source Code
+Parts/Attachments:
+   1   Shown     46 lines  Text
+   2.1          484 bytes  Application
+   2.2          292 bytes  Application
+   3.1          633 bytes  Application
+   3.2          284 KB     Application
+   4.1          490 bytes  Application
+   4.2          175 bytes  Application
+   5.1          490 bytes  Application
+   5.2          3.8 KB     Application
+----------------------------------------
+
+Rob & Marilyn,
+
+Attached are source files for updating to CRMFLX Ver. 2.2 
+(Experimental).  In addition to the source file (CRMFLX_V22_EXP.f), I 
+have included two include files (BLEND.PAR and MAXNSPHVOL.PAR).  The 
+stubby driver used to verify that you are using the correct versions 
+of the code and database (MSPH_Verify22.f) is also attached.
+
+There are significant upgrades to the code from Version 2.1.  Please 
+note that there is a minor change to the interface, with the addition 
+of the variable IUSEMSP:
+
+C       IUSEMSP - flag for control of magnetosphere flux calculation:
+C          IUSEMSP = 0 if only the magnetosphere model flux is used.
+C          IUSEMSP = 1 if user supplied uniform solar wind flux value
+C                      is added to the magnetosphere flux.
+C          IUSEMSP = 2 if analytic solar wind model (uniform flux) is
+C                      added to the magnetosphere flux.
+
+Code verification runs showed that CRM2 output in the open field line 
+(lobe) regions of the magnetotail did not order up well as a function 
+of Kp.  Fluence plots with a wide range of Kp values showed the lines 
+frequently crossing each other.  Kp scaling laws are now used, as 
+well as reintroduced z-layer bins  controlling the near-neighbor 
+search when the spacecraft is in the tail.
+
+Numerous comparisons made between this latest version of CRMFLX 
+(CRM2) and the original release (CRM1, with the smaller database) 
+show that there are differences as expected.  CRM2's flux profile has 
+a lower flux region associated with the lobe regions, and there is a 
+slight increase in the flux in the smaller geocentric range regions. 
+However, the net effect on the fluence integrated over an orbit is 
+usually not large.  Most orbits examined show that the difference is 
+less than 50%.
+
+I initially had concerns over increasing the runtime of CRM2 by 
+adding more computational load.  However, by cleaning up and 
+optimizing the code, it looks as though runtime performance is 
+holding up well.
+
+Please let me know if errors or problems are found.
+
+Regards,
+
+Bill Blackwell

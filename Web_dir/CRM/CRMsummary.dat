@@ -1,0 +1,20 @@
+                    Currently scheduled FPSI, OTG : HRC-S LETG
+                                     Estimated Kp : 2.0
+        ACE EPAM P3 Proton Flux (p/cm^2-s-sr-MeV) : 2.42e+01
+            GOES-R P4 flux, in RADMON P4GM  units : 6.03e-02
+            GOES-R P7 flux, in RADMON P41GM units : 1.51e-02
+            GOES-R E > 2.0 MeV flux (p/cm^2-s-sr) : 5.83e+01
+                                 Orbit Start Time : 2020:089:19:54:10
+              Geocentric Distance (km), Orbit Leg : 110077 A
+                                       CRM Region : 2(Magnetosheath)
+           External Proton Flux (p/cm^2-s-sr-MeV) : 1.3878e+03
+         Attenuated Proton Flux (p/cm^2-s-sr-MeV) : 0.0000e+00
+  External Proton Orbital Fluence (p/cm^2-sr-MeV) : 1.1083e+08
+Attenuated Proton Orbital Fluence (p/cm^2-sr-MeV) : 3.4586e+07
+
+
+Last Data Update: 2020:090:09:59:07 (UT)
+
+Due to transition to GOES-16, what used to be P2 is now P4
+and what used to be P5 is now P7 This message will dissappear
+in 01/31/2021

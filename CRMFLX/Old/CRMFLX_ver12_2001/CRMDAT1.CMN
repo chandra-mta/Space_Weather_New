@@ -1,0 +1,24 @@
+C
+C     CRMDAT1.CMN
+C
+C     Chandra Radiation Model (CRM) solar wind database COMMON Block.
+C
+C       NUMDAT1 - number of non-zero values in the database.
+C       XFLUX1  - array containing the X-coordinate of each data
+C                 cell's center  (Re).
+C       YFLUX1  - array containing the Y-coordinate of each data
+C                 cell's center  (Re).
+C       ZFLUX1  - array containing the Z-coordinate of each data
+C                 cell's center  (Re).
+C       FLXBIN1 - array containing the average ion flux within
+C                 each cell  (ions/[cm^2-sec-sr-MeV]).
+C       NUMBIN1 - array containing the number of non-zero values within
+C                 each cell.
+C
+      INTEGER NUMDAT1(MAXKP),NUMBIN1(MAXKP,MAXPNT)
+      REAL FLXBIN1(MAXKP,MAXPNT),XFLUX1(MAXKP,MAXPNT)
+      REAL YFLUX1(MAXKP,MAXPNT),ZFLUX1(MAXKP,MAXPNT)
+C
+      COMMON/CRMDAT1/NUMDAT1,XFLUX1,YFLUX1,ZFLUX1,FLXBIN1,NUMBIN1
+C
+C

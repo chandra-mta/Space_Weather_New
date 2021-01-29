@@ -1,0 +1,24 @@
+C
+C     CRMDAT3.CMN
+C
+C     Chandra Radiation Model (CRM) magnetosphere database COMMON Block.
+C
+C       NUMDAT3 - number of non-zero values in the database.
+C       XFLUX3  - array containing the X-coordinate of each data
+C                 cell's center  (Re).
+C       YFLUX3  - array containing the Y-coordinate of each data
+C                 cell's center  (Re).
+C       ZFLUX3  - array containing the Z-coordinate of each data
+C                 cell's center  (Re).
+C       FLXBIN3 - array containing the average ion flux within
+C                 each cell  (ions/[cm^2-sec-sr-MeV]).
+C       NUMBIN3 - array containing the number of non-zero values within
+C                 each cell.
+C
+      INTEGER NUMDAT3(MAXKP),NUMBIN3(MAXKP,MAXPNT)
+      REAL FLXBIN3(MAXKP,MAXPNT),XFLUX3(MAXKP,MAXPNT)
+      REAL YFLUX3(MAXKP,MAXPNT),ZFLUX3(MAXKP,MAXPNT)
+C
+      COMMON/CRMDAT3/NUMDAT3,XFLUX3,YFLUX3,ZFLUX3,FLXBIN3,NUMBIN3
+C
+C

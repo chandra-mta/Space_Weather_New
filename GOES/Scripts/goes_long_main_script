@@ -1,0 +1,6 @@
+
+cd /data/mta4/Space_Weather/GOES/Scripts
+
+etenv PYTHONPATH "/data/mta/Script/Python3.6/envs/ska3/lib/python3.6/site-packages:/data/mta/Script/Python3.6/lib/python3.6/site-packages/"
+
+/data/mta4/Space_Weather/GOES/Scripts/collect_goes_long.py

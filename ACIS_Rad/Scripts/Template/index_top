@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<title>ACIS Radiation Correlations</title>
+
+<script language="JavaScript">
+    function MyWindowOpener(imgname) {
+        msgWindow=open("","displayname","toolbar=no,directories=no,menubar=no,location=no,scrollbars=yes,status=no,width=810,height=1010,resize=yes");
+        msgWindow.document.close();
+        msgWindow.document.write("<html><head><title>Radiaton  plot:   "+imgname+"</title></head>");
+        msgWindow.document.write("<body bgcolor='white'>");
+        msgWindow.document.write("<img src='./Plots/"+imgname+"' border=0 width=800 height=1000></body></html>");
+        msgWindow.focus();
+    }
+    function MyWindowOpener2(imgname) {
+        msgWindow=open("","displayname","toolbar=no,directories=no,menubar=no,location=no,scrollbars=yes,status=no,width=800,height=410,resize=yes");
+        msgWindow.document.close();
+        msgWindow.document.write("<html><head><title>Radiaton  plot:   "+imgname+"</title></head>");
+        msgWindow.document.write("<body bgcolor='white'>");
+        msgWindow.document.write("<img src='./Plots/"+imgname+"' border=0 width=800 height=400></body></html>");
+        msgWindow.focus();
+    }
+</script>
+
+
+</head>
+<!-- 
+<body text="#DDDDDD" bgcolor="#000000" link="#FF0000" vlink="#FFFF22" alink="#7500FF" background="../stars.jpg">
+-->
+<body style="width:95%;margin-left:10px; margin-right;10px;background-color:#FAEBD7;font-family:Georgia, "Times New Roman", Times, serif">
+
+<div style='float:right;'>
+<a href="../../sot.html">SOT home page</a>
+<br />
+<a href="../index.html">Radiation Main Page</a>
+</div>
+
+<h1><center>ACIS Radiation Correlations</center></h1>
+<p>
+GOES Primary, ACE, EPHIN, and ACIS count rates plotted on the same time scale.
+Also shown on the same timescale is a stripchart of Chandra configuration.
+</p>
+<p>
+Note: GOES plot changed from Mar 01, 2020 due to the change of the satellite.
+The energy bands are different and the rate ranges are quite different before and after
+Mar 2020.
+</p>
+
+<!--
+<br />
+See also <a href="./Html/rad_time.html">Rad zone timing plots</a>.
+<br/>
+-->
+
+<h2>MOST CURRENT DATA:</h2>
+<ul>
+EPHIN and ACIS data are obtained from the standard data pipeline.  
+Therefore this plot lags behind the 
+
+<a href="../ACE/ace.html">most current ACE</a> 
+
+and 
+
+<a href="../GOES/goes_pchan_p.html">most current GOES</a> 
+
+data and may be incomplete.
+</ul>
+<div style='text-align:center;'>
+<!--
+<a href="javascript:MyWindowOpener('./rad_cnts_curr.gif')">
+<img src="./Plots/rad_cnts_curr.gif" style='width:45%'>
+-->
+<a href="javascript:MyWindowOpener('./rad_cnts_curr.png')">
+<img src="./Plots/rad_cnts_curr.png" style='width:45%'>
+</a>
+<!--
+<a href="javascript:MyWindowOpener2('./rad_use_curr.gif')">
+<img src="./Plots/rad_use_curr.gif" style='width:45%;padding-bottom:70px'>
+-->
+<a href="javascript:MyWindowOpener('./rad_use_curr.png')">
+<img src="./Plots/rad_use_curr.png" style='width:45%'>
+</a>
+<h4>(Click the plots above to enlarge.)</h4>
+</div>
+
+
+<br /><hr /><br />
+
+

@@ -1,0 +1,8 @@
+cd /data/mta4/Space_Weather/CRM3/Scripts
+
+/data/mta4/Space_Weather/CRM3/Scripts/runcrm
+
+mv -f  *.gif /data/mta4/www/RADIATION_new/Orbit/Plots/.
+
+
+

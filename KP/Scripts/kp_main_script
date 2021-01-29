@@ -1,0 +1,9 @@
+cd /data/mta4/Space_Weather/KP/Scripts
+
+setenv PYTHONPATH "/data/mta/Script/Python3.6/envs/ska3/lib/python3.6/site-packages:/data/mta/Script/Python3.6/lib/python3.6/site-packages/"
+
+/data/mta4/Space_Weather/KP/Scripts/update_k_index.py
+/data/mta4/Space_Weather/KP/Scripts/get_kp.py
+/data/mta4/Space_Weather/KP/Scripts/update_solor_wind_data.py
+
+

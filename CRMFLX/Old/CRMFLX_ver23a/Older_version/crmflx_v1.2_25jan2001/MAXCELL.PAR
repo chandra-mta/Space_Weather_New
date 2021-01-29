@@ -1,0 +1,6 @@
+C
+C     MAXCELL = maximum number of near-neighbor cells used in
+C               calculating the average flux at this location.
+      PARAMETER (MAXCELL = 10)
+C
+C

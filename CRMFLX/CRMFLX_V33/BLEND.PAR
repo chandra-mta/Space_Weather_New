@@ -1,0 +1,10 @@
+C
+      REAL BLENDX1, BLENDX2
+C     BLENDX1 = XGSM (XTAIL) limit for *not* using z-layers (if XTAIL >= BLENDX1, no z-layers used).
+      PARAMETER (BLENDX1 = -8.)
+C
+C     BLENDX2 = XGSM (XTAIL) limit for *only* using z-layers (if XTAIL >= BLENDX1, no z-layers used).
+      PARAMETER (BLENDX2 = -10.)
+C
+C
+

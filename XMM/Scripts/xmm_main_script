@@ -1,0 +1,20 @@
+cd  /data/mta4/Space_Weather/XMM/Scripts
+
+setenv PYTHONPATH "/data/mta/Script/Python3.6/envs/ska3/lib/python3.6/site-packages:/data/mta/Script/Python3.6/lib/python3.6/site-packages/"
+
+/data/mta4/Space_Weather/XMM/Scripts/add_region_info.py
+/data/mta4/Space_Weather/XMM/Scripts/update_xmm_rad_data.py
+/data/mta4/Space_Weather/XMM/Scripts/check_mta_xmm_alert_page.py
+
+/data/mta4/Space_Weather/XMM/Scripts/plot_gsm_orbits.py
+/data/mta4/Space_Weather/XMM/Scripts/plot_gsm_orbits_xz_plane.py
+/data/mta4/Space_Weather/XMM/Scripts/plot_xmm_cxo_comp.py
+/data/mta4/Space_Weather/XMM/Scripts/plot_xmm_rad.py
+
+convert /data/mta4/www/RADIATION_new/XMM/Plots/mta_plot_xmm_comp.png    -trim /data/mta4/www/RADIATION_new/XMM/Plots/mta_plot_xmm_comp.png
+convert /data/mta4/www/RADIATION_new/XMM/Plots/mta_xmm_plot_gsm.png     -trim /data/mta4/www/RADIATION_new/XMM/Plots/mta_xmm_plot_gsm.png
+convert /data/mta4/www/RADIATION_new/XMM/Plots/mta_xmm_plot_gsm_xz.png  -trim /data/mta4/www/RADIATION_new/XMM/Plots/mta_xmm_plot_gsm_xz.png
+convert /data/mta4/www/RADIATION_new/XMM/Plots/mta_xmm_plot_p1.png      -trim /data/mta4/www/RADIATION_new/XMM/Plots/mta_xmm_plot_p1.png
+convert /data/mta4/www/RADIATION_new/XMM/Plots/mta_xmm_plot_p2.png      -trim /data/mta4/www/RADIATION_new/XMM/Plots/mta_xmm_plot_p2.png
+
+

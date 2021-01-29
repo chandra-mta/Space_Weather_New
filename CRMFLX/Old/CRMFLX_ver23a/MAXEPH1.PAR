@@ -1,0 +1,6 @@
+C
+C     MAXEPH1 = maximum number of ephemeris points used between the
+C     start and stop times.
+      PARAMETER (MAXEPH1 = 10000)
+C
+C

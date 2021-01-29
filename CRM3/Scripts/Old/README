@@ -1,0 +1,127 @@
+
++++++++++++++++++++++++++++++++++
+The Chandra Radiation Model (CRM)
++++++++++++++++++++++++++++++++++
+
+Robert Cameron                  October 2000
+
+updated Feb 24, 2015    by t. isobe (tisobe@cfa.harvard.edu)
+
+Last Update     Aug 13, 2018    TI
+
+The Chandra Radiation Model (CRM) from Sverdrup/MSFC
+is propagated in this directory, and graphical and
+tabular data products are updated every 5 minutes 
+by cron jobs, to track current and future orbital 
+proton flux and fluence.
+
+crm.pl 
+------
+    runs at 5-minute intervals to track the planned SIM and 
+    OTG positions, Kp, and the CRM model output, and to generate
+    the orbital fluence history, both with and without SIM+OTG
+    attenuation factors. crm.pl also runs the IDL procedure
+    crmpl2.pro, which generates plots of predicted future 
+    proton fluence.
+
+    input:
+
+    CRM_p.datNN     - proton flux data from CRM model, where NN = Kp*10 (eg 53 => 5.3)
+                      (each CRM_p.datNN file contains:
+                      time (seconds from 1998), CRM region, mean flux, 
+                      95% flux, 50% flux, flux SD)
+    
+    fphist.dat      - simplified time sequence of Chandra SIM position,
+                      currently derived from /proj/sot/acis/FLU-MON/FPHIST-2001.dat
+                      (symbolic linked to it)
+    
+    grathist.dat    - simplified time sequence of Chandra OTG positions,
+                      curently derived from /proj/sot/acis/FLU-MON/GRATHIST-2001.dat
+                      (symbolic linked to it)
+    
+    /data/mta4/Space_Weather/ACE/Data/kp.dat
+    /data/mta4/Space_Weather/ACE/Data/fluace.dat
+    /data/mta4/Space_Weather/ephem/Data/gephem.dat
+    /data/mta4/Space_Weather/GOES/Data/G13pchan_5m.txt
+    /data/mta4/Space_Weather/GOES/Data/G15pchan_5m.txt
+
+
+    output:
+    
+    CRMarchive.dat  - archive of Chandra orbital fluences
+    
+    CRMsummary.dat  - latest summary of Chandra proton flux and fluence
+
+runcrm 
+-------
+    generate CRM fluxes at 5-minute intervals (corresponding 
+    to the Chandra ephemeris positions in 
+    /data/mta4/Space_Weather/ephem/PE.EPH.dat), 
+    for the 28 possible Kp values from 0.0 to 9.0
+
+    this script is run as a part of /data/mta4/Space_Weather/ephem/Scripts/ephem.pl
+
+    input  -- /data/mta4/Space_Weather/ephem/Data/PE.EPH.gsme_in_Re
+
+    output -- /data/mta4/Space_Weather/CRM3/Data/CRM_p.datNN
+
+    ###f77 runcrm.f /data/mta4/Space_Weather/CRMFLX/CRMFLX_ver23a/CRMFLX_V23A_EXP.f -o runcrm
+    gfortran -std=legacy -ffixed-form -fd-lines-as-comments -ffixed-line-length-none  \
+                runcrm.f /data/mta4/Space_Weather/CRMFLX/CRMFLX_ver23a/CRMFLX_V23A_EXP.f -o runcrm
+    
+    >>> Binary data compatibility <<<
+    ---------------------------------
+
+        CRMFLX_V12_EXP.f needs three binary data files which are machine dependent.
+        if you need to recompile runcrm.f on none linux machine, you need to do the following.
+        
+        1. go to linux machine (this version is complined on linux)
+
+        2. compile SolWB2A.f and run it. this will create an ascii version
+           (SolWB2A.f can be found in /data/mta4/Space_Weather/CRMFLX/CRMFLX_ver23a)
+
+        3. go to a new machine/operaiton system.
+
+        4. compile SolWA2B.f and run it. this will create a binary version 
+           which can be read on the new machine.
+
+        5. do same for two others. If you can't find a fortran program, specificlally
+           to that data, just modify  SolWB2A.f and/or  SolWA2B.f
+
+        The binary data files are:
+
+            MSheath_Kp_PROT.BIN
+            MSPH_Kp_PROT.BIN
+            SolWind_Kp_PROT.BIN
+
+        The ascii versions are already in:
+            /data/mta4/Space_Weather/Data/
+
+        (last update: Jul 23, 2019 on r2d2-v)
+
+Plottting routines
+--------------------
+CRM_plots.idl           --- idl calling script. set the environment for the plot
+rac_arread.pro          --- read data from a file into 1-D vectors
+rac_arreadbl.pro        --- read data from a file into 1-D vectors
+timeconv.pro            --- convert a time in seconds to year, day, hour, min, sec
+crmpl2.pro              --- the main script to creates two plots (crmpl.gif, crmplatt.gif)
+
+                            data needed:    /data/mta4/Space_Weather/CRM3/Data/CRMsummary.dat
+                                            /proj/sot/acis/FLU-MON/FPHIST-2001.dat
+                                            /proj/sot/acis/FLU-MON/GRATHIST-2001.dat
+                                            /data/mta4/Space_Weather/ephem/Data/dsn_summary.dat
+                                            /data/mta4/Space_Weather/ephem/Data/PE.EPH.gsme
+
+convrt_to_fphist.perl   --- the script to convert FPHIST-2001.dat to fphist.dat so that
+                            crmpl2.pro can use it. it was used to be done internally, but
+                            FPHIST-2001.dat has a data gap and need to be handle the
+                            problem outside of the idl script
+
+cron job
+--------
+han-v as mta
+
+21 3,6,9,12,18,21 * * *                                /data/mta4/Space_Weather/CRM3/Scripts/crm_wrap_script > /data/mta4/Space_Weather/Test_Logs/crm3_runcrm.cron 2>&1
+4,9,14,19,24,29,34,39,44,49,54,59 * * * * cd /data/mta4/Space_Weather/CRM3/Scripts/; /usr/bin/perl crm.pl > /data/mta4/Space_Weather/Test_Logs/crm3_crm.cron 2>&1
+

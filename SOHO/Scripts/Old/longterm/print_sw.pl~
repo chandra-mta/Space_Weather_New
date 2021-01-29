@@ -1,0 +1,177 @@
+#! /usr/bin/perl -w
+
+# Use monthly ACE SWEPAM and SOHO MTOF files
+# to extrapolate solar wind into the future
+
+# Robert Cameron
+# May 2003
+
+use PGPLOT;
+
+$wdir = "/proj/rac/ops/SOHO";
+
+#pgbegin (0,'/xs',1,3);
+pgbegin (0,"$wdir/solwin.gif/vgif",1,3);
+pgsch(1.6);
+
+@dtab = ([0,0,31,60,91,121,152,182,213,244,274,305,335],
+	 [0,0,31,59,90,120,151,181,212,243,273,304,334],
+	 [0,0,31,59,90,120,151,181,212,243,273,304,334],
+	 [0,0,31,59,90,120,151,181,212,243,273,304,334]);
+
+# create a 100-year hash of MJDs
+
+@ylen = (366,365,365,365);
+$d = 40586;
+foreach (1970..2070) { $mjd{$_} = $d; $d += $ylen[$_ % 4] };
+
+# get ACE SWEPAM data
+
+open (IF, "$wdir/swepam") or die "Cannot open input SWEPAM file\n";
+@l = <IF>;
+foreach (@l) {
+  next unless /^20/;
+  ($y,$m,$d,$hm,$mjd,$sod,$dum,$den,$spd,$dum) = split;
+  $key = sprintf "%08d",$mjd*24 + $sod/3600;
+  $doy = sprintf "%03d",$dtab[$y % 4][$m] + $d;
+  $adate{$key} = "$y $doy $hm";
+  $aden0{$key} = $den;
+  $aden1{$key} = $den;
+  $aspd0{$key} = $spd;
+  $aspd1{$key} = $spd;
+}
+@ak = sort keys %adate;
+$rak = $ak[-1]-$ak[0];
+print "SWEPAM time range = $rak\n";
+
+# get SOHO MTOF data
+
+open (IF, "$wdir/mtof") or die "Cannot open input MTOF file\n";
+@l = <IF>;
+foreach (@l) {
+  next unless /^20/;
+  ($y,$dhms,$dum,$dum,$den,$spd,$dum,$dum) = split;
+  ($doy,$h,$m,$dum) = split ':',$dhms;
+  $key = sprintf "%08d",($mjd{$y}+$doy)*24 + $h;
+  $mdate{$key} = "$y $doy $h$m";
+  $mden0{$key} = $den;
+  $mden1{$key} = $den;
+  $mspd0{$key} = $spd;
+  $mspd1{$key} = $spd;
+}
+@mk = sort keys %mdate;
+$rmk = $mk[-1]-$mk[0];
+print "MTOF time range = $rmk\n";
+
+# read Chandra ephemeris
+
+open (IF, "$wdir/PE.EPH.gsme") or die "Cannot open input Chandra ephemeris file\n";
+@l = <IF>;
+foreach (@l) {
+  ($dum,$rkm,$tgsm,$pgsm,$dum,$dum,$fy,$mon,$d,$h,$min,$dum) = split;
+  next if ($min);
+  $y = int($fy);
+  $h = sprintf "%02d",$h;
+  $min = sprintf "%02d",$min;
+  $doy = sprintf "%03d",$dtab[$y % 4][$mon] + $d;
+  $key = sprintf "%08d",($mjd{$y}+$doy)*24 + $h;
+  $edate{$key} = "$y $doy $h$min";
+  $rkm{$key} = $rkm;
+  $tgsm{$key} = $tgsm;
+  $pgsm{$key} = $pgsm;
+}
+@ek = sort keys %edate;
+$rek = $ek[-1]-$ek[0];
+print "ephemeris time range = $rek\n";
+
+# get current time, and extrapolate 28 days into the future
+
+$now = time;
+#for (0..28) { push @xlab,(gmtime($now + $_*86400))[7] };
+
+for $fh (0..28*24) {
+    ($h,$y,$doy) = (gmtime($now + $fh*3600))[2,5,7];
+    $ydh = sprintf "%04d %03d %02d00",$y+1900,$doy,$h;
+    $key = sprintf "%08d",($mjd{$y+1900}+$doy)*24 + $h;
+    $key1 = sprintf "%08d",$key - 655;
+    $key2 = sprintf "%08d",$key - 1309;
+    $key3 = sprintf "%08d",$key - 1964;
+    $adate{$key} = $ydh;
+    $mdate{$key} = $ydh;
+    @aden=();
+    @aspd=();
+    @mden=();
+    @mspd=();
+    foreach (($key1,$key2,$key3)) {
+	push @aden,$aden0{$_} if ($aden0{$_} and abs($aden0{$_}) < 9900);
+	push @aspd,$aspd0{$_} if ($aspd0{$_} and abs($aspd0{$_}) < 9900);
+	push @mden,$mden0{$_} if ($mden0{$_} and abs($mden0{$_}) < 9900);
+	push @mspd,$mspd0{$_} if ($mspd0{$_} and abs($mspd0{$_}) < 9900);
+    }
+    $aden0{$key} = (@aden < 1)? -9999 : $aden[0];
+    $aspd0{$key} = (@aspd < 1)? -9999 : $aspd[0];
+    $mden0{$key} = (@mden < 1)? -9999 : $mden[0];
+    $mspd0{$key} = (@mspd < 1)? -9999 : $mspd[0];
+    $aden1{$key} = (@aden < 2)? -9999 : $aden[0]*2 - $aden[1];
+    $aspd1{$key} = (@aspd < 2)? -9999 : $aspd[0]*2 - $aspd[1];
+    $mden1{$key} = (@mden < 2)? -9999 : $mden[0]*2 - $mden[1];
+    $mspd1{$key} = (@mspd < 2)? -9999 : $mspd[0]*2 - $mspd[1];
+    push @dd,$doy+$h/24;
+    push @aden0,$aden0{$key};
+    push @aspd0,$aspd0{$key};
+    push @mden0,$mden0{$key};
+    push @mspd0,$mspd0{$key};
+    push @aden1,$aden1{$key};
+    push @aspd1,$aspd1{$key};
+    push @mden1,$mden1{$key};
+    push @mspd1,$mspd1{$key};
+    push @rkm,$rkm{$key}/1000;
+    push @mlat,90-$tgsm{$key};
+    push @mlon,$pgsm{$key};
+}
+
+$npt = @dd;
+
+$tstamp = `date`;
+chomp $tstamp;
+
+pgsci(1);
+pgenv ($dd[0], $dd[-1], -200, 200, 0, 0);
+pglab ("Day of Year", "degrees,Mm", "GSM Coordinates");
+pgtext ($dd[-1]-9, 210, $tstamp);
+pgsci(3);
+pgline ($npt, \@dd, \@rkm);
+pgsci(2);
+pgline ($npt, \@dd, \@mlat);
+pgsci(1);
+pgpoint ($npt, \@dd, \@mlon, 1);
+
+pgsci(1);
+pgenv ($dd[0], $dd[-1], 0, 1000, 0, 0);
+pglab ("Day of Year", "km/s", "Solar Wind Speed");
+pgtext ($dd[0]+10, 1020, ". 0th order, + 1st order");
+pgtext ($dd[-1]-9, 1020, $tstamp);
+pgsci(3);
+pgpoint ($npt, \@dd, \@aspd0, 1);
+pgpoint ($npt, \@dd, \@aspd1, 2);
+pgtext ($dd[0], 1020, "ACE SWEPAM");
+pgsci(2);
+pgpoint ($npt, \@dd, \@mspd0, 1);
+pgpoint ($npt, \@dd, \@mspd1, 2);
+pgtext ($dd[0]+5, 1020, "SOHO MTOF");
+
+pgsci(1);
+pgenv ($dd[0], $dd[-1], 0, 40, 0, 0);
+pglab ("Day of Year", "p/cc", "Solar Wind Proton Density");
+pgtext ($dd[0]+10, 41, ". 0th order, + 1st order");
+pgtext ($dd[-1]-9, 41, $tstamp);
+pgsci(3);
+pgpoint ($npt, \@dd, \@aden0, 1);
+pgpoint ($npt, \@dd, \@aden1, 2);
+pgtext ($dd[0], 41, "ACE SWEPAM");
+pgsci(2);
+pgpoint ($npt, \@dd, \@mden0, 1);
+pgpoint ($npt, \@dd, \@mden1, 2);
+pgtext ($dd[0]+5, 41, "SOHO MTOF");
+
+pgend;

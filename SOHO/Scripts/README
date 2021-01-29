@@ -1,0 +1,29 @@
+#######################################
+Solar Wind Density and Speed Prediction
+#######################################
+
+This directory contains files to predict and plot the solar wind
+environment for Chandra, 4 weeks into the future.
+
+solar_wind_warp_script
+solar_wind_main_script
+-----------------------
+Environment setting scripts
+
+create_predicted_solar_wind_plot.py
+-----------------------------------
+The script to obtain data, predict future trends and plot the data.
+
+input:  ftp://ftp.swpc.noaa.gov/pub/lists/ace2/*ace_swepam_1h.txt
+        http://umtof.umd.edu/pm/crn/archive/CRN_*.USED
+        <ephem_dir>/Data/PE.EPH.gsme_spherical
+output: <html_dir>/Orbit/Plots/solwin.png
+
+Web address:
+https://cxc.cfa.harvard.edu/mta/RADIATION_new/Orbit/orbit.html
+
+cron job
+--------
+han-v as mta
+36 0,3,6,9,12,15,18,21 * * *  cd /data/mta4/Space_Weather/SOHO/Scripts; /data/mta4/Space_Weather/SOHO/Scripts/solar_wind_warp_script 
+

@@ -1,0 +1,14 @@
+cd /data/mta4/Space_Weather/CRM3/Scripts
+
+setenv PYTHONPATH "/data/mta/Script/Python3.6/envs/ska3/lib/python3.6/site-packages:/data/mta/Script/Python3.6/lib/python3.6/site-packages/"
+
+/data/mta4/Space_Weather/CRM3/Scripts/create_crm_summary_table.py
+
+/data/mta4/Space_Weather/CRM3/Scripts/plot_crm_flux_data.py
+
+convert /data/mta4/www/RADIATION_new/Orbit/Plots/crmpl.png -trim /data/mta4/www/RADIATION_new/Orbit/Plots/crmpl.png
+
+convert /data/mta4/www/RADIATION_new/Orbit/Plots/crmplatt.png -trim /data/mta4/www/RADIATION_new/Orbit/Plots/crmplatt.png
+
+
+

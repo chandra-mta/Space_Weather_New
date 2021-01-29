@@ -1,0 +1,42 @@
+>>> Binary data compatibility <<<
+---------------------------------
+
+CRMFLX_V23A_EXP.f needs three binary data files which are machine dependent.
+if you need to recompile runcrm.f on none linux machine, you need to do the following.
+
+1. go to linux machine (this version is complined on linux)
+
+2. compile SolWB2A.f and run it. this will create an ascii version
+   (SolWB2A.f can be found in /data/mta4/proj/rac/ops/CRM2/v26apr2004/crmflx_v23/)
+
+3. go to a new machine/operaiton system.
+
+4. compile SolWA2B.f and run it. this will create a binary version
+    which can be read on the new machine.
+
+5. do same for two others. If you can't find a fortran program, specificlally
+   to that data, just modify  SolWB2A.f and/or  SolWA2B.f
+
+   The binary data files are:
+
+        MSheath_Kp_PROT.BIN
+        MSPH_Kp_PROT.BIN
+        SolWind_Kp_PROT.BIN
+
+Update (Feb 24, 2015)
+
+    ASCII version created from these are already in this directory. 
+
+        MSheath_Kp_PROT.ASC
+        MSPH_Kp_PROT.ASC
+        SolWind_Kp_PROT.ASC
+    use:
+        MSHA2B.f
+        MSPA2B.f
+        SolWA2B.f
+
+    respectively to convert the ascii data into binary data.
+
+
+
+

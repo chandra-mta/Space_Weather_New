@@ -1,0 +1,59 @@
+
+################################
+Updating Ephemeris Related Data
+################################
+
+Currently:  dir_list:   /data/mta4/Space_Weather/house_keeping/dir_list
+            ephem_dir:  /data/mta4/Space_Weather/EPHEM/
+
+dephem.pl   --- maintain a longterm archive of ephemeris data
+
+    input:  /dsops/GOT/aux/DEPH.dir/DE<time stamp>.EPH
+
+    output: <data_dir>/longterm/dephem.dat
+            <data_dir>/longterm/DE/deph.<year><yday>
+
+    function used:
+        <bin_dir>/ephem_longterm.idl
+        <bin_dir>/lephem_longterm.pro
+
+ephem.pl    --- update gsme files
+
+    input:  /dsops/GOT/aux/DEPH.dir/DE<time stamp>.EPH
+
+    output: <data_dir>/PE.EPH
+            <data_dir>/PE.EPH.gsme
+            <data_dir>/PE.EPH.gsme_in
+            <data_dir>/PE.EPH.gsme_in_Re
+            <data_dir>/solun_eph.dat
+
+    function used:
+        <bin_dir>/ephem.idl
+        <idl_dir>/read_ephemeris.pro
+        <bin_dir>/lephem.pro
+        <bin_dir>/solun_eph         --- compiled from solun_eph.f
+        <bin_dir>/cocochan          --- complied from cocochan.f
+
+gephem.pl   --- interpolate from the ephemeris file
+
+    input:  <data_dir>/PE.EPH.dat
+    output: <data_dir>/gephem.dat
+
+
+
+Note:
+    idl codes and fortran codes have hard coded paths. You need to 
+    change them before use it. The fortran code need to be recomplie:
+
+    f77 solun_eph.f -o solun_eph
+    f77 cocochan.f /data/mta4/Space_Weather/geopack/geopack.f /data/mta4/Space_Weather/geopack/supple.f -o cocochan 
+
+
+Cron Job
+--------
+han-v as mta
+
+21 3 * * *  cd /data/mta4/Space_Weather/EPHEM/Scripts; /usr/bin/perl ephem.pl > /data/mta4/Space_Weather/Test_Logs/ephem_ephem.cron   2>&1
+41 3 * * 0  cd /data/mta4/Space_Weather/EPHEM/Scripts; /usr/bin/perl dephem.pl> /data/mta4/Space_Weather/Test_Logs/ephem_dephem.cron  2>&1
+*  * * * *  cd /data/mta4/Space_Weather/EPHEM/Scripts; /usr/bin/perl gephem.pl> /data/mta4/Space_Weather/Test_Logs/ephem_gephem.cron  2>&1
+

@@ -1,0 +1,8 @@
+<tr><th colspan=7>&#160</th></tr>
+<tr><th>&#160</th><th colspan=6>External - does not take into account the instrument configuration </th></tr>
+<tr><th>&#160</th><th>Current Flux</th><th>Current fluence <br />(total so far in current orbit)</th>
+<th>Projected fluence</th><th>Projected fluence</th><th>&#160</th><th>Limits</th>
+<tr><th>&#160</th><th>(p/cm^2-s-sr-MeV)</th>
+<th>(p/cm^2-sr-MeV)</th><th>until next radzone <br />(total for current orbit)</th>
+<th>until next comm.</th><th>until second comm.</th><th>&#160</th>
+

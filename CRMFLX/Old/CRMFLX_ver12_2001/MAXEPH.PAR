@@ -1,0 +1,6 @@
+C
+C     MAXEPH = maximum number of ephemeris points used in the
+C     ephemeris datafile.
+      PARAMETER (MAXEPH = 500000)
+C
+C

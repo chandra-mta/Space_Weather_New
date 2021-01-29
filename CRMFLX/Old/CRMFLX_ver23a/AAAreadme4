@@ -1,0 +1,33 @@
+Date: Fri, 22 Nov 2002 10:51:06 -0500
+From: Bill Blackwell <Bill.Blackwell@msfc.nasa.gov>
+To: David.Johnson@msfc.nasa.gov
+Cc: Steve.O'Dell@msfc.nasa.gov, Rob.Suggs@msfc.nasa.gov, 
+    Joseph.Minow@msfc.nasa.gov, rac@head-cfa.cfa.harvard.edu,
+     swartz@sdms.msfc.nasa.gov
+Subject: CRMFLX V23
+Parts/Attachments:
+   1   Shown     19 lines  Text
+   2.1          633 bytes  Application
+   2.2          284 KB     Application
+----------------------------------------
+
+Dave,
+
+Attached is the update to CRMFLX, version 2.3.  The code change was 
+extremely minor, placing output from the magnetosphere initialization 
+routine (MSPINIT) under the SAVE statement in the main routine 
+CRMFLX.  This code change should fix the problem you encountered when 
+output from CRMFLX for a second series of radiation event 
+calculations became corrupted after the initial series of 
+calculations were followed by other (non-radiation) events.
+
+For my configuration control purposes, I have attached the entire 
+source code for CRMFLX V23, but the only routine affected is the main 
+routine, CRMFLX.
+
+I cannot duplicate the memory problem on my computer to verify the 
+fix to your problem, so please let me know if there are any problems.
+
+Regards,
+
+Bill Blackwell

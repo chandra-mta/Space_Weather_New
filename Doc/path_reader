@@ -1,0 +1,70 @@
+
+##################################################################
+How to set virable names and their values reading from a data file
+##################################################################
+
+See /data/mta4/Space_Weather/house_keeping/dir_list for the values
+the first column is the value and the second column is the variable.
+
+
+IDL
+;
+;--- read directory list
+;
+ifile  = '/data/mta4/Space_Weather/house_keeping/dir_list'
+openr, lun, ifile, /get_lun
+cmd    = 'wc -l ' + ifile
+spawn, cmd, xnum
+xxnum  = strsplit(xnum(0),' ',/extract)
+tnum   = long(xxnum(0))
+lines  = strarr(tnum)
+readf,lun, lines
+close, lun
+
+tnum1 = tnum - 1
+for i = 0, tnum1 do begin
+    xline = strsplit(lines[i], ':' ,/extract)
+    cmd   = xline[1] + '=' + xline[0]
+    x     = execute(cmd)
+endfor
+
+#-----------------------------------------------------------------------
+
+PERL
+#
+#--- read pre defined directory paths
+#
+$dir_list = '/data/mta4/Space_Weather/house_keeping/dir_list';
+
+open(FH, $dir_list);
+while(<FH>){
+    chomp $_;
+    @atemp = split(':', $_);;
+    $atemp[0] =~ s/^\s+|\s+$//g;
+    $atemp[0] =~ s/'//g;
+    $atemp[0] =~ s/"//g;
+
+    $atemp[1] =~ s/^\s+|\s+$//g;
+
+    ${$atemp[1]} = $atemp[0];
+}
+close(FH);
+
+#---------------------------------------------------------------------
+
+PYTHON
+#
+#--- reading directory list
+#
+path = '/data/mta4/Space_Weather/house_keeping/dir_list'
+
+f= open(path, 'r')
+data = [line.strip() for line in f.readlines()]
+f.close()
+
+for ent in data:
+    atemp = re.split(':', ent)
+    var  = atemp[1].strip()
+    line = atemp[0].strip()
+    exec "%s = %s" %(var, line)
+

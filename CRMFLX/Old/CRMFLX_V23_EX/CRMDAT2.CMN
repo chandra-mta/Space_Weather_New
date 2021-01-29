@@ -1,0 +1,24 @@
+C
+C     CRMDAT2.CMN
+C
+C     Chandra Radiation Model (CRM) magnetosheath database COMMON Block.
+C
+C       NUMDAT2 - number of non-zero values in the database.
+C       XFLUX2  - array containing the X-coordinate of each data
+C                 cell's center  (Re).
+C       YFLUX2  - array containing the Y-coordinate of each data
+C                 cell's center  (Re).
+C       ZFLUX2  - array containing the Z-coordinate of each data
+C                 cell's center  (Re).
+C       FLXBIN2 - array containing the average ion flux within
+C                 each cell  (ions/[cm^2-sec-sr-MeV]).
+C       NUMBIN2 - array containing the number of non-zero values within
+C                 each cell.
+C
+      INTEGER NUMDAT2(MAXKP),NUMBIN2(MAXKP,MAXPNT)
+      REAL FLXBIN2(MAXKP,MAXPNT),XFLUX2(MAXKP,MAXPNT)
+      REAL YFLUX2(MAXKP,MAXPNT),ZFLUX2(MAXKP,MAXPNT)
+C
+      COMMON/CRMDAT2/NUMDAT2,XFLUX2,YFLUX2,ZFLUX2,FLXBIN2,NUMBIN2
+C
+C

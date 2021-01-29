@@ -1,0 +1,1129 @@
+189a190,201
+>       IMPLICIT NONE
+> C
+>       INTEGER ISPECI,IDLOC,IUSESW,NFLXGET,NDROPHI,NDROPLO,LOGFLG
+>       INTEGER IUSEMSH,IUSEMSP
+>       INTEGER ISPSAV0,ISPSAV1,ISPSAV2,ISPSAV3,NSECTR1,NSECTR2,NSECTR3
+>       INTEGER NSPHVOL3,ISPDIFF
+>       REAL XKP,XGSM,YGSM,ZGSM,XTAIL,YTAIL,ZTAIL,XKPDIFF,FLUXMN,FLUX95
+>       REAL FLUX50,FLUXSD,FSWIMN,FSWI95,FSWI50,FSWISD,RNGTOL,XKP3
+>       REAL FLXMNSW,FLX95SW,FLX50SW,FLXSDSW,XKPTOL,XKPSAV1,XKPSAV2
+>       REAL XKPSAV3,FLXMN1,FLX951,FLX501,FLXSD1,FLXMN2,FLX952,FLX502
+>       REAL FLXSD2
+> C
+515a528,535
+>       IMPLICIT NONE
+> C
+>       REAL SWETEMP,PTEMP,SWPTEMP,HETEMP,SWHTEMP,DPR,RADE,PI,GAMMA,XL,X0
+>       REAL XN,EPS,BTOTCGS,BX,BY,BZ,BTOT,VTOT,VX,VY,VZ,VTOT1,V_A,DENNUM
+>       REAL HEFRAC,PRES1,C_S,XNAVE,VAVE,FRACPRES,XN1,A,B,C,XTEMP,XPOS
+>       REAL RHO2,AVE_MA,AVE_MS,VWIN_AVE,VA_AVE,VS_AVE,BXAVE,BYAVE,BZAVE
+>       REAL VMS,AVE_MF,THET2,BOWANG,THET1,XTEMP1,RHOX,BOWRAD,ETEMP
+> C
+685a706,712
+> C
+>       IMPLICIT NONE
+> C
+>       INTEGER ISPECI,LUNIT,ICNT,KK,IIKP,IIX,IIY,IIZ,II,I,J,K,JJ
+>       INTEGER NSPHVOL3
+>       REAL XD,YD,ZD,DISTMAPMAX3
+> C
+715,716c742
+<      $  '/data/mta4/Space_Weather/CRMFLX/CRMFLX_ver23a/MSPH_Kp_PROT.BIN'
+<      &,
+---
+>      $  'MSPH_Kp_PROT.BIN',
+832a859,863
+>       IMPLICIT NONE
+> C
+>       INTEGER ISPECI,LUNIT,ICNT,KK,II,I,J,K,JJ
+>       REAL XD,YD,ZD
+> C
+845,846c876
+<      $  '/data/mta4/Space_Weather/CRMFLX/CRMFLX_ver23a/MSheath_Kp_PROT.BI
+<      &N',
+---
+>      $  'MSheath_Kp_PROT.BIN',
+923a954,958
+>       IMPLICIT NONE
+> C
+>       INTEGER ISPECI,LUNIT,ICNT,KK,II,I,J,K,JJ
+>       REAL XD,YD,ZD
+> C
+936,937c971
+<      $  '/data/mta4/Space_Weather/CRMFLX/CRMFLX_ver23a/SolWind_Kp_PROT.BI
+<      &N',
+---
+>      $  'SolWind_Kp_PROT.BIN',
+1016a1051,1055
+>       IMPLICIT NONE
+> C
+>       REAL btot,bx,by,va1,va,vs1,vs,v01,v0,func,alp,step1,step2
+>       REAL step3,vy,vz,angle,vms,bz,vx,dpr
+> C
+1134a1174,1175
+>       IMPLICIT NONE
+> C
+1138a1180,1183
+>       INTEGER IKP, I, NUMAVG, NUMCELL
+>       REAL RNGCELL, AVGNUM, FLUX, RNGCHK, ZGSM, YGSM, XGSM
+>       REAL ZCKLO, ZCKHI, RNG, RNGDIFF, RNGABS
+> C
+1313a1359,1360
+>       IMPLICIT NONE
+> C
+1320a1368,1372
+>       INTEGER NUMCELL, NSPHVOL, IKP, INDX, INDY, INDZ, I, II
+>       INTEGER JJ, KK, INDEXNOW, NUMAVG
+>       REAL RNGCELL, AVGNUM, FLUX, RNGCHK, ZGSM, YGSM, XGSM
+>       REAL FVE, XVE, YVE, ZVE, RNG, RNGDIFF, RNGABS
+> C
+1485a1538,1539
+>       IMPLICIT NONE
+> C
+1492a1547,1551
+>       INTEGER NUMCELL, NSPHVOL, INDX, INDY, INDZ
+>       INTEGER I, II, JJ, KK, INDEXNOW, NUMAVG, IKP
+>       REAL RNGCELL, AVGNUM, FLUX, RNGCHK, ZGSM, YGSM, XGSM
+>       REAL ZCKHI, ZCKLO, FVE, YVE, XVE, ZVE, RNG, RNGDIFF, RNGABS
+> C
+1685a1745,1746
+>       IMPLICIT NONE
+> C
+1689a1751,1755
+>       INTEGER NUMCELL, LOGFLG, NDROPLO, NDROPHI, NFLXGET
+>       INTEGER IKP, NGOT, I, NDO, J, INDMAX, IUSE, INDMIN
+>       REAL WEIGHT, DTOT, FLXMIN, FLXMAX, RNG, ZCKLO, ZCKHI
+>       REAL XGSM, YGSM, ZGSM, RNGCHK, FLUX, DISNUM, RNGCELL
+> C
+2071a2138,2139
+>       IMPLICIT NONE
+> C
+2078a2147,2152
+>       INTEGER NUMCELL, NSPHVOL, LOGFLG, NDROPLO, NDROPHI, NFLXGET
+>       INTEGER IKP, INDX, INDY, INDZ, NGOT, I, II, JJ, KK, INDEXNOW
+>       INTEGER NDO, J, INDMAX, INDMIN, IUSE
+>       REAL RNGCELL, DISNUM, FLUX, RNGCHK, ZGSM, YGSM, XGSM
+>       REAL FVE, YVE, XVE, ZVE, RNG, FLXMAX, FLXMIN, DTOT, WEIGHT
+> C
+2417a2492,2493
+>       IMPLICIT NONE
+> C
+2424a2501,2507
+>       INTEGER NUMCELL, NSPHVOL, LOGFLG, NDROPLO, NDROPHI, NFLXGET
+>       INTEGER IKP, INDX, INDY, INDZ, NGOT, I, II, JJ, KK, INDEXNOW
+>       INTEGER NDO, J, INDMAX, INDMIN, IUSE
+>       REAL WEIGHT, DTOT, FLXMIN, FLXMAX, RNG, FVE, XVE, YVE, ZVE
+>       REAL RNGCHK, ZGSM, XGSM, YGSM, ZCKHI, ZCKLO, FLUX
+>       REAL RNGCELL, DISNUM
+> C
+2757a2841,2842
+>       IMPLICIT NONE
+> C
+2761a2847,2851
+>       INTEGER NUMCELL, LOGFLG, NDROPLO, NDROPHI, IKP, NDO, J
+>       INTEGER INDMAX, INDMIN, IUSE, I
+>       REAL RNGCELL, AVGNUM, FLUX, RNGCHK, XGSM, YGSM, ZGSM
+>       REAL ZCKLO, ZCKHI, RNG, RNGDIFF, RNGABS, FLXMAX, FLXMIN
+> C
+2871a2962,2963
+>       IF(NUMCELL.EQ.0) RETURN
+> C
+3034a3127,3128
+>       IMPLICIT NONE
+> C
+3042a3137,3142
+>       INTEGER NUMCELL, NSPHVOL, LOGFLG, NDROPLO, NDROPHI
+>       INTEGER I, J, II, JJ, KK, INDEXNOW, NDO, IUSE, INDMAX, INDMIN
+>       INTEGER IKP, INDX, INDY, INDZ
+>       REAL FLXMIN, FLXMAX, FVE, XVE, YVE, ZVE, RNG, RNGDIFF, RNGABS
+>       REAL RNGCHK, FLUX, RNGCELL, AVGNUM, ZGSM, YGSM, XGSM
+> C
+3292a3393,3394
+>       IMPLICIT NONE
+> C
+3300a3403,3409
+>       INTEGER I, II, JJ, KK, INDEXNOW, INDX, INDY, INDZ, NDO
+>       INTEGER J, IUSE, INDMAX, INDMIN, LOGFLG, NSPHVOL, NDROPHI
+>       INTEGER IKP, NUMCELL, NDROPLO
+>       REAL RNGABS, RNGDIFF, RNG, FVE, YVE, XVE, ZVE
+>       REAL XGSM, YGSM, ZGSM, RNGCHK, RNGCELL, AVGNUM, FLUX
+>       REAL FLXMIN, FLXMAX, ZCKHI, ZCKLO
+> C
+3342,3345c3451,3456
+<         KK = INDZ + KOFFSET(I)
+<         if ((ii.ge.1).and.(jj.ge.1).and.(kk.ge.1).and.(ii.le.maxnum)
+<      $  .and.(jj.le.maxnum).and.(kk.le.maxnum)) then
+<         INDEXNOW = IMAPINDX(IKP,II,JJ,KK)
+---
+>         IF((II.GE.1).AND.(JJ.GE.1).AND.(KK.GE.1).AND.(II.LE.MAXNUM)
+>      $  .AND.(JJ.LE.MAXNUM).AND.(KK.LE.MAXNUM)) THEN
+>           INDEXNOW = IMAPINDX(IKP,II,JJ,KK)
+>         ELSE
+>           INDEXNOW = 0
+>         END IF
+3391d3501
+<         END IF
+3395a3506,3509
+>       IF(NUMCELL.EQ.0) RETURN
+> C
+> D     WRITE(*,*)' FLXDAT3_MAP_Z! NUMCELL = ',NUMCELL
+> C
+3548a3663,3664
+>       IMPLICIT NONE
+> C
+3552a3669,3673
+>       INTEGER NUMCELL, IKP, I, IUSE, LOGFLG
+>       REAL RNGCELL, AVGNUM, FLUX, RNGCHK, ZGSM, YGSM, XGSM
+>       REAL ZCKLO, ZCKHI, RNG, RNGDIFF, RNGABS, FMIN, FMAX, FSIG
+>       REAL FLXLO, FLXHI, FMEAN
+> C
+3564a3686,3691
+> C**** PATCH!! ***
+> D     IKP = 9
+> D     XGSM = -6.49124
+> D     YGSM = -29.0235
+> D     ZGSM = 0.0
+> C
+3573a3701,3703
+> D     DO I = 1,9
+> D       WRITE(*,*)' I,NUMDAT(I) = ',I,NUMDAT(I)
+> D     END DO
+3665,3669c3795,3796
+<       if (numcell.eq.0) then
+<          flux = 0.0
+<          avgnum = 0.0
+<          return
+<       end if
+---
+>       IF(NUMCELL.EQ.0) RETURN
+> C
+3784a3912,3913
+>       IMPLICIT NONE
+> C
+3792a3922,3927
+>       INTEGER IKP, INDX, INDY, INDZ, I, II, JJ, KK, INDEXNOW, IUSE
+>       INTEGER NUMCELL, LOGFLG, NSPHVOL
+>       REAL RNGCELL, AVGNUM, FLUX, RNGCHK, ZGSM, YGSM, XGSM, FVE, XVE
+>       REAL YVE, ZVE, RNG, RNGDIFF, RNGABS, FMIN, FMAX, FSIG, FLXLO
+>       REAL FLXHI, FMEAN
+> C
+3882,3886d4016
+<       if (numcell.eq.0) then
+<          flux = 0.0
+<          avgnum = 0.0
+<          return
+<       end if
+4001a4132,4133
+>       IMPLICIT NONE
+> C
+4009a4142,4147
+>       INTEGER INDX, INDY, INDZ, NUMCELL, I, II, JJ, KK, IKP
+>       INTEGER INDEXNOW, LOGFLG, NSPHVOL,IUSE
+>       REAL RNGCELL, ZGSM, YGSM, XGSM, RNGCHK, AVGNUM, FLUX
+>       REAL FVE, ZVE, ZCKHI, ZCKLO, XVE, YVE, RNG, RNGDIFF, RNGABS
+>       REAL FMIN, FMAX, FSIG, FLXLO, FLXHI, FMEAN
+> C
+4024a4163,4168
+> C**** PATCH!! ***
+> D     IKP = 4
+> D     XGSM = -17.8830
+> D     YGSM = -23.8054
+> D     ZGSM = 0.0
+> C
+4033a4178,4180
+> D     DO I = 1,9
+> D       WRITE(*,*)' I,NUMDAT(I) = ',I,NUMDAT(I)
+> D     END DO
+4036d4182
+< C
+4055,4058c4201,4210
+<         if ((ii.ge.1).and.(jj.ge.1).and.(kk.ge.1).and.(ii.le.maxnum)
+<      $  .and.(jj.le.maxnum).and.(kk.le.maxnum)) then
+<         INDEXNOW = IMAPINDX(IKP,II,JJ,KK)
+< D       WRITE(*,*)' I,II,JJ,KK,INDEXNOW = ',I,II,JJ,KK,INDEXNOW
+---
+>         IF((II.GE.1).AND.(JJ.GE.1).AND.(KK.GE.1).AND.(II.LE.MAXNUM)
+>      $  .AND.(JJ.LE.MAXNUM).AND.(KK.LE.MAXNUM)) THEN
+>           INDEXNOW = IMAPINDX(IKP,II,JJ,KK)
+>         ELSE
+>           INDEXNOW = 0
+>         END IF
+> D       IF(INDEXNOW.GT.0) THEN
+> D         WRITE(*,*)' I,II,JJ,KK,INDEXNOW = ',I,II,JJ,KK,INDEXNOW
+> D         PAUSE 'PAUSED!'
+> D       END IF
+4103d4254
+<         END IF
+4108,4112c4259,4261
+<       if (numcell.eq.0) then
+<          flux = 0.0
+<          avgnum = 0.0
+<          return
+<       end if
+---
+> D     WRITE(*,*)' NUMCELL = ',NUMCELL
+>       IF(NUMCELL.EQ.0) RETURN
+> C
+4206a4356,4361
+>       IMPLICIT NONE
+>       REAL DIST, PD, RAT, RAT16, VEL, XN_PD, A, A0, S00, X00, S0, X0
+>       REAL XM, PHI, ZMGNP, YMGNP, XMGNP, ZGSM, YGSM, XGSM, RHO
+>       REAL RHOMGNP, XKSI, XDZT, SQ1, SQ2, SIGMA, TAU
+>       INTEGER ID
+> C
+4299a4455,4461
+>       IMPLICIT NONE
+>       REAL XKP, XGSM, YGSM, ZGSM, XTAIL, YTAIL, ZTAIL, XHINGE
+>       REAL VEL, DIST, DYPRES, XMGP, YMGP, ZMGP, ABANG, ANGRAD
+>       REAL DISTSC, VZ, VX, VY, BZ, BY, BX, SWETEMP, SWPTEMP, HEFRAC
+>       REAL SWHTEMP, BOWANG, RADBS, DENNUM
+>       INTEGER ID, IDLOC
+> C
+4377a4540,4541
+>       IMPLICIT NONE
+> C
+4379a4544,4547
+>       INTEGER I, J, K, ISTEP, JSTEP, KSTEP, NSPHVOL
+>       INTEGER ISTRT, JSTRT, KSTRT, KSTOP, JSTOP, ISTOP
+>       REAL ZINC, YINC, XINC, DISTMAPMAX, XRNG, YRNG, ZRNG, DIST
+> C
+4521a4690,4693
+>       IMPLICIT NONE
+>       INTEGER ISPECI
+>       REAL FLUXSD, FLUXMN, FLUX50, FLUX95, XKP, A
+> C
+4650a4823
+>       IMPLICIT NONE
+4651a4825
+>       REAL RNGGEO
+4655a4830
+>       INTEGER NUMSCAL
+4661a4837,4841
+>       REAL FLUXSD, FLUXMN, FLUX50, FLUX95, RNGTOL
+>       REAL XTAIL, YTAIL, ZTAIL, XKP, RNGCK, RNGCHK
+>       REAL RNG1, RNGMIN1, TOTNUM, RNG2, ANNDIST
+>       INTEGER LOGFLG, NDROPLO, NDROPHI, NFLXGET, I, NSECTRS
+> C
+4775,4777c4955,4959
+< D       WRITE(*,*)' After FLUXDAT!'
+< D       WRITE(*,*)' I,FLUX(I),AVGNUM(I),RNGCELL(I),NUMCELL(I) = ',
+< D    $              I,FLUX(I),AVGNUM(I),RNGCELL(I),NUMCELL(I)
+---
+> D       IF(NUMCELL(I).EQ.0) THEN
+> D         WRITE(*,*)' After FLUXDAT!'
+> D         WRITE(*,*)' I,FLUX(I),AVGNUM(I),RNGCELL(I),NUMCELL(I) = ',
+> D    $                I,FLUX(I),AVGNUM(I),RNGCELL(I),NUMCELL(I)
+> D       END IF
+4830,5128c5012,5015
+<       RETURN
+<       END
+< C
+< C
+<       SUBROUTINE NBRFLUX_MAP(XKP,NSECTRS,SECTX,SECTY,SCMEAN,SC95,SC50,
+<      $  SCSIG,XTAIL,YTAIL,ZTAIL,NUMDAT,XFLUX,YFLUX,ZFLUX,FLUXBIN,
+<      $  NUMBIN,SMOOTH1,NFLXGET,NDROPHI,NDROPLO,LOGFLG,RNGTOL,FPCHI,
+<      $  FPCLO,NSPHVOL,IOFFSET,JOFFSET,KOFFSET,IMAPINDX,FLUXMN,FLUX95,
+<      $  FLUX50,FLUXSD)
+< C
+< C     This routine provides the region's ion flux as a function
+< C     of Kp.
+< C
+< C     Inputs:
+< C        XKP     - Kp index (real value between 0 & 9).
+< C
+< C        NSECTRS - number of Kp scaling sectors in region.
+< C
+< C        SECTX   - array of each sector center's x coordinate.
+< C
+< C        SECTY   - array of each sector center's y coordinate.
+< C
+< C        SCMEAN  - array of each sector's mean flux scale factor.
+< C
+< C        SC95    - array of each sector's 95% flux scale factor.
+< C
+< C        SC50    - array of each sector's 50% flux scale factor.
+< C
+< C        SCSIG   - array of each sector's std dev flux scale factor.
+< C
+< C        XTAIL   - satellite's X-coordinate in geotail system (Re).
+< C
+< C        YTAIL   - satellite's Y-coordinate in geotail system (Re).
+< C
+< C        ZTAIL   - satellite's Z-coordinate in geotail system (Re).
+< C
+< C        NUMDAT  - number of non-zero values in the database.
+< C
+< C        XFLUX   - array containing the X-coordinate of each data
+< C                  cell's center  (Re).
+< C
+< C        YFLUX   - array containing the Y-coordinate of each data
+< C                  cell's center  (Re).
+< C
+< C        ZFLUX   - array containing the Z-coordinate of each data
+< C                  cell's center  (Re).
+< C
+< C        FLUXBIN - array containing the average ion flux within
+< C                  each cell  (ions/[cm^2-sec-sr-MeV]).
+< C
+< C        NUMBIN  - array containing the number of non-zero values within
+< C                  each cell.
+< C
+< C        SMOOTH1 - flag for control of database smoothing filter:
+< C               SMOOTH1 = 0 if no data smoothing is used.
+< C               SMOOTH1 = 1 if spike rejection and near neighbor flux.
+< C               SMOOTH1 = 2 if spike rejection with range weighted
+< C                            scaling of flux.
+< C               SMOOTH1 = 3 if spike rejection with average flux.
+< C               SMOOTH1 = 4 if spatial average of flux in volume
+< C                            specified by RNGTOL.
+< C               SMOOTH1 = 5 if spatial average of flux in volume
+< C                            specified by RNGTOL, with the specified
+< C                            number of high and low flux values inside
+< C                            the volume dropped first.
+< C               SMOOTH1 = 6 if spatial averaging of flux in volume
+< C                            specified by RNGTOL, with percentile
+< C                            threshold limits on flux values.
+< C
+< C       NFLXGET  - number of flux values to get for smoothing filter
+< C                   (used if SMOOTH1 = 1,2, or 3)
+< C
+< C       NDROPHI  - number of high flux values to drop for smoothing
+< C                   filter (used if SMOOTH1 = 1,2,3, or 5).
+< C
+< C       NDROPLO  - number of low flux values to drop for smoothing
+< C                   filter (used if SMOOTH1 = 1,2,3, or 5).
+< C
+< C       LOGFLG   - flag controlling how flux average is performed
+< C                   (used if SMOOTH1 = 2,3,4,5, or 6).
+< C               LOGFLG = 1 if log10 of flux values used.
+< C               LOGFLG = 2 if linear flux values used.
+< C
+< C       RNGTOL   - range tolerance from near-neigbor used in spatial
+< C                   averaging of database (Re)
+< C                   (used if SMOOTH1 = 4,5, or 6).
+< C
+< C       FPCHI    - upper percentile limit for spatial averaging of flux
+< C                   (used if SMOOTH1 = 6).
+< C
+< C       FPCLO    - lower percentile limit for spatial averaging of flux
+< C                   (used if SMOOTH1 = 6).
+< C       NSPHVOL  - number of volume elements stored in the
+< C                  streamline mapping search volume.
+< C       IOFFSET  - array of offset indices for X-direction.
+< C       JOFFSET  - array of offset indices for Y-direction.
+< C       KOFFSET  - array of offset indices for Z-direction.
+< C       IMAPINDX - array of pointers for mapped database.
+< C
+< C     Output:
+< C       FLUXMN  - mean flux (#/[cm^2-sec-sr-MeV]) for selected species.
+< C       FLUX95  - 95% flux (#/[cm^2-sec-sr-MeV]) for selected species.
+< C       FLUX50  - 50% flux (#/[cm^2-sec-sr-MeV]) for selected species.
+< C       FLUXSD  - standard deviation of flux for selected species.
+< C
+< C     Set the minimum range for magnetosphere calculations.
+<       PARAMETER (RNGGEO = 6.0)
+< C
+< C     Set the number of Kp scaling sectors to use per calculation.
+< C     (NUMSCAL must not exceed NUMSEC!)
+<       PARAMETER (NUMSCAL = 2)
+< C
+<       INCLUDE 'NUMSEC.PAR'
+<       INCLUDE 'MAXKP.PAR'
+<       INCLUDE 'MAXPNT.PAR'
+<       INCLUDE 'MAXNUM.PAR'
+< C
+<       INCLUDE 'MAXNSPHVOL.PAR'
+< C
+<       INTEGER IOFFSET(MAXNSPHVOL),JOFFSET(MAXNSPHVOL)
+<       INTEGER KOFFSET(MAXNSPHVOL),IMAPINDX(MAXKP,MAXNUM,MAXNUM,MAXNUM)
+< C
+<       REAL SECTX(NUMSEC),SECTY(NUMSEC)
+<       REAL SCMEAN(NUMSEC,MAXKP),SC95(NUMSEC,MAXKP)
+<       REAL SC50(NUMSEC,MAXKP),SCSIG(NUMSEC,MAXKP)
+<       REAL WTMEAN(MAXKP),WT95(MAXKP),WT50(MAXKP),WTSIG(MAXKP)
+<       REAL RNGSECT(NUMSEC),FLUX(MAXKP),AVGNUM(MAXKP),RNGCELL(MAXKP)
+<       INTEGER INDSECT(NUMSEC),NUMCELL(MAXKP)
+< C
+<       INTEGER NUMDAT(MAXKP),NUMBIN(MAXKP,MAXPNT)
+<       REAL FLUXBIN(MAXKP,MAXPNT),XFLUX(MAXKP,MAXPNT)
+<       REAL YFLUX(MAXKP,MAXPNT),ZFLUX(MAXKP,MAXPNT)
+< C
+<       INTEGER SMOOTH1,FPCHI,FPCLO
+< C
+< D     WRITE(*,*)
+< D     WRITE(*,*)' Entered NBRFLUX!'
+< D     WRITE(*,*)' XKP = ',XKP
+< D     DO I = 1,NSECTRS
+< D       WRITE(*,*)
+< D       WRITE(*,*)' I,SECTX(I),SECTY(I) = ',I,SECTX(I),SECTY(I)
+< D       DO J = 1,MAXKP
+< D         WRITE(*,*)' I,J,SCMEAN(I,J),SC95(I,J) = ',
+< D    $                I,J,SCMEAN(I,J),SC95(I,J)
+< D         WRITE(*,*)' I,J,SC50(I,J),SCSIG(I,J) = ',
+< D    $                I,J,SC50(I,J),SCSIG(I,J)
+< D       END DO
+< D     END DO
+< D     WRITE(*,*)
+< D     WRITE(*,*)' XTAIL,YTAIL,ZTAIL = ',XTAIL,YTAIL,ZTAIL
+< D     WRITE(*,*)
+< D     DO I = 1,MAXKP
+< D       WRITE(*,*)' I,NUMDAT(I) = ',I,NUMDAT(I)
+< D       DO J = 1,MAXPNT
+< D         IF((XFLUX(I,J).GE.-15.).AND.(XFLUX(I,J).LE.-5.).AND.
+< D    $       (YFLUX(I,J).GE.-30.).AND.(YFLUX(I,J).LE.-20.)) THEN
+< D           WRITE(*,*)' I,J,XFLUX(I,J),YFLUX(I,J),ZFLUX(I,J) = ',
+< D    $                  I,J,XFLUX(I,J),YFLUX(I,J),ZFLUX(I,J)
+< D           WRITE(*,*)' I,J,NUMBIN(I,J),FLUXBIN(I,J) = ',
+< D    $                  I,J,NUMBIN(I,J),FLUXBIN(I,J)
+< D           WRITE(*,*)
+< D           PAUSE 'PAUSED!'
+< D         END IF
+< D       END DO
+< D     END DO
+< D     WRITE(*,*)
+< D     PAUSE 'PAUSED!'
+< C
+< C     Do not allow for calculations to take place inside the minimum
+< C     sphere, which is needed because of GEOTAIL's orbit.
+< C
+<       RNGCK = SQRT(XTAIL**2 + YTAIL**2 + ZTAIL**2)
+<       IF(RNGCK.LT.RNGGEO) THEN
+< D       WRITE(*,*)
+< D       WRITE(*,*)' Entered magnetosphere data gap region!'
+<         FLUXMN = 0.
+<         FLUX95 = 0.
+<         FLUX50 = 0.
+<         FLUXSD = 0.
+<         RETURN
+<       END IF
+< C
+< C     Rank order the Kp scaling sectors on the basis of their range
+< C     from the satellite in the XY-plane.
+< C
+<       CALL NEIGHBR(XTAIL,YTAIL,NSECTRS,SECTX,SECTY,INDSECT,RNGSECT)
+< D     WRITE(*,*)' After NEIGHBR!'
+< D     DO I = 1,NSECTRS
+< D       WRITE(*,*)' I,INDSECT(I),RNGSECT(I) = ',I,INDSECT(I),RNGSECT(I)
+< D     END DO
+< D     WRITE(*,*)
+< C
+< C     Calculate the distance weighted sum of the Kp scaling factors.
+< C
+< C     NUMWT = NUMSCAL
+<       CALL WTSCAL(XTAIL,YTAIL,NUMSCAL,INDSECT,RNGSECT,SCMEAN,SC95,
+<      $  SC50,SCSIG,WTMEAN,WT95,WT50,WTSIG)
+< CC    CALL WTSCAL2(NUMSCAL,INDSECT,RNGSECT,SCMEAN,SC95,
+< CC   $  SC50,SCSIG,WTMEAN,WT95,WT50,WTSIG)
+< D     WRITE(*,*)' After WTSCAL!'
+< C
+< C     Find the near-neighbor flux data cell for each Kp interval.
+< C     These flux values are treated as the average flux at the center
+< C     their respective Kp intervals.
+< C
+< C     Fix the range tolerance for the near-neighbor flux calculation.
+<       IF((SMOOTH1.EQ.4).OR.(SMOOTH1.EQ.5).OR.(SMOOTH1.EQ.6)) THEN
+< C       Spatial averaging is used.
+<         RNGCHK = RNGTOL
+<       ELSE
+< C       There is no data smoothing used.
+<         RNGCHK = 1.0
+<       END IF
+< C
+< C     Find the index for the current Kp value.
+<       DO I = 1,MAXKP
+<         IF((XKP.LE.FLOAT(I)).AND.(XKP.GE.FLOAT(I-1))) THEN
+<           IKP = I
+<           GO TO 1000
+<         END IF
+<       END DO
+< 1000  CONTINUE
+< C
+< D     WRITE(*,*)' XKP,IKP = ',XKP,IKP
+< D     PAUSE 'PAUSED!'
+< C
+<       IF((SMOOTH1.EQ.0).OR.(SMOOTH1.EQ.4)) THEN
+< C       Calculate the flux with no data smoothing or with spatial
+< C       averaging inside the volume defined by RNGTOL.
+<         CALL FLXDAT1_MAP(IKP,XTAIL,YTAIL,ZTAIL,NUMDAT,XFLUX,YFLUX,ZFLUX,
+<      $    FLUXBIN,NUMBIN,RNGCHK,NSPHVOL,IOFFSET,JOFFSET,KOFFSET,
+<      $    IMAPINDX,FLUX(IKP),AVGNUM(IKP),RNGCELL(IKP),NUMCELL(IKP))
+<       ELSE IF((SMOOTH1.EQ.1).OR.(SMOOTH1.EQ.2).OR.(SMOOTH1.EQ.3)) THEN
+< C       Spike rejection option.
+<         CALL FLXDAT2_MAP(IKP,XTAIL,YTAIL,ZTAIL,NUMDAT,XFLUX,YFLUX,ZFLUX,
+<      $    FLUXBIN,NUMBIN,RNGCHK,SMOOTH1,NFLXGET,NDROPHI,NDROPLO,
+<      $    LOGFLG,NSPHVOL,IOFFSET,JOFFSET,KOFFSET,IMAPINDX,FLUX(IKP),
+<      $    AVGNUM(IKP),RNGCELL(IKP),NUMCELL(IKP))
+<       ELSE IF(SMOOTH1.EQ.5) THEN
+< C       Perform the spatial average inside the volume defined by
+< C       RNGTOL after the specified number of high & low flux values
+< C       inside the volume have been dropped.
+<         CALL FLXDAT3_MAP(IKP,XTAIL,YTAIL,ZTAIL,NUMDAT,XFLUX,YFLUX,ZFLUX,
+<      $    FLUXBIN,NUMBIN,RNGCHK,NDROPHI,NDROPLO,LOGFLG,NSPHVOL,
+<      $    IOFFSET,JOFFSET,KOFFSET,IMAPINDX,FLUX(IKP),AVGNUM(IKP),
+<      $    RNGCELL(IKP),NUMCELL(IKP))
+<       ELSE
+< C       (SMOOTH1 = 6 case) Perform spatial averaging of flux in the
+< C       volume specified by RNGTOL, with percentile threshold limits
+< C       on flux values used in averaging.
+<         CALL FLXDAT4_MAP(IKP,XTAIL,YTAIL,ZTAIL,NUMDAT,XFLUX,YFLUX,ZFLUX,
+<      $    FLUXBIN,NUMBIN,RNGCHK,LOGFLG,NSPHVOL,IOFFSET,JOFFSET,KOFFSET,
+<      $    IMAPINDX,FPCHI,FPCLO,FLUX(IKP),AVGNUM(IKP),RNGCELL(IKP),
+<      $    NUMCELL(IKP))
+<       END IF
+< D     WRITE(*,*)' After FLUXDAT!'
+< D     WRITE(*,*)' IKP,FLUX(IKP),AVGNUM(IKP),RNGCELL(IKP),',
+< D    $           'NUMCELL(IKP) = ',
+< D    $            IKP,FLUX(IKP),AVGNUM(IKP),RNGCELL(IKP),NUMCELL(IKP)
+< C
+< C     Find the minimum distance to a data cell from any one of the
+< C     database's Kp intervals.
+< C
+<       RNG1 = RNGMIN1(MAXKP,RNGCELL)
+< D     WRITE(*,*)' After RNGMIN!'
+< C
+< C     Get the weighted sum (average) of all of the useable flux values
+< C     that lie within the specified range tolerance above the minimum
+< C     range. Get the flux statistics by multiplying the average flux
+< C     value at the spacecraft's location by the distance weighted sum
+< C     of the Kp scaling factors.
+< C
+<       FLUXMN = 0.
+<       FLUX95 = 0.
+<       FLUX50 = 0.
+<       FLUXSD = 0.
+< C
+< C
+<       ANNDIST = RNGCELL(IKP)*AVGNUM(IKP)
+<       FLUXMN = FLUXMN + FLUX(IKP)*AVGNUM(IKP)*WTMEAN(IKP)
+< D     WRITE(*,*)' XKP,XTAIL,YTAIL,ZTAIL = ',XKP,XTAIL,YTAIL,ZTAIL
+< D     WRITE(*,*)' IKP,FLUX(IKP),RNGCELL(IKP),RNG2 = ',
+< D    $            IKP,FLUX(IKP),RNGCELL(IKP),RNG2
+< D     WRITE(*,*)' FLUXMN,AVGNUM(IKP),WTMEAN(IKP) = ',
+< D    $            FLUXMN,AVGNUM(IKP),WTMEAN(IKP)
+<       FLUX95 = FLUX95 + FLUX(IKP)*AVGNUM(IKP)*WT95(IKP)
+<       FLUX50 = FLUX50 + FLUX(IKP)*AVGNUM(IKP)*WT50(IKP)
+<       FLUXSD = FLUXSD + FLUX(IKP)*AVGNUM(IKP)*WTSIG(IKP)
+<       TOTNUM = AVGNUM(IKP)
+< C
+<       IF(TOTNUM.LT.1.0) TOTNUM = 1.0
+<       ANNDIST = ANNDIST/TOTNUM
+< C
+<       FLUXMN = FLUXMN/TOTNUM
+< D     WRITE(*,*)' IKP,TOTNUM,FLUXMN = ',IKP,TOTNUM,FLUXMN
+< D     WRITE(*,*)
+<       FLUX95 = FLUX95/TOTNUM
+<       FLUX50 = FLUX50/TOTNUM
+<       FLUXSD = FLUXSD/TOTNUM
+---
+> D     IF(FLUXMN.EQ.0.) THEN
+> D       WRITE(*,*)' FLUXMN,XTAIL,YTAIL,ZTAIL = ',
+> D    $              FLUXMN,XTAIL,YTAIL,ZTAIL
+> D     END IF
+5234a5122
+>       IMPLICIT NONE
+5235a5124
+>       REAL RNGGEO
+5239a5129
+>       INTEGER NUMSCAL
+5249a5140,5147
+>       INTEGER NSPHVOL, LOGFLG, NDROPLO, NDROPHI, NFLXGET
+>       INTEGER NSECTRS, I, IKP
+>       REAL FLUXSD, FLUX50, FLUX95, FLUXMN, RNGTOL, ZTAIL, YTAIL, XTAIL
+>       REAL XKP, RNGCK, RNGCHK, RNG1, DELTARNG, RNG2
+>       REAL TOTNUM1, FLUXMN1, FLUX951, FLUX501, FLUXSD1, ANNDIST
+>       REAL TOTNUM2, FLUXMN2, FLUX952, FLUX502, FLUXSD2
+>       REAL BLEND1, BLEND2,YINT
+> C
+5259a5158
+>       LOGICAL IKP_GOOD(MAXKP),IKP_GOOD_Z(MAXKP)
+5266a5166,5170
+> C**** PATCH!! ***
+> D     XTAIL = -20.0176
+> D     YTAIL = -21.948
+> D     ZTAIL = 10.0
+> C
+5348c5252,5254
+<         IF((XKP.LE.FLOAT(I)).AND.(XKP.GE.FLOAT(I-1))) THEN
+---
+>         IKP_GOOD(I)   = .FALSE.
+>         IKP_GOOD_Z(I) = .FALSE.
+> CC      IF((XKP.LE.FLOAT(I)).AND.(XKP.GE.FLOAT(I-1))) THEN
+5358,5359c5264,5265
+<           GO TO 1000
+<         END IF
+---
+> CC        GO TO 1000
+> CC      END IF
+5372,5379c5278,5304
+<           CALL FLXDAT1_MAP(IKP,XTAIL,YTAIL,ZTAIL,NUMDAT,XFLUX,YFLUX,
+<      $      ZFLUX,FLUXBIN,NUMBIN,RNGCHK,NSPHVOL,IOFFSET,JOFFSET,KOFFSET,
+<      $      IMAPINDX,FLUX(IKP),AVGNUM(IKP),RNGCELL(IKP),NUMCELL(IKP))
+< C
+<           CALL FLXDAT1_MAP_Z(IKP,XTAIL,YTAIL,ZTAIL,NUMDAT,XFLUX,YFLUX,
+<      $      ZFLUX,FLUXBIN,NUMBIN,RNGCHK,NSPHVOL,IOFFSET,JOFFSET,KOFFSET,
+<      $      IMAPINDX,FLUX_Z(IKP),AVGNUM_Z(IKP),RNGCELL_Z(IKP),
+<      $      NUMCELL_Z(IKP))
+---
+>           IF(XTAIL.GE.BLENDX2) THEN
+> C           No z-layers.
+>             CALL FLXDAT1_MAP(IKP,XTAIL,YTAIL,ZTAIL,NUMDAT,XFLUX,YFLUX,
+>      $        ZFLUX,FLUXBIN,NUMBIN,RNGCHK,NSPHVOL,IOFFSET,JOFFSET,
+>      $        KOFFSET,IMAPINDX,FLUX(IKP),AVGNUM(IKP),RNGCELL(IKP),
+>      $        NUMCELL(IKP))
+>             IF(NUMCELL(IKP).EQ.0) THEN
+> C             Do not include this calculation in the statistics.
+>               IKP_GOOD(IKP) = .FALSE.
+>             ELSE
+>               IKP_GOOD(IKP) = .TRUE.
+>             END IF
+>           END IF
+> C
+>           IF(XTAIL.LE.BLENDX1) THEN
+> C           Use z-layers.
+>             CALL FLXDAT1_MAP_Z(IKP,XTAIL,YTAIL,ZTAIL,NUMDAT,XFLUX,YFLUX,
+>      $        ZFLUX,FLUXBIN,NUMBIN,RNGCHK,NSPHVOL,IOFFSET,JOFFSET,
+>      $        KOFFSET,IMAPINDX,FLUX_Z(IKP),AVGNUM_Z(IKP),RNGCELL_Z(IKP),
+>      $        NUMCELL_Z(IKP))
+>             IF(NUMCELL_Z(IKP).EQ.0) THEN
+> C             Do not include this calculation in the statistics.
+>               IKP_GOOD_Z(IKP) = .FALSE.
+>             ELSE
+>               IKP_GOOD_Z(IKP) = .TRUE.
+>             END IF
+>           END IF
+5384,5392c5309,5335
+<           CALL FLXDAT2_MAP(IKP,XTAIL,YTAIL,ZTAIL,NUMDAT,XFLUX,YFLUX,
+<      $      ZFLUX,FLUXBIN,NUMBIN,RNGCHK,SMOOTH1,NFLXGET,NDROPHI,NDROPLO,
+<      $      LOGFLG,NSPHVOL,IOFFSET,JOFFSET,KOFFSET,IMAPINDX,FLUX(IKP),
+<      $      AVGNUM(IKP),RNGCELL(IKP),NUMCELL(IKP))
+< C
+<           CALL FLXDAT2_MAP_Z(IKP,XTAIL,YTAIL,ZTAIL,NUMDAT,XFLUX,YFLUX,
+<      $      ZFLUX,FLUXBIN,NUMBIN,RNGCHK,SMOOTH1,NFLXGET,NDROPHI,NDROPLO,
+<      $      LOGFLG,NSPHVOL,IOFFSET,JOFFSET,KOFFSET,IMAPINDX,FLUX_Z(IKP),
+<      $      AVGNUM_Z(IKP),RNGCELL_Z(IKP),NUMCELL_Z(IKP))
+---
+>           IF(XTAIL.GE.BLENDX2) THEN
+> C           No z-layers.
+>             CALL FLXDAT2_MAP(IKP,XTAIL,YTAIL,ZTAIL,NUMDAT,XFLUX,YFLUX,
+>      $        ZFLUX,FLUXBIN,NUMBIN,RNGCHK,SMOOTH1,NFLXGET,NDROPHI,
+>      $        NDROPLO,LOGFLG,NSPHVOL,IOFFSET,JOFFSET,KOFFSET,IMAPINDX,
+>      $        FLUX(IKP),AVGNUM(IKP),RNGCELL(IKP),NUMCELL(IKP))
+>             IF(NUMCELL(IKP).EQ.0) THEN
+> C             Do not include this calculation in the statistics.
+>               IKP_GOOD(IKP) = .FALSE.
+>             ELSE
+>               IKP_GOOD(IKP) = .TRUE.
+>             END IF
+>           END IF
+> C
+>           IF(XTAIL.LE.BLENDX1) THEN
+> C           Use z-layers.
+>             CALL FLXDAT2_MAP_Z(IKP,XTAIL,YTAIL,ZTAIL,NUMDAT,XFLUX,YFLUX,
+>      $        ZFLUX,FLUXBIN,NUMBIN,RNGCHK,SMOOTH1,NFLXGET,NDROPHI,
+>      $        NDROPLO,LOGFLG,NSPHVOL,IOFFSET,JOFFSET,KOFFSET,IMAPINDX,
+>      $        FLUX_Z(IKP),AVGNUM_Z(IKP),RNGCELL_Z(IKP),NUMCELL_Z(IKP))
+>             IF(NUMCELL_Z(IKP).EQ.0) THEN
+> C             Do not include this calculation in the statistics.
+>               IKP_GOOD_Z(IKP) = .FALSE.
+>             ELSE
+>               IKP_GOOD_Z(IKP) = .TRUE.
+>             END IF
+>           END IF
+5399,5407c5342,5381
+<           CALL FLXDAT3_MAP(IKP,XTAIL,YTAIL,ZTAIL,NUMDAT,XFLUX,YFLUX,
+<      $      ZFLUX,FLUXBIN,NUMBIN,RNGCHK,NDROPHI,NDROPLO,LOGFLG,NSPHVOL,
+<      $      IOFFSET,JOFFSET,KOFFSET,IMAPINDX,FLUX(IKP),AVGNUM(IKP),
+<      $      RNGCELL(IKP),NUMCELL(IKP))
+< C
+<           CALL FLXDAT3_MAP_Z(IKP,XTAIL,YTAIL,ZTAIL,NUMDAT,XFLUX,YFLUX,
+<      $      ZFLUX,FLUXBIN,NUMBIN,RNGCHK,NDROPHI,NDROPLO,LOGFLG,NSPHVOL,
+<      $      IOFFSET,JOFFSET,KOFFSET,IMAPINDX,FLUX_Z(IKP),AVGNUM_Z(IKP),
+<      $      RNGCELL_Z(IKP),NUMCELL_Z(IKP))
+---
+>           IF(XTAIL.GE.BLENDX2) THEN
+> C           No z-layers.
+>             CALL FLXDAT3_MAP(IKP,XTAIL,YTAIL,ZTAIL,NUMDAT,XFLUX,YFLUX,
+>      $        ZFLUX,FLUXBIN,NUMBIN,RNGCHK,NDROPHI,NDROPLO,LOGFLG,
+>      $        NSPHVOL,IOFFSET,JOFFSET,KOFFSET,IMAPINDX,FLUX(IKP),
+>      $        AVGNUM(IKP),RNGCELL(IKP),NUMCELL(IKP))
+>             IF(NUMCELL(IKP).EQ.0) THEN
+> C             Do not include this calculation in the statistics.
+>               IKP_GOOD(IKP) = .FALSE.
+>             ELSE
+>               IKP_GOOD(IKP) = .TRUE.
+>             END IF
+>           END IF
+> C
+>           IF(XTAIL.LE.BLENDX1) THEN
+> C           Use z-layers.
+>             CALL FLXDAT3_MAP_Z(IKP,XTAIL,YTAIL,ZTAIL,NUMDAT,XFLUX,YFLUX,
+>      $        ZFLUX,FLUXBIN,NUMBIN,RNGCHK,NDROPHI,NDROPLO,LOGFLG,
+>      $        NSPHVOL,IOFFSET,JOFFSET,KOFFSET,IMAPINDX,FLUX_Z(IKP),
+>      $        AVGNUM_Z(IKP),RNGCELL_Z(IKP),NUMCELL_Z(IKP))
+> C
+>             IF(NUMCELL_Z(IKP).EQ.0) THEN
+> C             Redo the calculation without z-layers.
+>               CALL FLXDAT3_MAP(IKP,XTAIL,YTAIL,ZTAIL,NUMDAT,XFLUX,YFLUX,
+>      $          ZFLUX,FLUXBIN,NUMBIN,RNGCHK,NDROPHI,NDROPLO,LOGFLG,
+>      $          NSPHVOL,IOFFSET,JOFFSET,KOFFSET,IMAPINDX,FLUX_Z(IKP),
+>      $          AVGNUM_Z(IKP),RNGCELL_Z(IKP),NUMCELL_Z(IKP))
+>             END IF
+> C
+>             IF(NUMCELL_Z(IKP).EQ.0) THEN
+> C             Do not include this calculation in the statistics.
+>               IKP_GOOD_Z(IKP) = .FALSE.
+>             ELSE
+>               IKP_GOOD_Z(IKP) = .TRUE.
+>             END IF
+> D           WRITE(*,*)' SM5: IKP,NUMCELL(IKP),NUMCELL_Z(IKP) = ',
+> D    $                       IKP,NUMCELL(IKP),NUMCELL_Z(IKP)
+> D           WRITE(*,*)' SM5: IKP,IKP_GOOD(IKP),IKP_GOOD_Z(IKP) = ',
+> D    $                       IKP,IKP_GOOD(IKP),IKP_GOOD_Z(IKP)
+>           END IF
+5413,5421c5387,5417
+<           CALL FLXDAT4_MAP(IKP,XTAIL,YTAIL,ZTAIL,NUMDAT,XFLUX,YFLUX,
+<      $      ZFLUX,FLUXBIN,NUMBIN,RNGCHK,LOGFLG,NSPHVOL,IOFFSET,JOFFSET,
+<      $      KOFFSET,IMAPINDX,FPCHI,FPCLO,FLUX(IKP),AVGNUM(IKP),
+<      $      RNGCELL(IKP),NUMCELL(IKP))
+< C
+<           CALL FLXDAT4_MAP_Z(IKP,XTAIL,YTAIL,ZTAIL,NUMDAT,XFLUX,YFLUX,
+<      $      ZFLUX,FLUXBIN,NUMBIN,RNGCHK,LOGFLG,NSPHVOL,IOFFSET,JOFFSET,
+<      $      KOFFSET,IMAPINDX,FPCHI,FPCLO,FLUX_Z(IKP),AVGNUM_Z(IKP),
+<      $      RNGCELL_Z(IKP),NUMCELL_Z(IKP))
+---
+>           IF(XTAIL.GE.BLENDX2) THEN
+> C           No z-layers.
+>             CALL FLXDAT4_MAP(IKP,XTAIL,YTAIL,ZTAIL,NUMDAT,XFLUX,YFLUX,
+>      $        ZFLUX,FLUXBIN,NUMBIN,RNGCHK,LOGFLG,NSPHVOL,IOFFSET,
+>      $        JOFFSET,KOFFSET,IMAPINDX,FPCHI,FPCLO,FLUX(IKP),
+>      $        AVGNUM(IKP),RNGCELL(IKP),NUMCELL(IKP))
+>             IF(NUMCELL(IKP).EQ.0) THEN
+> C             Do not include this calculation in the statistics.
+>               IKP_GOOD(IKP) = .FALSE.
+>             ELSE
+>               IKP_GOOD(IKP) = .TRUE.
+>             END IF
+>           END IF
+> C
+>           IF(XTAIL.LE.BLENDX1) THEN
+> C           Use z-layers.
+>             CALL FLXDAT4_MAP_Z(IKP,XTAIL,YTAIL,ZTAIL,NUMDAT,XFLUX,YFLUX,
+>      $        ZFLUX,FLUXBIN,NUMBIN,RNGCHK,LOGFLG,NSPHVOL,IOFFSET,
+>      $        JOFFSET,KOFFSET,IMAPINDX,FPCHI,FPCLO,FLUX_Z(IKP),
+>      $        AVGNUM_Z(IKP),RNGCELL_Z(IKP),NUMCELL_Z(IKP))
+>             IF(NUMCELL_Z(IKP).EQ.0) THEN
+> C             Do not include this calculation in the statistics.
+>               IKP_GOOD_Z(IKP) = .FALSE.
+>             ELSE
+>               IKP_GOOD_Z(IKP) = .TRUE.
+>             END IF
+> D           WRITE(*,*)' SM6: IKP,NUMCELL(IKP),NUMCELL_Z(IKP) = ',
+> D    $                       IKP,NUMCELL(IKP),NUMCELL_Z(IKP)
+> D           WRITE(*,*)' SM6: IKP,IKP_GOOD(IKP),IKP_GOOD_Z(IKP) = ',
+> D    $                       IKP,IKP_GOOD(IKP),IKP_GOOD_Z(IKP)
+>           END IF
+5425a5422,5423
+> D      WRITE(*,*)' IKP,IKP_GOOD(IKP),IKP_GOOD_Z(IKP) = ',
+> D    $             IKP,IKP_GOOD(IKP),IKP_GOOD_Z(IKP)
+5432a5431
+> D     PAUSE 'PAUSED!'
+5439c5438
+<         IF(RNG1.GE.RNGCELL(IKP)) RNG1 = RNGCELL(IKP)
+---
+>         IF((RNG1.GE.RNGCELL(IKP)).AND.IKP_GOOD(IKP)) RNG1 = RNGCELL(IKP)
+5443,5444c5442,5443
+< D     WRITE(*,*)' After RNGMIN!  DELTARNG,RNG1,RNG2 = ',
+< D    $                           DELTARNG,RNG1,RNG2
+---
+> D     WRITE(*,*)' 1: After RNGMIN!  DELTARNG,RNG1,RNG2 = ',
+> D    $                              DELTARNG,RNG1,RNG2
+5463c5462
+<         IF(RNGCELL(IKP).LE.RNG2) THEN
+---
+>         IF((RNGCELL(IKP).LE.RNG2).AND.IKP_GOOD(IKP)) THEN
+5490a5490,5502
+> C     Find the minimum distance to a data cell from any one of the
+> C     database's Kp intervals.
+> C
+>       RNG1 = 1.E+20
+>       DO IKP = 3,7
+>        IF((RNG1.GE.RNGCELL_Z(IKP)).AND.IKP_GOOD_Z(IKP))
+>      $     RNG1 = RNGCELL_Z(IKP)
+>       END DO
+>       DELTARNG = 0.2
+>       RNG2 = RNG1 + DELTARNG
+> D     WRITE(*,*)' 2: After RNGMIN!  DELTARNG,RNG1,RNG2 = ',
+> D    $                              DELTARNG,RNG1,RNG2
+> C
+5499c5511
+<         IF(RNGCELL(IKP).LE.RNG2) THEN
+---
+>         IF((RNGCELL_Z(IKP).LE.RNG2).AND.IKP_GOOD_Z(IKP)) THEN
+5552a5565,5574
+> D     WRITE(*,*)
+> D     WRITE(*,*)' End of NBRFLUX_MAP_Z!'
+> D     WRITE(*,*)' FLUXMN,XTAIL,YTAIL,ZTAIL = ',FLUXMN,XTAIL,YTAIL,ZTAIL
+> D     PAUSE 'PAUSED!'
+> D     IF(FLUXMN.EQ.0.) THEN
+> D       WRITE(*,*)' FLUXMN,XTAIL,YTAIL,ZTAIL = ',
+> D    $              FLUXMN,XTAIL,YTAIL,ZTAIL
+> D       PAUSE 'PAUSED!'
+> D     END IF
+> C
+5576a5599,5600
+>       IMPLICIT NONE
+> C
+5578a5603,5604
+>       INTEGER NSECTRS, I
+>       REAL YTAIL, XTAIL
+5599a5626,5628
+>       IMPLICIT NONE
+> C
+>       INTEGER I, N
+5625a5655,5658
+>       IMPLICIT NONE
+> C
+>       REAL X, Y, ANG, XHINGE, YROT2, XROT2
+> C
+5666a5700,5701
+>       IMPLICIT NONE
+> C
+5669a5705,5707
+>       INTEGER NSECTRS, ISPECI, I
+>       REAL XKP, XKPSC
+> C
+5724a5763,5764
+>       IMPLICIT NONE
+> C
+5727a5768,5770
+>       INTEGER NSECTRS, ISPECI, I
+>       REAL XKP, XKPSC
+> C
+5785a5829,5830
+>       IMPLICIT NONE
+> C
+5788a5834,5836
+>       INTEGER NSECTRS, ISPECI, I
+>       REAL XKP, XKPSC
+> C
+5866a5915,5921
+>       IMPLICIT NONE
+> C
+>       INTEGER ISPECI
+>       REAL X1, X2, Y1, Y2, XCEN, YCEN
+>       REAL SCSIG, SC50, SC95, SCMEAN, XKPSC, XKP
+>       REAL FMEAN, F95, F50, FSIG, FAVG
+> C
+5955a6011,6017
+>       IMPLICIT NONE
+> C
+>       INTEGER ISPECI
+>       REAL X1, X2, Y1, Y2, YCEN, XCEN, XKP
+>       REAL SCSIG, SC50, SC95, SCMEAN, XKPSC
+>       REAL FMEAN, F95, F50, FSIG, FAVG
+> C
+6044a6107,6113
+>       IMPLICIT NONE
+> C
+>       INTEGER ISPECI
+>       REAL X1, X2, Y1, Y2, YCEN, XCEN, XKP
+>       REAL SCSIG, SC50, SC95, SCMEAN, XKPSC
+>       REAL FMEAN, F95, F50, FSIG, FAVG
+> C
+6133a6203,6209
+>       IMPLICIT NONE
+> C
+>       INTEGER ISPECI
+>       REAL X1, X2, Y1, Y2, YCEN, XCEN, XKP
+>       REAL SCSIG, SC50, SC95, SCMEAN, XKPSC
+>       REAL FMEAN, F95, F50, FSIG, FAVG
+> C
+6222a6299,6305
+>       IMPLICIT NONE
+> C
+>       INTEGER ISPECI
+>       REAL X1, X2, Y1, Y2, YCEN, XCEN, XKP
+>       REAL SCSIG, SC50, SC95, SCMEAN, XKPSC
+>       REAL FMEAN, F95, F50, FSIG, FAVG
+> C
+6311a6395,6401
+>       IMPLICIT NONE
+> C
+>       INTEGER ISPECI
+>       REAL X1, X2, Y1, Y2, YCEN, XCEN, XKP
+>       REAL SCSIG, SC50, SC95, SCMEAN, XKPSC
+>       REAL FMEAN, F95, F50, FSIG, FAVG
+> C
+6400a6491,6497
+>       IMPLICIT NONE
+> C
+>       INTEGER ISPECI
+>       REAL X1, X2, Y1, Y2, YCEN, XCEN, XKP
+>       REAL SCSIG, SC50, SC95, SCMEAN, XKPSC
+>       REAL FMEAN, F95, F50, FSIG, FAVG
+> C
+6489a6587,6593
+>       IMPLICIT NONE
+> C
+>       INTEGER ISPECI
+>       REAL X1, X2, Y1, Y2, YCEN, XCEN, XKP
+>       REAL SCSIG, SC50, SC95, SCMEAN, XKPSC
+>       REAL FMEAN, F95, F50, FSIG, FAVG
+> C
+6578a6683,6689
+>       IMPLICIT NONE
+> C
+>       INTEGER ISPECI
+>       REAL X1, X2, Y1, Y2, YCEN, XCEN, XKP
+>       REAL SCSIG, SC50, SC95, SCMEAN, XKPSC
+>       REAL FMEAN, F95, F50, FSIG, FAVG, A
+> C
+6661a6773,6779
+>       IMPLICIT NONE
+> C
+>       INTEGER ISPECI
+>       REAL X1, X2, Y1, Y2, YCEN, XCEN, XKP
+>       REAL SCSIG, SC50, SC95, SCMEAN, XKPSC
+>       REAL FMEAN, F95, F50, FSIG, FAVG
+> C
+6739a6858,6864
+>       IMPLICIT NONE
+> C
+>       INTEGER ISPECI
+>       REAL X1, X2, Y1, Y2, YCEN, XCEN, XKP
+>       REAL SCSIG, SC50, SC95, SCMEAN, XKPSC
+>       REAL FMEAN, F95, F50, FSIG, FAVG
+> C
+6817a6943,6949
+>       IMPLICIT NONE
+> C
+>       INTEGER ISPECI
+>       REAL X1, X2, Y1, Y2, YCEN, XCEN, XKP
+>       REAL SCSIG, SC50, SC95, SCMEAN, XKPSC
+>       REAL FMEAN, F95, F50, FSIG, FAVG
+> C
+6895a7028,7034
+>       IMPLICIT NONE
+> C
+>       INTEGER ISPECI
+>       REAL X1, X2, Y1, Y2, YCEN, XCEN, XKP
+>       REAL SCSIG, SC50, SC95, SCMEAN, XKPSC
+>       REAL FMEAN, F95, F50, FSIG, FAVG, A
+> C
+6978a7118,7124
+>       IMPLICIT NONE
+> C
+>       INTEGER ISPECI
+>       REAL X1, X2, Y1, Y2, YCEN, XCEN, XKP
+>       REAL SCSIG, SC50, SC95, SCMEAN, XKPSC
+>       REAL FMEAN, F95, F50, FSIG, FAVG
+> C
+7056a7203,7209
+>       IMPLICIT NONE
+> C
+>       INTEGER ISPECI
+>       REAL X1, X2, Y1, Y2, YCEN, XCEN, XKP
+>       REAL SCSIG, SC50, SC95, SCMEAN, XKPSC
+>       REAL FMEAN, F95, F50, FSIG, FAVG, A
+> C
+7138a7292,7298
+>       IMPLICIT NONE
+> C
+>       INTEGER ISPECI
+>       REAL X1, X2, Y1, Y2, YCEN, XCEN, XKP
+>       REAL SCSIG, SC50, SC95, SCMEAN, XKPSC
+>       REAL FMEAN, F95, F50, FSIG, FAVG
+> C
+7216a7377,7383
+>       IMPLICIT NONE
+> C
+>       INTEGER ISPECI
+>       REAL X1, X2, Y1, Y2, YCEN, XCEN, XKP
+>       REAL SCSIG, SC50, SC95, SCMEAN, XKPSC
+>       REAL FMEAN, F95, F50, FSIG, FAVG
+> C
+7270a7438
+> 
+7288a7457,7460
+>       IMPLICIT NONE
+>       INTEGER ISPECI
+>       REAL XKP, FLUXMN, FLUX95, FLUX50, FLUXSD
+> C
+7348a7521,7522
+>       IMPLICIT NONE
+> C
+7350a7525,7529
+>       REAL BX, BY, BZ, VX, VY, VZ, DENNUM, SWETEMP, SWPTEMP
+>       REAL HEFRAC, SWHTEMP, DYPRES, XKP, ABANG, XHINGE
+>       REAL DYPRES1, DYPRES2, ABANG1, ABANG2, VX1, VX2, YINT
+>       REAL BOWANG
+> C
+7401a7581,7582
+>       IMPLICIT NONE
+> C
+7403a7585,7587
+>       INTEGER N, L, IR, I, J, IINDA
+>       REAL RRA
+> C
+7477c7661,7663
+<       INTEGER n,M,NSTACK
+---
+>       IMPLICIT NONE
+> C
+>       INTEGER n,M,NSTACK, itemp
+7618a7805
+> 
+7625a7813,7816
+>       IMPLICIT NONE
+> C
+>       INTEGER NSAVE, N, L, I, J, IR, IINDA
+>       REAL RRA, RRB
+7711a7903,7904
+>       IMPLICIT NONE
+> C
+7713a7907,7909
+>       INTEGER N, L, IR, NNB, I, J
+>       REAL RRA, RRB
+> C
+7792a7989,7990
+>       IMPLICIT NONE
+> C
+7794a7993,7996
+>       REAL AMIN, AMAX, ASIG, AMEAN, ASUMSQ, ASUM, APCLO, APCHI
+>       REAL RFPCHI, RFPCLO, PERSTP, PERLO, PERHI, YINT
+>       INTEGER N, L, IHI, ILO
+> C
+7906a8109,8110
+>       IMPLICIT NONE
+> C
+7909a8114,8116
+>       INTEGER I, J, II, JJ, NUMSCAL
+>       REAL DTOT, WEIGHT, YTAIL, XTAIL
+> C
+8004a8212,8213
+>       IMPLICIT NONE
+> C
+8007a8217,8219
+>       INTEGER NUMSCAL, I, II, J
+>       REAL DTOT
+> C
+8059c8271
+<       FUNCTION YINT(X1,Y1,X2,Y2,XIN,MODE)         
+---
+>       REAL FUNCTION YINT(X1,Y1,X2,Y2,XIN,MODE)
+8068c8280,8285
+< C         
+---
+> C
+>       IMPLICIT NONE
+>       INTEGER MODE
+>       REAL X1, Y1, X2, Y2, XIN
+>       REAL XX1, XX2, XXIN, YY1, YY2
+> C
+8110a8328,8330
+>       IMPLICIT NONE
+>       REAL XGSM, ZGSM, ZCKLO, ZCKHI
+> C
+8165a8386
+> 

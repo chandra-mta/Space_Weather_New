@@ -1,0 +1,14 @@
+This directory contains newer (larger ACS) data files   Mar 26, 2020
+
+######
+runcrm
+######
+
+calculate CRM proton flux for Chandra ephemeris read from a file, for all 28 possible values of Kp.
+
+
+
+gfortran -std=legacy -ffixed-form -fd-lines-as-comments
+         -ffixed-line-length-none runcrm.f
+         /data/mta4/Space_Weather/CRMFLX/CRMFLX_V33/CRMFLX_V33.f
+          -o runcrm

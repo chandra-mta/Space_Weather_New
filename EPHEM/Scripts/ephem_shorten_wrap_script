@@ -1,0 +1,1 @@
+TERM=dummy; export TERM; /bin/tcsh  < /data/mta4/Space_Weather/EPHEM/Scripts/ephem_shorten_main_script

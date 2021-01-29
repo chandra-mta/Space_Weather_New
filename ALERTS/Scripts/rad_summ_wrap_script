@@ -1,0 +1,1 @@
+TERM=dummy; export TERM; /bin/tcsh  < /data/mta4/Space_Weather/ALERTS/Scripts/rad_summ_main_script

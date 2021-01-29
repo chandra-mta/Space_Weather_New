@@ -1,0 +1,105 @@
+C
+C
+      subroutine fast(bx,by,bz,va,vs,v0,alp,vms)
+
+c subroutine to solve the equations 21-24 in Bennet's paper for the
+c local fast magnetosonic speed
+c
+c It uses the simple bisection method to solve the equations.
+c accuracy to 0.01 in V_ms is good enough 
+C
+C     This routine is adpated from the paper by L. Bennet et.al.,
+C     "A Model of the Earth's Distant Bow Shock."  This paper was
+C     to be published in the Journal of Geophysical Research, 1997.
+C     This source code is from their web site at:
+C     http://www.igpp.ucla.edu/galileo/newmodel.htm
+C
+      IMPLICIT NONE
+C
+      REAL btot,bx,by,va1,va,vs1,vs,v01,v0,func,alp,step1,step2
+      REAL step3,vy,vz,angle,vms,bz,vx,dpr
+C
+
+      dpr = 6.2832/360.0
+
+      btot = sqrt(bx*bx + by*by + bz*bz)
+      vx = 1
+      va1 = va/1.0e5
+      vs1 = vs/1.0e5
+      v01 = v0/1.0e5
+
+      func = va1**2 + vs1**2 - 2.0*v01*vx + sqrt((va1**2 + vs1**2)**2 
+     1     - 4.0*va1**2*vs1**2*(vx*bx + by*sin(alp)*sqrt(v01*vx 
+     2     - vx**2) + bz*cos(alp)*sqrt(v01*vx 
+     3     - vx**2))**2/(btot**2*v01*vx))
+
+      step1 = 2.0
+      step2 = 0.1
+      step3 = 0.01
+
+      if (func.gt.0) then
+ 100     vx = vx + step1
+      func = va1**2 + vs1**2 - 2.0*v01*vx + sqrt((va1**2 + vs1**2)**2 
+     1     - 4.0*va1**2*vs1**2*(vx*bx + by*sin(alp)*sqrt(v01*vx 
+     2     - vx**2) + bz*cos(alp)*sqrt(v01*vx 
+     3     - vx**2))**2/(btot**2*v01*vx))
+         if (func.gt.0) goto 100
+
+ 200     vx = vx - step2
+      func = va1**2 + vs1**2 - 2.0*v01*vx + sqrt((va1**2 + vs1**2)**2 
+     1     - 4.0*va1**2*vs1**2*(vx*bx + by*sin(alp)*sqrt(v01*vx 
+     2     - vx**2) + bz*cos(alp)*sqrt(v01*vx 
+     3     - vx**2))**2/(btot**2*v01*vx))
+         if (func.lt.0) goto 200
+
+ 300     vx = vx + step3
+      func = va1**2 + vs1**2 - 2.0*v01*vx + sqrt((va1**2 + vs1**2)**2 
+     1     - 4.0*va1**2*vs1**2*(vx*bx + by*sin(alp)*sqrt(v01*vx 
+     2     - vx**2) + bz*cos(alp)*sqrt(v01*vx 
+     3     - vx**2))**2/(btot**2*v01*vx))
+         if (func.gt.0) goto 300
+
+         goto 1000
+
+      end if
+
+      if (func.lt.0) then
+ 400     vx = vx + step1
+      func = va1**2 + vs1**2 - 2.0*v01*vx + sqrt((va1**2 + vs1**2)**2 
+     1     - 4.0*va1**2*vs1**2*(vx*bx + by*sin(alp)*sqrt(v01*vx 
+     2     - vx**2) + bz*cos(alp)*sqrt(v01*vx 
+     3     - vx**2))**2/(btot**2*v01*vx))
+         if (func.lt.0) goto 400
+ 
+ 500     vx = vx - step2 
+      func = va1**2 + vs1**2 - 2.0*v01*vx + sqrt((va1**2 + vs1**2)**2 
+     1     - 4.0*va1**2*vs1**2*(vx*bx + by*sin(alp)*sqrt(v01*vx 
+     2     - vx**2) + bz*cos(alp)*sqrt(v01*vx 
+     3     - vx**2))**2/(btot**2*v01*vx))
+         if (func.gt.0) goto 500 
+ 
+ 600     vx = vx + step3
+      func = va1**2 + vs1**2 - 2.0*v01*vx + sqrt((va1**2 + vs1**2)**2 
+     1     - 4.0*va1**2*vs1**2*(vx*bx + by*sin(alp)*sqrt(v01*vx 
+     2     - vx**2) + bz*cos(alp)*sqrt(v01*vx 
+     3     - vx**2))**2/(btot**2*v01*vx))
+         if (func.lt.0) goto 600
+
+         goto 1000
+ 
+      end if
+
+ 1000 continue
+
+      vy = sin(alp)*sqrt(v01*vx - vx**2)
+      vz = cos(alp)*sqrt(v01*vx - vx**2)
+
+      angle = acos((bx*vx + by*vy + bz*vz)/(sqrt(bx*bx + by*by 
+     1      +bz*bz)*sqrt(vx*vx + vy*vy + vz*vz)))
+
+      vms = 1.0e5*sqrt(vx*vx + vy*vy + vz*vz)
+
+      return
+      end
+C
+C

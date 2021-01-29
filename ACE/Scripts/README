@@ -1,0 +1,61 @@
+###############################
+Update ACE Realtime HTML Page
+###############################
+
+
+ace_wrap_script
+ace_main_script     --- environment setting to run the following two scripts
+
+
+update_ace_data_files.py
+-------------------------
+update ace related data files
+
+input:  ftp://ftp.swpc.noaa.gov/pub/lists/ace/ace_epam_5m.txt
+        <ephem_dir>/Data/gephem.dat
+        <kp_dir>/Data/k_index_data_past
+output: <ace_dir>/Data/ace.archive
+        <ace_dir>/Data/ace_12h_archive
+        <ace_dir>/Data/ace_7day_archive
+        <ace_dir>/Data/longterm/ace_data.txt
+        <ace_dir>/Data/fluace.dat
+        <ace_dir>/Data/kp.dat
+
+
+plot_p3_data.py
+---------------
+plot ace scaled p3 plot
+
+input:  <ace_dir>/Data/ace_7day_archive
+output: <html_dir>/ACE/Plots/mta_ace_plot_P3.png
+
+
+create_ace_html_page.py
+------------------------
+updata ace html page
+
+input:  <ace_dir>/Data/ace_12h_archive
+        http://services.swpc.noaa.gov/images/ace-epam-7-day.gif
+        http://services.swpc.noaa.gov/images/ace-mag-swepam-7-day.gif
+
+output: <web_dir>/ACE/ace.html
+
+compute_fluence_cxo70.py
+------------------------
+create a html page displaying ace fluence when cxo is above 70kkm
+
+input:  <ephem_dir>/Data/PE.EPH.gsme_spherical
+        <ace_dir>/Data/ace_7day_archive
+output: <html_dir>/ACE/ace_flux_dat.html        
+
+web address:
+------------
+http://cxc.cfa.harvard.edu/mta/RADIATION_new/ACE/ace.html
+
+Cron job 
+--------
+han-v as mta
+
+2,8,13,18,23,28,33,38,43,48,54 * * * * /data/mta4/Space_Weather/ACE/Scripts/ace_wrap_script > /data/mta4/Space_Weather/Test_Logs/ace_main.cron  2>&1
+
+

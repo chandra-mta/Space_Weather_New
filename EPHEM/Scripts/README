@@ -1,0 +1,62 @@
+################################
+Updating Ephemeris Related Data
+################################
+
+Scripts
+-------
+ephem_copy_wrap_script
+ephem_copy_main_script      --- setting environments
+
+copy_ephem_data.py  ---- copy ephem data from /data/mta/Script/Ephem/EPH_Data/
+    input:              /data/mta/Script/Ephem/EPH_Data/DE*EPH.dat0
+    output:             <data_dir>/PE.EPH.dat           --- same as DE*EPH.dat0
+                        <data_dir>/PE.EPHgsme          
+                            t, r, x, y, z, xgsm, ygsm, zgsm, fy, mon, day  hh, mm, kp lid
+                        <data_dir>/PE.EPHgsme_in_Re
+                            t, xgsm, ygsm, zgsm, xgse, ygse, zgse, fy, mon, day, hh, mm, kp, lid
+                                where gsm is geocentric solar magnetospheric coordinates
+                                      gse is geocentric soloar ecliptic coordinates
+                        <data_dir>/logterm/dephem.dat
+
+convert_coord.py    ---- convert Chandra ECI linear coords to GSE, GSE coord
+    input:              <data_dir>/PE.EPH.gsme
+    output:             data line of T, R, xgsm, ygsm, zgsm, xge, yge, zge, fy, day, hh, mm, ss
+
+ephem_interpolate.py    --- interpolate the current epheris data
+    input:              <data_dir>/PE.EPH.dat
+    output:             <data_dir>/gephem.dat
+
+interpolate_daemonize.c --- c script to run daemonized ephem_interpolate.py
+interpolate_script.sh   --- shell script to run ephem_interpolate.py
+
+ephem_shorten_warp_script
+ephem_shorten_main_script --- setting environments
+
+create_short_ephdata.py  ---- shorten data for crm use
+    input:              <data_dir>/PE.EPHgsme
+                        <data_dir>/PE.EPHgsme_in_Re
+    output:             <data_dir>/PE.EPHgsme_short
+                        <data_dir>/PE.EPHgsme_in_Re_short
+
+
+
+Cron Job
+--------
+mat on 3cpo-v
+
+daemonized process on c3po-v as mta
+mta      17481  0.0  0.0  12668   436 ?        S    06:46   0:00 interpolate_daemonize
+
+
+mta on han-v
+
+21 3 * * *  cd /data/mta4/Space_Weather/EPHEM/Scripts; /data/mta4/Space_Weather/EPHEM/Scripts/ephem_copy_wrap_script > /data/mta4/Space_Weather/Test_Logs/ephem_ephem.cron   2>&1
+
+19 3,6,9,12,18,21 * * *   /data/mta4/Space_Weather/EPHEM/Scripts/ephem_shorten_wrap_script > /data/mta4/Space_Weather/Test_Logs/ephem_shorten.cron 2>&1
+
+
+
+
+Note: 
+The most of the update is done in /data/mta/Script/Ephem/Scripts. See README there for geopack 
+python module (a web site link is listed).

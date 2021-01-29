@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chandra Radiation Summary</title>
+<meta http-equiv="refresh" content="300"/>
+</head>
+<body style="width:95%;margin-left:10px; margin-right;10px;background-color:#FAEBD7;font-family:Georgia, "Times New Roman", Times, serif">
+
+<div style="float:right;">
+<a href="../../sot.html">Back to the SOT home page</a>
+<br />
+<a href="../index.html">Back to Radiation Main Page</a>
+</div>
+<h2>Chandra Radiation Environment Summary</h2>
+<p>
+See <a href="about_rad_summ.html">about rad_summ</a> for the definition and origin of the values below.
+</p>
+
+<table border=0>
+<tr><th> Orbit start:               </th><td>#ORBSTART# (#OPERIOD# ksec in this period)</td></tr>
+<tr><th>Current altitude/orbit leg: </th><td> #ALT# (km)</td></tr>
+<tr><th>Current configuration:      </th><td>#INST_OTG#</td></tr>
+<tr><th>Next comm:                  </th><td>#NEXT_COMM# (#COMM_SPAN# hours)</td></tr>
+<tr><th>Next rad zone:              </th><td>#NEXT_RAD# (#RAD_SPAN# hours)</td></tr>
+<tr><th>Last updated:               </th><td>#CURRENT_TIME# </td></tr>
+</table>
+<p>
+(all times on this page are UTC)
+</p>
+
+
+<table border=1>
+<tr><th>&#160</th><th colspan=6>Attenuated - projects fluences based on upcoming SI and grating configuration
+<br />ACIS effective exposure times (ks)
+&#160 &#160 Until next radzone:   #NEXT_RAD_SEC#
+&#160 &#160 Until next comm:    #NEXT_COMM_SEC#
+</th></tr>
+<tr><th>&#160</th><th>Current Flux</th><th>Current fluence<br />(total so far in current orbit)</th>
+<th>Projected fluence<br /> until next rad zone</th>
+<th>Projected fluence</th><th>Projected fluence</th><th>Limits</th>
+
+<tr><th>&#160</th><th>(p/cm^2-s-sr-MeV)</th><th>(p/cm^2-sr-MeV)</th>
+<th>at current flux<br />(at 2X flux)<br/>*at 10X flux*</th>
+<th>until next comm.</th><th>until second comm.</th><th>&#160</th>
+

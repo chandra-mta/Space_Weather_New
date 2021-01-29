@@ -1,0 +1,21 @@
+
+
+gfortran -std=legacy -ffixed-form -fd-lines-as-comments -ffixed-line-length-none runcrm_test.f  
+
+
+/data/mta4/Space_Weather/CRMFLX/CRMFLX_ver12_2001/CRMFLX_V12_EXP.f  -o runcrm_v12
+
+
+/data/mta4/Space_Weather/CRMFLX/CRMFLX_ver23a/CRMFLX_V23A_EXP.f -o runcrm_v23a
+
+
+/data/mta4/Space_Weather/CRMFLX/CRMFLX_V23_EX/CRMFLX_V33.f -o runcrm_v23ex
+
+
+
+/data/mta4/Space_Weather/CRMFLX/CRMFLX_V33/CRMFLX_V33.f -o runcrm_v3
+
+
+
+
+

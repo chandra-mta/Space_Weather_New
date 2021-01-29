@@ -1,0 +1,40 @@
+
+How to convert ASC to BIN data
+==============================
+BIN data is system depedent. After compling the converting fortran scripts, run them on the computer
+you want to run rumcrm.
+
+gfortran -std=legacy -ffixed-form -fd-lines-as-comments -ffixed-line-length-none MSheathA2B.f -o MSheathA2B
+gfortran -std=legacy -ffixed-form -fd-lines-as-comments -ffixed-line-length-none MSPHA2B.f    -o MSPHA2B
+gfortran -std=legacy -ffixed-form -fd-lines-as-comments -ffixed-line-length-none SolWA2B.f    -o SolWA2B
+
+Then run:
+MSheathA2B
+MSPHA2B
+SolWA2B
+
+in the directory where ASC files are in:
+
+MSheath_Kp_PROT.ASC
+MSPH_Kp_PROT.ASC
+SolWind_Kp_PROT.ASC
+
+This will create:
+
+MSheath_Kp_PROT.BIN
+MSPH_Kp_PROT.BIN
+SolWind_Kp_PROT.BIN
+
+After BIN files are created, they must be move to the directory where CRMFLX*.f is located.
+
+
+If you want to convert back BIN to ASC, comple:
+
+gfortran -std=legacy -ffixed-form -fd-lines-as-comments -ffixed-line-length-none MsheathB2A.f -o MsheathB2A
+gfortran -std=legacy -ffixed-form -fd-lines-as-comments -ffixed-line-length-none MSPHB2A.f    -o MSPHB2A
+gfortran -std=legacy -ffixed-form -fd-lines-as-comments -ffixed-line-length-none SolWB2A.f    -o SolWB2A
+
+then run them on the same system that BIN files are created. 
+
+
+
