@@ -1,7 +1,0 @@
-C
-C     MAXKP = number of Kp bins in the data file.
-      INTEGER MAXKP
-      PARAMETER (MAXKP = 9)
-C
-C
-

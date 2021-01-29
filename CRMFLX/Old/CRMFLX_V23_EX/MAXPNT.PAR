@@ -1,7 +1,0 @@
-C
-C     MAXPNT = maximum number of points used in datafile.
-      INTEGER MAXPNT
-      PARAMETER (MAXPNT = 250000)
-C
-C
-

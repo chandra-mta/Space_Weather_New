@@ -1,6 +1,0 @@
-
-GEOPACK Site:           http://geo.phys.spbu.ru/~tsyganenko/modeling.html
-
-f77 cocochan.f geopack.f supple.f -o cocochan
-
-How to debug fortran:   http://infohost.nmt.edu/tcc/help/lang/fortran/gdb.html

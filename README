@@ -1,0 +1,30 @@
+
+==============
+Space Weather 
+==============
+
+ACE         --- Update ACE Realtime HTML Page
+
+ACIS Rad    --- creates ACIS radiation related plots.
+
+ALERTS      --- Update MTA Radiation Environment Summary
+
+Comm Dir    --- collect comm contact data
+
+CRM3        --- Chandra Radiation Model (ver 3)
+
+CRMFLX      --- CRM flux model
+
+EPHEM       --- Updating Ephemeris Related Data
+
+GSM Plot    --- create GSM and GSE plots
+
+KP          --- extract k index
+
+SOHO        --- Solar Wind Density and Speed Prediction
+
+STEREO      --- Copying data and plots from NOAA STEREO site (defunct)
+
+TLE         --- process TLE ephemeris files for XMM and CXO
+
+XMM         --- XMM real time radiation observation

@@ -1,5 +1,0 @@
-C
-C     MAXNUM = maximum number of volume elements along an axis used in datafile.
-      PARAMETER (MAXNUM = 65)
-C
-C

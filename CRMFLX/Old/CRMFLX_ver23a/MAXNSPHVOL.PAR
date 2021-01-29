@@ -1,5 +1,0 @@
-C
-C     MAXNSPHVOL - maximum number of sub-volume elements stores in the
-C                  streamline mapping search volume.
-      PARAMETER (MAXNSPHVOL = 100000)
-C

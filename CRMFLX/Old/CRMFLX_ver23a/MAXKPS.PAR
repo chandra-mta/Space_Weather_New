@@ -1,5 +1,0 @@
-C
-C     MAXKPS = maximum number of Kp distribution mid-points used.
-      PARAMETER (MAXKPS = 100)
-C
-C
