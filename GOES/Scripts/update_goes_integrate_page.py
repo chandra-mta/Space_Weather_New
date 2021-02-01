@@ -5,7 +5,7 @@
 #       update_goes_integrate_page.py: create goes integrated html page         #
 #                                                                               #
 #           author: t. isobe (tisobe@cfa.harvard.edu)                           #
-#           last update: Jan 20, 2021                                           #
+#           last update: Feb 01, 2021                                           #
 #                                                                               #
 #################################################################################
 
@@ -171,7 +171,10 @@ def make_two_hour_table():
 #--- print flax data
 #
         for m in range(0, len(p_save)):
-            out  = adjust_format(p_save[m][1][k])
+            try:
+                out  = adjust_format(p_save[m][1][k])
+            except:
+                continue
             line = line   +  out +"\t\t" 
             #line = line   + "%1.5f\t\t" % (p_save[m][1][k]) 
             aline = aline + "%2.3e\t\t" % (p_save[m][1][k])
