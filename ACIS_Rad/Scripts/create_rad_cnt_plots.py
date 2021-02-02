@@ -1,4 +1,4 @@
-#!/usr/bin/env /data/mta/Script/Python3.6/envs/ska3/bin/python
+#!/usr/bin/env /data/mta4/Script/Python3.6/envs/ska3/bin/python
 
 #####################################################################################################
 #                                                                                                   #
@@ -6,7 +6,7 @@
 #                                                                                                   #
 #               author: t. isobe    (tisobe@cfa.harvard.edu)                                        #
 #                                                                                                   #
-#               last update: Sep 09, 2020                                                           #
+#               last update: Feb 02, 2021                                                           #
 #                                                                                                   #
 #####################################################################################################
 
@@ -68,9 +68,12 @@ def plot_radiation_counts(start, stop, outname):
 #
     try:
         start = int(float(start))
-        stop  = int(float(stop))
     except:
         start = int(Chandra.Time.DateTime(start).secs) + 2.0
+
+    try:
+        stop  = int(float(stop))
+    except:
         stop  = int(Chandra.Time.DateTime(stop).secs)
 
 #
@@ -317,6 +320,8 @@ def read_goes_data_r(start, stop, byear):
 
         try:
             stime = Chandra.Time.DateTime(adat[0]).secs
+            if stime < start:
+                continue
             goes_time.append(stime)
         except:
             continue
@@ -414,7 +419,8 @@ def read_xmm_data(start, stop):
         if stime < start:
             continue
         elif stime > stop:
-            break
+            continue
+            #break
         else:
             try:
                 xmm_time.append(stime)
