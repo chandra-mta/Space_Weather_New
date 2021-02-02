@@ -6,7 +6,7 @@
 #                                                                                           #
 #               author: t. isobe (tiosbe@cfa.harvard.edu)                                   #
 #                                                                                           #
-#               last update: Mar 20, 2020                                                   #
+#               last update: Feb 02, 2021                                                   #
 #                                                                                           #
 #############################################################################################
 
@@ -152,9 +152,9 @@ def create_crm_summary_table():
     line = line + '\n\n'
     line = line + 'Last Data Update: ' + cl_time + ' (UT)'
     line = line + '\n\n'
-    line = line + 'Due to transition to GOES-16, what used to be P2 is now P4\n'
-    line = line + 'and what used to be P5 is now P7 This message will dissappear\n'
-    line = line + 'in 01/31/2021'
+    #line = line + 'Due to transition to GOES-16, what used to be P2 is now P4\n'
+    #line = line + 'and what used to be P5 is now P7 This message will dissappear\n'
+    #line = line + 'in 01/31/2021'
 
 
     with open(sumdat, 'w') as fo:
