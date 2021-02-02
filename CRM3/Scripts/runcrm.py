@@ -96,7 +96,7 @@ def runcrm(ifile=''):
 #--- read the ephemeris data
 #
     data  = mcf.read_data_file(ifile)
-    if(len(data) < 1:
+    if len(data) < 1:
         exit(1)
     cdata = mcf.separate_data_to_arrays(data)
     tlist = cdata[0]
