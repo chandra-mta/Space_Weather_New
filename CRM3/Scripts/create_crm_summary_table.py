@@ -1,4 +1,4 @@
-#!/usr/bin/env /data/mta/Script/Python3.6/envs/ska3/bin/python
+#!/usr/bin/env /data/mta4/Script/Python3.6/envs/ska3/bin/python
 
 #############################################################################################
 #                                                                                           #
@@ -31,7 +31,7 @@ for ent in data:
     line  = atemp[0].strip()
     exec("%s = %s" %(var, line))
 
-sys.path.append('/data/mta/Script/Python3.6/MTA/')
+sys.path.append('/data/mta4/Script/Python3.6/MTA/')
 import mta_common_functions     as mcf
 #
 #--- set a temporary file name
