@@ -1,4 +1,4 @@
-#!/usr/bin/env /data/mta/Script/Python3.6/envs/ska3/bin/python
+#!/usr/bin/env /data/mta4/Script/Python3.6/envs/ska3/bin/python
 
 #####################################################################################
 #                                                                                   #
@@ -6,7 +6,7 @@
 #                                                                                   #
 #               author: t. isobe (tisobe@cfa.harvard.edu)                           #
 #                                                                                   #
-#               last updae: Mar 23, 2020                                            #
+#               last updae: feb 04, 2021                                            #
 #                                                                                   #
 #####################################################################################
 
@@ -36,7 +36,7 @@ for ent in data:
 #
 #--- append  pathes to private folders to a python directory
 #
-sys.path.append('/data/mta/Script/Python3.6/MTA/')
+sys.path.append('/data/mta4/Script/Python3.6/MTA/')
 #
 #--- import several functions
 #
@@ -61,7 +61,7 @@ ace_data         = ace_dir   + 'Data/'
 #
 #--- ftp address
 #
-noaa_file       = 'ftp://' + ace_ftp + 'ace_epam_5m.txt'
+noaa_file       = 'https://services.swpc.noaa.gov/text/ace-epam.txt'
 #
 #--- current time
 #
@@ -388,6 +388,12 @@ def combine_data(current_ace_data, past_ace_data):
     dlen   = len(current_ace_data)
     clen   = len(current_ace_data[0])
     plen   = len(past_ace_data[0])
+#
+#--- there is no new data; return past data
+#
+    if clen < 1:
+        return past_ace_data
+
     nstart = current_ace_data[0][0]
 #
 #--- initialize a list of lists
