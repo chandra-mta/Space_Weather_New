@@ -10,25 +10,11 @@ import time
 import random
 rtail  = int(time.time() * random.random())
 zspace = '/tmp/zspace' + str(rtail)
-
-
-f    = open('/data/mta4/www/RADIATION_new/CRM/CRMsummary.dat', 'r')
-line = f.read()
-f.close()
-
-f    = open('/data/mta4/Space_Weather/house_keeping/crm_summary_html_template', 'r')
-html = f.read()
-
-html = html.replace("#TEXT#", line)
-
-fo   = open('/data/mta4/www/RADIATION_new/CRM/CRMsummary.html', 'w')
-fo.write(html)
-fo.close()
 #
 #-- quite often the plotting routine stack and becomes a staled process
 #-- check the previous one and kill it
 #
-cmd = 'ps aux|grep plot_crm_flux_data.py > ' + zspace
+cmd = 'ps aux|grep plot_p3_data.py > ' + zspace
 os.system(cmd)
 
 with open(zspace, 'r') as f:
