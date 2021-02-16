@@ -38,6 +38,10 @@ cmd = 'rm -rf ' + zspace
 os.system(cmd)
 
 for ent in data:
+    ms = re.search('grep', ent)
+    if ms is not None:
+        continue 
+
     atemp = re.split('\s+', ent)
     cmd   = 'kill -9 ' + atemp[1]
     os.system(cmd)
