@@ -6,7 +6,7 @@
 #                                                                               #
 #           author: t. isobe (tisobe@cfa.harvard.edu)                           #
 #                                                                               #
-#           last update: Jan 05, 2021                                           #
+#           last update: Feb 17, 2021                                           #
 #                                                                               #
 #################################################################################
 
@@ -110,9 +110,12 @@ def plot_crm_flux_data():
 #
 #--- convert them to predictive flux and attenuated flux
 #
-    [flux, flux_atten] = create_attenuation_list(ftime_list, flux_list,\
+    try:
+        [flux, flux_atten] = create_attenuation_list(ftime_list, flux_list,\
                                 inst_start, inst_stop, otg_start, otg_stop,\
                                 ace, fluence, afluence, otime, altitude)
+    except:
+        exit(1)
 #
 #--- convert time into day of year
 #

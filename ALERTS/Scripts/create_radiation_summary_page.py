@@ -6,7 +6,7 @@
 #                                                                                       #
 #               author: t. isobe (tisobe@cfa.harvard.edu)                               #
 #                                                                                       #
-#               last updae: Jan 20, 2021                                                #
+#               last updae: Feb 17, 2021                                                #
 #                                                                                       #
 #########################################################################################
 
@@ -88,7 +88,11 @@ def create_radiation_summary_page():
 #
 #--- read goes data
 #
-    [goes_p4_flx, goes_p7_flx, goes_e2_flx, goes_p4_flu, goes_p7_flu, goes_e2_flu] = read_goes_data()
+    try:
+        out = read_goes_data()
+    except:
+        exit(1)
+    [goes_p4_flx, goes_p7_flx, goes_e2_flx, goes_p4_flu, goes_p7_flu, goes_e2_flu] = out
 #
 #--- read ace data
 #
