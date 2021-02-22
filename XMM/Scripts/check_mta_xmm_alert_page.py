@@ -1,4 +1,4 @@
-#!/usr/bin/env /data/mta/Script/Python3.6/envs/ska3/bin/python
+#!/usr/bin/env /data/mta4/Script/Python3.6/envs/ska3/bin/python
 
 #################################################################################################
 #                                                                                               #
@@ -8,7 +8,7 @@
 #                                                                                               #
 #           author: t. isobe (tisobe@cfa.harvard.edu)                                           #
 #                                                                                               #
-#           last update: Feb 26, 2020                                                           #
+#           last update: Feb 22, 2021                                                           #
 #                                                                                               #
 #################################################################################################
 
@@ -171,7 +171,7 @@ def run_test():
         line = line + '\n\n\n'
 
         line = line + 'see:\n\n '  
-        line = line + '\t\thttps://cxc.cfa.harvard.edu/mta/RADIATION/XMM/ '
+        line = line + '\t\thttps://cxc.cfa.harvard.edu/mta/RADIATION_new/XMM/ '
         line = line + '\n\nfor the current condition.\n'
 
         with open(zspace, 'w') as fo:
