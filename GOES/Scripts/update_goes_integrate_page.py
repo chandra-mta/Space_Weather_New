@@ -5,7 +5,7 @@
 #       update_goes_integrate_page.py: create goes integrated html page         #
 #                                                                               #
 #           author: t. isobe (tisobe@cfa.harvard.edu)                           #
-#           last update: Feb 01, 2021                                           #
+#           last update: Feb 22, 2021                                           #
 #                                                                               #
 #################################################################################
 
@@ -182,7 +182,10 @@ def make_two_hour_table():
 #
 #--- electron does not have distinction fo 0.8 2.8 or 4.0; so fake with all E>2.0
 #
-        aline = aline  + "%2.3e\t%2.3e\n" % (p_save[m][1][k], p_save[m][1][k])
+        try:
+            aline = aline  + "%2.3e\t%2.3e\n" % (p_save[m][1][k], p_save[m][1][k])
+        except:
+            aline = aline  + "na\t%na\n" % (p_save[m][1][k], p_save[m][1][k])
 #
 #--- table break
 #
