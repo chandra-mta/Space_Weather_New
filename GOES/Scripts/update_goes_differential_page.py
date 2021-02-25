@@ -5,7 +5,7 @@
 #       update_goes_differential_page.py: update goes differential html page    #
 #                                                                               #
 #           author: t. isobe (tisobe@cfa.harvard.edu)                           #
-#           last update: Feb 10, 2021                                           #
+#           last update: Feb 25, 2021                                           #
 #                                                                               #
 #################################################################################
 
@@ -181,19 +181,22 @@ def make_two_hour_table():
         line = line + '\t' +  t_list[k]  + '\t\t'
 
 
-        line = line + adjust_format(p_data[0][1][k]) + "\t"
-        line = line + adjust_format(p_data[1][1][k]) + "\t"
-        line = line + adjust_format(p_data[2][1][k]) + "\t"
-        line = line + adjust_format(p_data[3][1][k]) + "\t"
-        line = line + adjust_format(p_data[4][1][k]) + "\t"
-        line = line + adjust_format(p_data[5][1][k]) + "\t"
-        line = line + adjust_format(p_data[6][1][k]) + "\t"
-        line = line + adjust_format(p_data[7][1][k]) + "\t"
-        line = line + adjust_format(p_data[8][1][k]) + "\t"
-        line = line + adjust_format(p_data[9][1][k]) + "\t"
-        line = line + adjust_format(p_data[10][1][k]) + "\t"
-        line = line + adjust_format(p_data[11][1][k]) + "\t"
-        line = line + adjust_format(p_data[12][1][k]) + "\t"
+        try:
+            line = line + adjust_format(p_data[0][1][k]) + "\t"
+            line = line + adjust_format(p_data[1][1][k]) + "\t"
+            line = line + adjust_format(p_data[2][1][k]) + "\t"
+            line = line + adjust_format(p_data[3][1][k]) + "\t"
+            line = line + adjust_format(p_data[4][1][k]) + "\t"
+            line = line + adjust_format(p_data[5][1][k]) + "\t"
+            line = line + adjust_format(p_data[6][1][k]) + "\t"
+            line = line + adjust_format(p_data[7][1][k]) + "\t"
+            line = line + adjust_format(p_data[8][1][k]) + "\t"
+            line = line + adjust_format(p_data[9][1][k]) + "\t"
+            line = line + adjust_format(p_data[10][1][k]) + "\t"
+            line = line + adjust_format(p_data[11][1][k]) + "\t"
+            line = line + adjust_format(p_data[12][1][k]) + "\t"
+        except:
+            pass
 
         line = line + "%5.0f\t\n" % (hrc_val[k])
 
