@@ -5,7 +5,7 @@
 #       collect_goes_long.py: collect data for the long term use                #
 #                                                                               #
 #           author: t. isobe (tisobe@cfa.harvard.edu)                           #
-#           last update: Jan 12, 2021                                           #
+#           last update: Mar 12, 2021                                           #
 #                                                                               #
 #################################################################################
 
@@ -122,20 +122,11 @@ def collect_goes_long():
             continue
         line = line + t_list[k]  + '\t\t'
 
-
-        line = line + adjust_format(p_data[0][1][k])  + "\t"
-        line = line + adjust_format(p_data[1][1][k])  + "\t"
-        line = line + adjust_format(p_data[2][1][k])  + "\t"
-        line = line + adjust_format(p_data[3][1][k])  + "\t"
-        line = line + adjust_format(p_data[4][1][k])  + "\t"
-        line = line + adjust_format(p_data[5][1][k])  + "\t"
-        line = line + adjust_format(p_data[6][1][k])  + "\t"
-        line = line + adjust_format(p_data[7][1][k])  + "\t"
-        line = line + adjust_format(p_data[8][1][k])  + "\t"
-        line = line + adjust_format(p_data[9][1][k])  + "\t"
-        line = line + adjust_format(p_data[10][1][k]) + "\t"
-        line = line + adjust_format(p_data[11][1][k]) + "\t"
-        line = line + adjust_format(p_data[12][1][k]) + "\t"
+        for m in range(0, 13):
+            try:
+                line = line + adjust_format(p_data[m][1][k])  + "\t"
+            except:
+                line = line + "0.0\t"
 
         line = line + "%5.0f\t\n" % (hrc_val[k])
 #
@@ -321,10 +312,13 @@ def compute_hrc(data):
 
     hrc = []
     for k in range(0, len(c5)):
-        val = 6000.0 *  (c5[k] * (23.27-11.64) + c6[k]* (38.1 - 25.9))/(38.1 - 11.64)\
+        try:
+            val = 6000.0 *  (c5[k] * (23.27-11.64) + c6[k]* (38.1 - 25.9))/(38.1 - 11.64)\
              + 270000.0 * (c7[k])\
              + 100000.0 * (c8[k] *(98.5-83.7) + c9[k] * (118-99.9)\
              + c10[k]*(143.-115) + c11[k]*(242.-160.)) /(242.-83.7)
+        except:
+            val = 0.0
 
         hrc.append(val)
 
