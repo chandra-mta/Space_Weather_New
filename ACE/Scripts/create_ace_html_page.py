@@ -6,7 +6,7 @@
 #                                                                                                   #
 #               author: t. isobe    (tisobe@cfa.harvard.edu)                                        #
 #                                                                                                   #
-#               Last update: Jan 14, 2021                                                           #
+#               Last update: Mar 15, 2021                                                           #
 #                                                                                                   #
 #####################################################################################################
 
@@ -88,7 +88,10 @@ def create_ace_html_page():
 #--- l_vals:    a list of the 'last' entries of those electron/proton flux data
 #--- data is also trimmed to the last 2 hours
 #
-    cdata_cols, l_vals = convert_to_col_data(cdata)
+    try:
+        cdata_cols, l_vals = convert_to_col_data(cdata)
+    except:
+        exit(1)
 #
 #--- create data table for the html page
 #
