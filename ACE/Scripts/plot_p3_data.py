@@ -6,7 +6,7 @@
 #                                                                                       #
 #               author: t. isobe    (tisobe@cfa.harvard.edu)                            #
 #                                                                                       #
-#               Last update: Jan 06, 2021                                               #
+#               Last update: Mar 16, 2021                                               #
 #                                                                                       #
 #########################################################################################
 
@@ -109,6 +109,7 @@ def convert_to_arrays(data):
     for k in range(0, 8):
        sdata.append([])
 
+    chk = 0
     for ent in data:
         atemp = re.split('\s+', ent)
         chk1  = float(atemp[6])
@@ -116,19 +117,30 @@ def convert_to_arrays(data):
         if (chk1 != 0) or (chk2 != 0):
             continue
 #
-#--- compuer Chnadra Time
+#--- convert to ydate (input date format example: 2021 03 16  0845)
 #
-        ltime = atemp[0] + ':' +  atemp[1] + ':' + atemp[2] + ':'
-        ltime = ltime    + atemp[3][0] + atemp[3][1] + ':' + atemp[3][2] + atemp[3][3] + ':00'
-        ltime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(ltime, '%Y:%m:%d:%H:%M:%S'))
-        stime = int(Chandra.Time.DateTime(ltime).secs)
+        ltime = atemp[0] + ':' +  atemp[1] + ':' + atemp[2] 
+        ltime = time.strftime('%Y:%j', time.strptime(ltime, '%Y:%m:%d'))
+        btemp = re.split(':', ltime)
+        year  = int(float(btemp[0]))
+        yday  = float(btemp[1])
+        hh    = float(atemp[3][0] + atemp[3][1])
+        mm    = float(atemp[3][2] + atemp[3][3])
+        yday += hh /24.0 + mm / 1440.0 
 #
-#--- convert chandra time into doy of this year
+#--- if the year changes, use ydate from the year started
 #
-        doy   = (stime - year_start) / 86400.0
-        if doy > 0:
-            doy += 1
-        sdata[0].append(doy)
+        if chk == 0:                #--- keeping the year of the first data point
+            byear = year
+            if mcf.is_leapyear(byear):
+                base = 366
+            else:
+                base = 365
+            chk = 1
+
+        if year > byear:
+            yday += base
+        sdata[0].append(yday)
 #
 #--- electron part
 #
