@@ -1,4 +1,4 @@
-#!/usr/bin/env /data/mta/Script/Python3.6/envs/ska3/bin/python
+#!/usr/bin/env /data/mta/Script/Python3.8/envs/ska3-shiny/bin/python
 
 #####################################################################################
 #                                                                                   #
@@ -6,7 +6,7 @@
 #                                                                                   #
 #           author: t. isobe (tiosbe@cfa.harvard.edu)                               #
 #                                                                                   #
-#           last update: Mar 27, 2020                                               #
+#           last update: Mar 16, 2021                                               #
 #                                                                                   #
 #####################################################################################
 
@@ -35,7 +35,7 @@ for ent in data:
 #
 #--- append path to a private folder
 #
-sys.path.append('/data/mta/Script/Python3.6/MTA/')
+sys.path.append('/data/mta/Script/Python3.8/MTA/')
 import mta_common_functions     as mcf
 #
 #--- temp writing file name

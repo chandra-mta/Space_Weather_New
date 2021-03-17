@@ -1,3 +1,0 @@
-.run /data/mta4/Space_Weather/Idl_subs/read_ephemeris
-.run /data/mta4/Space_Weather/EPHEM/Scripts/lephem
-exit

@@ -1,10 +1,10 @@
-#!/usr/bin/env /data/mta/Script/Python3.6/envs/ska3/bin/python
+#!/usr/bin/env /data/mta4/Script/Python3.6/envs/ska3/bin/python
 
 #############################################################################
 #                                                                           #
 #       copy_ephem_data.py: copy ephem data from another site               #
 #                                                                           #
-#               author: t. isobe (tisobe@@cfa.harvard.edu)                   #
+#               author: t. isobe (tisobe@@cfa.harvard.edu)                  #
 #                                                                           #
 #                   last update: Mar 03, 2020                               #
 #                                                                           #
@@ -47,12 +47,12 @@ rtail  = int(time.time() * random.random())
 zspace = '/tmp/zspace' + str(rtail)
 
 #----------------------------------------------------------------------------------
-#-- copy_ephem_data: copy ephem data from /data/mta/Script/Ephem/EPH_Data/       --
+#-- copy_ephem_data: copy ephem data from /data/mta4/Script/Ephem/EPH_Data/       --
 #----------------------------------------------------------------------------------
 
 def copy_ephem_data():
     """
-    copy ephem data from /data/mta/Script/Ephem/EPH_Data/
+    copy ephem data from /data/mta4/Script/Ephem/EPH_Data/
     input:  none, but read from <input_data>/DE*.EPH.dat0
     output: <data_dir>/EPH.dat
             <data_dir>/EPH.gsme

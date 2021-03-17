@@ -1,7 +1,0 @@
-.run /data/mta4/Space_Weather/Idl_subs/rac_arread
-.run /data/mta4/Space_Weather/Idl_subs/rac_arreadbl
-.run /data/mta4/Space_Weather/Idl_subs/timeconv
-set_plot, 'z'
-device, set_resolution= [650,500],set_colors=7
-.run /data/mta4/Space_Weather/GSM_plots/Scripts/cheph_gsm
-exit

@@ -1,4 +1,4 @@
-#!/usr/bin/env /data/mta/Script/Python3.6/envs/ska3/bin/python
+#!/usr/bin/env /data/mta/Script/Python3.8/envs/ska3-shiny/bin/python
 
 #################################################################################################
 #                                                                                               #
@@ -6,7 +6,7 @@
 #                                                                                               #
 #           author: t. isobe (tisobe@cfa.harvard.edu)                                           #
 #                                                                                               #
-#           last update: Feb 26, 2020                                                           #
+#           last update: Mar 16, 2021                                                           #
 #                                                                                               #
 #################################################################################################
 
@@ -49,7 +49,7 @@ for ent in data:
 #
 #--- append  pathes to private folders to a python directory
 #
-sys.path.append('/data/mta/Script/Python3.6/MTA/')
+sys.path.append('/data/mta/Script/Python3.8/MTA/')
 #
 #--- import several functions
 #

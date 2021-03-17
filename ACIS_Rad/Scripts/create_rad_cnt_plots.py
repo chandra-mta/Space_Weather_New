@@ -1,4 +1,4 @@
-#!/usr/bin/env /data/mta4/Script/Python3.6/envs/ska3/bin/python
+#!/usr/bin/env /data/mta4/Script/Python3.8/envs/ska3-shiny/bin/python
 
 #####################################################################################################
 #                                                                                                   #
@@ -6,7 +6,7 @@
 #                                                                                                   #
 #               author: t. isobe    (tisobe@cfa.harvard.edu)                                        #
 #                                                                                                   #
-#               last update: Feb 02, 2021                                                           #
+#               last update: Mar 16, 2021                                                           #
 #                                                                                                   #
 #####################################################################################################
 

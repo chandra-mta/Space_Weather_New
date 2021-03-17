@@ -1,1 +1,0 @@
-TERM=dummy; export TERM; /bin/tcsh  < /data/mta/Script/Space_Weather/GOES/Scripts/goes_new_main_script

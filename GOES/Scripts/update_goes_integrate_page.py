@@ -1,11 +1,11 @@
-#!/usr/bin/env /data/mta4/Script/Python3.6/envs/ska3/bin/python
+#!/usr/bin/env /data/mta4/Script/Python3.8/envs/ska3-shiny/bin/python
 
 #################################################################################
 #                                                                               #
 #       update_goes_integrate_page.py: create goes integrated html page         #
 #                                                                               #
 #           author: t. isobe (tisobe@cfa.harvard.edu)                           #
-#           last update: Feb 22, 2021                                           #
+#           last update: mar 16, 2021                                           #
 #                                                                               #
 #################################################################################
 
@@ -35,7 +35,7 @@ for ent in data:
 #--- append path to a private folder
 #
 sys.path.append(goes_dir)
-sys.path.append('/data/mta4/Script/Python3.6/MTA/')
+sys.path.append('/data/mta4/Script/Python3.8/MTA/')
 
 #import mta_common_functions     as mcf
 #

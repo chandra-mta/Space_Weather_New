@@ -47,14 +47,12 @@ mat on 3cpo-v
 daemonized process on c3po-v as mta
 mta      17481  0.0  0.0  12668   436 ?        S    06:46   0:00 interpolate_daemonize
 
-
-mta on han-v
-
-21 3 * * *  cd /data/mta4/Space_Weather/EPHEM/Scripts; /data/mta4/Space_Weather/EPHEM/Scripts/ephem_copy_wrap_script > /data/mta4/Space_Weather/Test_Logs/ephem_ephem.cron   2>&1
-
-19 3,6,9,12,18,21 * * *   /data/mta4/Space_Weather/EPHEM/Scripts/ephem_shorten_wrap_script > /data/mta4/Space_Weather/Test_Logs/ephem_shorten.cron 2>&1
+18 * * * * cd /data/mta4/Space_Weather/EPHEM/Scripts; /data/mta4/Space_Weather/EPHEM/Scripts/daemon_process_check_ephem_primary.py > $HOME/Logs/daemon_process_check_ephem_primary_cron 2>&1
 
 
+mta on r2d2-v
+32 3,6,9,12,18,21 * * *   /data/mta4/Space_Weather/EPHEM/Scripts/ephem_shorten_wrap_script > $HOME/Logs/ephem_shorten_new.cron 2>&1
+21 3 * * *                /data/mta4/Space_Weather/EPHEM/Scripts/ephem_copy_wrap_script    > $HOME/Logs/ephem_ephem_new.cron   2>&1
 
 
 Note: 
