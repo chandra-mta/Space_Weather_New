@@ -6,7 +6,7 @@
 #                                                                                                   #
 #               author: t. isobe    (tisobe@cfa.harvard.edu)                                        #
 #                                                                                                   #
-#               Last update: Mar 16, 2021                                                           #
+#               Last update: Mar 18, 2021                                                           #
 #                                                                                                   #
 #####################################################################################################
 
@@ -259,7 +259,7 @@ def create_ace_data_table(cdata, l_vals):
 #
 #--- compute mean and find min of p5, p6, and p7
 #
-    ind    = [p5dat > 0]
+    ind    = p5dat > 0
     cdat   = p5dat[ind]
     if len(cdat) > 0:
         p337a  = numpy.mean(cdat)
@@ -268,7 +268,7 @@ def create_ace_data_table(cdata, l_vals):
         p337a  = 0   
         p337m  = 0   
 
-    ind    = [p6dat > 0]
+    ind    = p6dat > 0
     cdat   = p6dat[ind]
     if len(cdat) > 0:
         p761a  = numpy.mean(cdat)
@@ -277,7 +277,7 @@ def create_ace_data_table(cdata, l_vals):
         p761a  = 0    
         p761m  = 0   
 
-    ind    = [p7dat > 0]
+    ind    = p7dat > 0
     cdat   = p7dat[ind]
     if len(cdat) > 0:
         p1073a = numpy.mean(cdat)
@@ -318,8 +318,8 @@ def create_ace_data_table(cdata, l_vals):
 #
 #--- index to find good data
 #
-    ind    = [pchk == 0]
-    ind2   = [echk == 0]
+    ind    = pchk == 0
+    ind2   = echk == 0
 
 #
 #--- check whether there are any good data left after removing bad ones
