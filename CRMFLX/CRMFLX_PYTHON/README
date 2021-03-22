@@ -1,0 +1,66 @@
+###############################################
+Compute CRM proton flux for Chandra Ephemeris
+###############################################
+
+This directory holds python version of crmflx.f and runcrm.f written by Robert Cameron. 
+
+Please also see: crmflx_description.pdf
+
+runcrm.py
+=========
+
+The script to call crmfxl.pyx and creates data tables of 
+    <data_dir>/CRM_p.data<##>
+
+    input: a file name of Chandra Ephemeris
+                default: <ephem_dir>Data/PE.EPH.gsme_in_Re_short
+
+    output: <crm3_dir>/Data/CRM_p.da<##>
+
+
+crmflx.pyx
+==========
+The script to estimate CRM proton flux on given coordinates and kp value
+To minimize the computation time, this version only kept essential parts for the MTA 
+computation and it is not as universal as the original crmflx.f. 
+
+Data needed:
+./Data/msheath_short.asc
+./Data/msph_short.asc
+./Data/solwin_short.asc
+
+These files keep the model values for given kp values. The original data files 
+(capitalized files) are also in the same directory. These files include only 
+"non-zero" data lines to save read-in time and the memory space. 
+
+    input:  xkp     --- kp index user desires output for.
+            xgsm    --- satellite's x-coordinate (re).
+            ygsm    --- satellite's y-coordinate (re).
+            zgsm    --- satellite's z-coordinate (re).
+
+    there are a couple dozens more but they are fixed values during the computation.
+
+    output: idloc   --- phenomenological region location identification flag:
+                        idloc = 1 if spacecraft is in solar wind
+                        idloc = 2 if spacecraft is in magnetosheath
+                        idloc = 3 if spacecraft is in magnetosphere.
+            fluxmn  --- mean flux (#/[cm^2-sec-sr-mev]) for selected species.
+            flux95  --- 95% flux (#/[cm^2-sec-sr-mev]) for selected species.
+            flux50  --- 50% flux (#/[cm^2-sec-sr-mev]) for selected species.
+            fluxsd  --- standard deviation of flux for selected species.
+
+
+setup.py
+========
+The script to compile python script.
+
+    /data/mta4/Script/Python3.8/envs/ska3-shiny/bin/python setup.py build_ext --inplace
+    This will creates:
+        * build/
+        * crmflx.c
+        * crmflx.cpython-36m-x86_64-linux-gnu.so
+    and updates:
+        * __pycache__
+
+See: https://cython.readthedocs.io/en/latest/src/tutorial/cython_tutorial.html
+
