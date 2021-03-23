@@ -6,7 +6,7 @@
 #                                                                                                   #
 #               author: t. isobe    (tisobe@cfa.harvard.edu)                                        #
 #                                                                                                   #
-#               Last update: Mar 18, 2021                                                           #
+#               Last update: Mar 23, 2021                                                           #
 #                                                                                                   #
 #####################################################################################################
 
@@ -638,8 +638,18 @@ def download_img(file, chg=1):
 #--- download the img
 #
     #cmd   = 'lynx -source ' + file + '>' + oimg
-    cmd   = 'wget -q -O' + oimg + ' ' + file
-    os.system(cmd)
+    try:
+        cmd  = 'wget -q -O' + oimg + ' ' + file
+        os.system(cmd)
+    except:
+        mc   = re.search('gif', oimg)
+        if mc is not None:
+            cmd  = ' cp ' + house_keeping + 'no_plot.gif ' + oimg
+        else:
+            cmd  = ' cp ' + house_keeping + 'no_data.png ' + oimg
+        os.system(cmd)
+
+        return
 #
 #--- reverse the color of the image
 #
