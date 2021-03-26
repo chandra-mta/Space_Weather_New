@@ -6,7 +6,7 @@
 #                                                                                                   #
 #               author: t. isobe    (tisobe@cfa.harvard.edu)                                        #
 #                                                                                                   #
-#               Last update: Mar 23, 2021                                                           #
+#               Last update: Mar 25, 2021                                                           #
 #                                                                                                   #
 #####################################################################################################
 
@@ -580,7 +580,7 @@ def curr_state():
     stop  = start + 3.0 * 86400.
 
     ifile = ephem_dir + 'dsn_summary.dat'
-    data  = read_file_data(ifile)
+    data  = mcf.read_file_data(ifile)
     data  = data[2:]
     line  = line + data[0] + '\n' + data[1] + '\n'
     for ent in data:
