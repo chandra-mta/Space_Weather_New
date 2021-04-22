@@ -5,7 +5,7 @@
 #       update_goes_differential_page.py: update goes differential html page    #
 #                                                                               #
 #           author: t. isobe (tisobe@cfa.harvard.edu)                           #
-#           last update: mar 16, 2021                                           #
+#           last update: Apr 22, 2021                                           #
 #                                                                               #
 #################################################################################
 
@@ -244,8 +244,9 @@ def make_two_hour_table():
     line = line +'\n'
     line = line + '\tHRC Proxy is defined as:\n'
     line = line + '\n'
-    line = line + '\tHRC Proxy = 6000 * (11.64-38.1MeV) + 270000 * (40.3-73.4MeV) '
-    line = line + '100000 * (83.7-242.0MeV)\n'
+#    line = line + '\tHRC Proxy = 6000 * (11.64-38.1MeV) + 270000 * (40.3-73.4MeV) '
+#    line = line + '100000 * (83.7-242.0MeV)\n'
+    line = line + '\tHRC Proxy  = 143 * P5 + 64738 * P6 + 162505 * P7 + 16\n'
 #
 #---  print out data file for CRM use
 #
@@ -456,10 +457,14 @@ def compute_hrc(data):
 
     for k in range(0, len(c5)):
         try:
-            val = 6000.0 *  (c5[k] * (23.27-11.64) + c6[k]* (38.1 - 25.9))/(38.1 - 11.64)\
-                + 270000.0 * (c7[k])\
-                + 100000.0 * (c8[k] *(98.5-83.7) + c9[k] * (118-99.9)\
-                + c10[k]*(143.-115) + c11[k]*(242.-160.)) /(242.-83.7)
+#            val = 6000.0 *  (c5[k] * (23.27-11.64) + c6[k]* (38.1 - 25.9))/(38.1 - 11.64)\
+#                + 270000.0 * (c7[k])\
+#                + 100000.0 * (c8[k] *(98.5-83.7) + c9[k] * (118-99.9)\
+#                + c10[k]*(143.-115) + c11[k]*(242.-160.)) /(242.-83.7)
+#
+#--- after 2021:112:06:05:00
+#
+            val = 143.0 * c5[k] + 64738.0 * c6[k] + 162505.0 * c7[k] + 16.1    #--- 16.1 = 4127.0 /256.0
         except:
             continue
 
