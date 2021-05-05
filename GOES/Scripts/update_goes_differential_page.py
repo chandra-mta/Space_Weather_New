@@ -5,7 +5,7 @@
 #       update_goes_differential_page.py: update goes differential html page    #
 #                                                                               #
 #           author: t. isobe (tisobe@cfa.harvard.edu)                           #
-#           last update: Apr 22, 2021                                           #
+#           last update: May 05, 2021                                           #
 #                                                                               #
 #################################################################################
 
@@ -246,7 +246,8 @@ def make_two_hour_table():
     line = line + '\n'
 #    line = line + '\tHRC Proxy = 6000 * (11.64-38.1MeV) + 270000 * (40.3-73.4MeV) '
 #    line = line + '100000 * (83.7-242.0MeV)\n'
-    line = line + '\tHRC Proxy  = 143 * P5 + 64738 * P6 + 162505 * P7 + 16\n'
+#    line = line + '\tHRC Proxy  = 143 * P5 + 64738 * P6 + 162505 * P7 + 16\n'
+    line = line + '\tHRC Proxy  = 143 * P5 + 64738 * P6 + 162505 * P7 + 4127\n'
 #
 #---  print out data file for CRM use
 #
@@ -464,7 +465,12 @@ def compute_hrc(data):
 #
 #--- after 2021:112:06:05:00
 #
-            val = 143.0 * c5[k] + 64738.0 * c6[k] + 162505.0 * c7[k] + 16.1    #--- 16.1 = 4127.0 /256.0
+#            val = 143.0 * c5[k] + 64738.0 * c6[k] + 162505.0 * c7[k] + 16.1    #--- 16.1 = 4127.0 /256.0
+#
+#--- after 2021:125:06:05:00 
+#
+            val = 143.0 * c5[k] + 64738.0 * c6[k] + 162505.0 * c7[k] + 4127
+
         except:
             continue
 
