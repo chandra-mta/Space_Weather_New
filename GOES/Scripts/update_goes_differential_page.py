@@ -5,7 +5,7 @@
 #       update_goes_differential_page.py: update goes differential html page    #
 #                                                                               #
 #           author: t. isobe (tisobe@cfa.harvard.edu)                           #
-#           last update: May 05, 2021                                           #
+#           last update: Oct 05, 2021                                           #
 #                                                                               #
 #################################################################################
 
@@ -198,7 +198,10 @@ def make_two_hour_table():
         except:
             pass
 
-        line = line + "%5.0f\t\n" % (hrc_val[k])
+        try:
+            line = line + "%5.0f\t\n" % (hrc_val[k])
+        except:
+            line = line + '\t\n'
 
     line  = line + '\n'
     aline = line
