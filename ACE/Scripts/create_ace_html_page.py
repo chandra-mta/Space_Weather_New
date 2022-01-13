@@ -6,7 +6,7 @@
 #                                                                                                   #
 #               author: t. isobe    (tisobe@cfa.harvard.edu)                                        #
 #                                                                                                   #
-#               Last update: Mar 25, 2021                                                           #
+#               Last update: Nov 04, 2021                                                           #
 #                                                                                                   #
 #####################################################################################################
 
@@ -509,9 +509,9 @@ def ace_invalid_spec(speci, speci_lim):
         line = line + 'Observed = ' + speci
         line = line + '(limit = ' + speci_lim + ')\n'
         line = line + 'see http://cxc.harvard.edu/mta/ace.html\n'
-        line = line + 'This message sent to sot_yellow_alert\n'
+        line = line + 'This message sent to mtadude\n'
 
-        send_mail('ACE_p5/p6', line, 'sot_yellow_alert@cfa.harvard.edu')
+        send_mail('ACE_p5/p6', line, 'mtadude@cfa.harvard.edu')
 #
 #--- open a file indicating that the mail was sent
 #
@@ -527,10 +527,6 @@ def send_mail(subject, content, address):
     fo = open(zspace, 'w')
     fo.write(content)
     fo.close()
-
-#---- REMOVE the line below after test finished!!!!-------------------
-    address = 'tisobe@cfa.harvard.edu'
-#---------------------------------------------------------------------
 
     cmd = 'cat ' + zspace + '|mailx -s "' + subject + '" ' + address
     os.system(cmd)
@@ -580,7 +576,7 @@ def curr_state():
     stop  = start + 3.0 * 86400.
 
     ifile = ephem_dir + 'dsn_summary.dat'
-    data  = mcf.read_file_data(ifile)
+    data  = mcf.read_data_file(ifile)
     data  = data[2:]
     line  = line + data[0] + '\n' + data[1] + '\n'
     for ent in data:
