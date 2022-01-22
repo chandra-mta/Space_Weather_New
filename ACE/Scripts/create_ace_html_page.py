@@ -15,9 +15,9 @@ HTTP_MAG = "http://services.swpc.noaa.gov/images/ace-mag-swepam-7-day.gif"
 
 # Set ACE P3 scaling parameters
 
-P5_P3_SCALE = 7.           # scale P5 to P3 values, while P3 is broke
-P6_P3_SCALE = 36.          # scale P6 to P3 values, while P3 is broke
-P7_P3_SCALE = 110.         # scale P7 to P3 values, while P3 is broke
+P3_P5_SCALE = 7.           # scale P5 to P3 values, while P3 is broke
+P3_P6_SCALE = 36.          # scale P6 to P3 values, while P3 is broke
+P3_P7_SCALE = 110.         # scale P7 to P3 values, while P3 is broke
 
 
 def get_options():
@@ -58,14 +58,14 @@ def create_ace_html_page():
         # displayed but filtered out before computing the stats.
 
         # Add scaled P5 and P6
-        dat['p5_scaled_p3'] = dat['p5'] * P5_P3_SCALE
-        dat['p6_scaled_p3'] = dat['p6'] * P6_P3_SCALE
+        dat['p3_scaled_p5'] = dat['p5'] * P3_P5_SCALE
+        dat['p3_scaled_p6'] = dat['p6'] * P3_P6_SCALE
 
         # ace_table with data for html display
 
         cols = ("yr", "mo", "da", "hhmm", "de1", "de4",
-                "p2", "p3", "p5", "p6",
-                "p5_scaled_p3", "p6_scaled_p3", "p7")
+                "p2", "p3", "p3_scaled_p5", "p3_scaled_p6",
+                "p5", "p6", "p7")
         row_format = ' '.join(["{:s} " * 4, "{:11.3f} " * 9, "\n"])
 
         for row in dat:
@@ -78,58 +78,38 @@ def create_ace_html_page():
 
         ace_table = ace_table + "\n" + header
 
-        # Compute electron/proton stats (mean, min, fluence)
-        means = {}
-        mins = {}
-        fluences_2h = {}
-        cols = ("de1", "de4", "p2", "p3", "p5", "p6",
-                "p5_scaled_p3", "p6_scaled_p3", "p7")
+        # Calculate electron/proton stats (mean, min, 2h fluence, spectra)
 
-        for col in cols:
-            # Filter out negative (bad) values
-            ok = dat[col] > 0
-            if len(dat[col][ok]) > 2:
-                # At least 2 measurements of nominal quality
-                # in the last 2 hours
-                means[col] = np.mean(dat[col][ok])
-                mins[col] = np.min(dat[col][ok])
-                fluences_2h[col] = np.mean(dat[col][ok]) * 7200
-            else:
-                means[col] = -1e5
-                mins[col] = -1e5
-                fluences_2h[col] = -1e5
-
-        # Spectral indexes
-        spectra = {'p3_p5': means['p3'] / means['p5'],
-                   'p3_p6': means['p3'] / means['p6'],
-                   'p5_p6': means['p5'] / means['p6'],
-                   'p6_p7': means['p6'] / means['p7']}
+        stats = calculate_stats(dat)
 
         # Add table with stats for the display
 
-        for stat, name, fmt in zip((means, mins, fluences_2h),
+        for stat, name, fmt in zip((stats['means'], stats['mins'], stats['fluences_2h']),
                                     ('AVERAGE', 'MINIMUM', 'FLUENCE'),
                                     ('{:11.3f}', '{:11.3f}', '{:11.4e}')):
             vals = stat.values()
             row_format = ' '.join([f"{name.ljust(15)}", f"{fmt} " * len(vals), "\n"])
             ace_table = ace_table + row_format.format(*list(vals))
 
+        # Add info on spectral indexes
 
         ace_table = ace_table + "\n" + "%7s %11s %11.3f %11s %11.3f %11s %11.3f %11s %11.3f \n\n"\
-                       % ("SPECTRA      ", "p3/p5", spectra['p3_p5'], "p3/p6", spectra['p3_p6'],
-                                           "p5/p6", spectra['p5_p6'], "p6/p7", spectra['p6_p7'])
+                       % ("SPECTRA        ", "p3/p5", stats['spectra']['p3_p5'],
+                                             "p3/p6", stats['spectra']['p3_p6'],
+                                             "p5/p6", stats['spectra']['p5_p6'],
+                                             "p6/p7", stats['spectra']['p6_p7'])
 
         ace_table = ace_table + "%62s %4.1f\n"\
                        % ("*   This P3 channel is currently scaled from P5 data. P3* = P5 X ",
-                          P5_P3_SCALE)
+                          P3_P5_SCALE)
 
         ace_table = ace_table + "%62s %4.1f\n"\
                        % ("**  This P3 channel is currently scaled from P6 data. P3** = P6 X ",
-                          P6_P3_SCALE)
+                          P3_P6_SCALE)
 
         ace_table = ace_table + "%62s %4.1f\n"\
                        % ("*** This P3 channel (not shown) is currently scaled from P7 data. P3*** = P7 X ",
-                          P7_P3_SCALE)
+                          P3_P7_SCALE)
 
     else:
         # No valid data in the last 2h
@@ -201,6 +181,43 @@ def read_2h_ace_data_from_12h_archive(fname):
     dat = dat[ok]
 
     return dat
+
+
+def calculate_stats(dat):
+    """
+    Calculate statistics: means, mins, 2h fluences in each channel,
+    and spectral indexes.
+    :param dat: astropy Table with ACE data
+    :returns stats: dictionary with values being dictionaries of stats
+                    for ACE channels
+    """
+
+    stats = {'means': {}, 'mins': {}, 'fluences_2h': {}, 'spectra': {}}
+
+    cols = ("de1", "de4", "p2", "p3", "p3_scaled_p5", "p3_scaled_p5",
+            "p5", "p6", "p7")
+
+    for col in cols:
+        # Filter out negative (bad) values
+        ok = dat[col] > 0
+        if len(dat[col][ok]) > 2:
+            # At least 2 measurements of nominal quality
+            # in the last 2 hours
+            stats['means'][col] = np.mean(dat[col][ok])
+            stats['mins'][col] = np.min(dat[col][ok])
+            stats['fluences_2h'][col] = np.mean(dat[col][ok]) * 7200
+        else:
+            stats['means'][col] = -1e5
+            stats['mins'][col] = -1e5
+            stats['fluences_2h'][col] = -1e5
+
+    # Spectral indexes
+    stats['spectra'] = {'p3_p5': stats['means']['p3'] / stats['means']['p5'],
+                        'p3_p6': stats['means']['p3'] / stats['means']['p6'],
+                        'p5_p6': stats['means']['p5'] / stats['means']['p6'],
+                        'p6_p7': stats['means']['p6'] / stats['means']['p7']}
+
+    return stats
 
 
 def download_img(img, html_dir, ace_dir, chg=1):
