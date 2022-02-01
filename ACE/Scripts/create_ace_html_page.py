@@ -84,7 +84,7 @@ def create_ace_html_page():
 
         # Add table with stats for the display
 
-        for stat, name, fmt in zip((stats['means'], stats['mins'], stats['fluences_2h']),
+        for stat, name, fmt in zip((stats['medians'], stats['mins'], stats['fluences_2h']),
                                     ('AVERAGE', 'MINIMUM', 'FLUENCE'),
                                     ('{:11.3f}', '{:11.3f}', '{:11.4e}')):
             vals = stat.values()
@@ -185,14 +185,18 @@ def read_2h_ace_data_from_12h_archive(fname):
 
 def calculate_stats(dat):
     """
-    Calculate statistics: means, mins, 2h fluences in each channel,
+    Calculate statistics: medians, mins, 2h fluences in each channel,
     and spectral indexes.
     :param dat: astropy Table with ACE data
     :returns stats: dictionary with values being dictionaries of stats
                     for ACE channels
     """
 
-    stats = {'means': {}, 'mins': {}, 'fluences_2h': {}, 'spectra': {}}
+    stats = {'medians': {},
+             'mins': {},
+             'fluences_2h': {},
+             'spectra': {'p3_p5': -1e5, 'p3_p6': -1e5,
+                         'p5_p6': -1e5, 'p6_p7': -1e5}}
 
     cols = ("de1", "de4", "p2", "p3", "p3_scaled_p5", "p3_scaled_p5",
             "p5", "p6", "p7")
@@ -203,19 +207,27 @@ def calculate_stats(dat):
         if len(dat[col][ok]) > 2:
             # At least 2 measurements of nominal quality
             # in the last 2 hours
-            stats['means'][col] = np.mean(dat[col][ok])
+            stats['medians'][col] = np.median(dat[col][ok])
             stats['mins'][col] = np.min(dat[col][ok])
-            stats['fluences_2h'][col] = np.mean(dat[col][ok]) * 7200
+            stats['fluences_2h'][col] = np.median(dat[col][ok]) * 7200
         else:
-            stats['means'][col] = -1e5
+            stats['medians'][col] = -1e5
             stats['mins'][col] = -1e5
             stats['fluences_2h'][col] = -1e5
 
     # Spectral indexes
-    stats['spectra'] = {'p3_p5': stats['means']['p3'] / stats['means']['p5'],
-                        'p3_p6': stats['means']['p3'] / stats['means']['p6'],
-                        'p5_p6': stats['means']['p5'] / stats['means']['p6'],
-                        'p6_p7': stats['means']['p6'] / stats['means']['p7']}
+    meds = stats['medians']
+    if all(x > 0 for x in [meds['p3'], meds['p5']]):
+        stats['spectra']['p3_p5'] = meds['p3'] / meds['p5']
+
+    if all(x > 0 for x in [meds['p3'], meds['p6']]):
+        stats['spectra']['p3_p6'] = meds['p3'] / meds['p6']
+
+    if all(x > 0 for x in [meds['p5'], meds['p6']]):
+        stats['spectra']['p5_p6'] = meds['p5'] / meds['p6']
+
+    if all(x > 0 for x in [meds['p6'], meds['p7']]):
+        stats['spectra']['p6_p7'] = meds['p6'] / meds['p7']
 
     return stats
 
