@@ -168,13 +168,15 @@ def read_2h_ace_data_from_12h_archive(fname):
     # remove duplicate lines; TODO check why they appear
     dat = unique(dat, keys=("yr", "mo", "da", "hhmm"))
 
-    # keep only the most recent two hours of nominal quality data
     fits_fmt = [f"{yr}-{mo.zfill(2)}-{da}T{hhmm[:2]}:{hhmm[-2:]}:00.000"
                 for yr, mo, da, hhmm in zip(dat['yr'], dat['mo'],
                                             dat['da'], dat['hhmm'])]
 
     tt = DateTime(np.array(fits_fmt), format='fits').date
-    now_minus_2h = DateTime(DateTime() - 2 / 24).date
+
+    # keep only the most recent 2h of nominal quality data
+    # subtract 2.25h to account for cronjob processing every 5 min
+    now_minus_2h = DateTime(DateTime() - 2.25 / 24).date
 
     # status: 0 = nominal, 4,6,7,8 = bad data, unable to process, 9 = no data
     ok = (dat['e_status'] == 0) & (dat['p_status'] == 0) & (tt > now_minus_2h)
