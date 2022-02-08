@@ -5,7 +5,7 @@ ACE and GOES radiation alerting for Chandra.
 
 Included alerts:
     - ACE P3 2-hour fluence exceeded 3.6e8, i.e. 50,000 x 2 x 3600
-    - No nominal ACE data in the last 12h
+    - No nominal ACE data for >12h
     - GOES HRC shield proxy limit exceeded 195000, i.e. ~3 x 256 x 248
       (3 x SCS107 trip limit)
 
@@ -15,9 +15,10 @@ Adding new alerts:
     - add module method to define pars[<alert>] in main()
 
 Disabling alerts:
-    - touch <name>.logfile in working directory
-    - this can be also used to extend the time an alert is disabled after being
-      triggered so that the log file is not removed automatically after 24h
+    - touch <name>.logfile in working directory; this can be also used
+      to extend the time an alert is disabled after being triggered so
+      that the log file is not removed automatically after 24h
+    - or edit alerts.json and change manual_disable from 0 to 1.
 
 TODO:
     - option that would allow various alerts to be sent to different mailing lists
