@@ -166,10 +166,10 @@ def test_send_alert_3(email):
         os.system(f"touch -t {stamp} {a['logfile']}")
         a['subject'] = 'after 24h'
         send_alert(a, mode=TESTMODE, email=email) # removes logfiles
-    
+
     # Test that logfiles are removed
     assert np.all([not os.path.exists(a['logfile']) for a in alerts])
-    
+
     for a in alerts:
         send_alert(a, mode=TESTMODE, email=email) # sends a new alert
 
@@ -184,7 +184,7 @@ def test_send_alert_3(email):
     # Clean up
     for a in alerts:
         os.remove(a['logfile'])
-            
+
 
 def test_send_alert_4(email):
     """
@@ -193,7 +193,7 @@ def test_send_alert_4(email):
     """
 
     alerts = Table(ALERTS)
-    
+
     # Manually disable all alerts
     alerts['manual_disable'] = np.array([1, 1, 1])
 

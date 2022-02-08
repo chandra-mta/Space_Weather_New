@@ -8,7 +8,7 @@ Included alerts:
     - No nominal ACE data in the last 12h
     - GOES HRC shield proxy limit exceeded 195000, i.e. ~3 x 256 x 248
       (3 x SCS107 trip limit)
-    
+
 Adding new alerts:
     - edit alert.json file
     - add get_message_<alert> method to Alert class
@@ -98,7 +98,7 @@ class Alert(object):
 
         message_method = getattr(self, f'get_message_{name}')
         message_method()
-            
+
 
     def get_subject(self, subject):
         """
@@ -108,7 +108,7 @@ class Alert(object):
         else:
             self.subject = subject
 
-            
+
     def get_message_ace_12h_status(self):
         """
         """
@@ -158,8 +158,8 @@ This message sent to {self.email}
                           f'mode={self.mode}',
                           f'val={self.val}',
                           f'email={self.email}>']))
-                
-                
+
+
     def __str__(self):
         return pformat(self.__dict__)
 
@@ -204,7 +204,7 @@ def get_ace_p3():
 def get_hrc_shield():
     """
     Read arc hrc_shield.h5 file, get most recent
-    goes hrc_shield proxy 
+    goes hrc_shield proxy
     """
 
     # HRC shield proxy
@@ -236,9 +236,9 @@ def trigger_alerts(a, pars):
     with violations; record the value that violated
     the limit
     """
-    
+
     name = a['name']
-    
+
     # process bool alerts
     if a['type'] == "bool":
         if not pars[name]:
