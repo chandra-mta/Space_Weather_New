@@ -1,0 +1,40 @@
+{ 
+    "alerts": [
+        {
+            "name": "ace_12h_status",
+            "subject": "ACE no valid data for >12h",
+            "type": "bool",
+            "limit": 0.0,
+            "triggered": 0,
+            "blackout_tstart": 24,
+            "blackout_tstop": 8,
+            "manual_disable": 0,
+            "val": 1.0,
+            "url": "http://cxc.harvard.edu/mta/RADIATION_new/ACE/ace.html"
+        },
+        {
+            "name": "acep3_2h_fluence",
+            "subject": "ACE P3",
+            "type": "upper",
+            "limit": 3.6e8,
+            "triggered": 0,
+            "blackout_tstart": 24,
+            "blackout_tstop": 5,
+            "manual_disable": 0,
+            "val": 0.0,
+            "url": "http://cxc.harvard.edu/mta/RADIATION_new/ACE/ace.html"
+        },
+        {
+            "name": "hrc_shield",
+            "subject": "GOES HRC shield proxy",
+            "type": "upper",
+            "limit": 195000.0,
+            "triggered": 0,
+            "blackout_tstart": 24,
+            "blackout_tstop": 0,
+            "manual_disable": 0,
+            "val": 0.0,
+            "url": "https://cxc.cfa.harvard.edu/mta/RADIATION_new/GOES/goes_pchan_p.html"
+        }
+    ]
+}
