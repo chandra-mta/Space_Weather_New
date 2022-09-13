@@ -48,6 +48,14 @@ input:  <ephem_dir>/Data/PE.EPH.gsme_spherical
         <ace_dir>/Data/ace_7day_archive
 output: <html_dir>/ACE/ace_flux_dat.html        
 
+ace_nh_viol.py
+--------------
+emails an alert and ace_12h_archive log file if no valid data is taken after 8hrs by default
+
+input: <ace_dir>/Data/ace_12h_archive
+output: /tmp/mta/ace_nh_viol/viol
+	/tmp/mta/ace_nh_viol/tracker
+
 web address:
 ------------
 http://cxc.cfa.harvard.edu/mta/RADIATION_new/ACE/ace.html
