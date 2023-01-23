@@ -39,8 +39,8 @@ if (viol_hour >= 13):
 #---infile definition and setup of violation directory
 #
 
-
-infile = ace_dir +  "Data/ace_12h_archive"
+ace12hfile = ace_dir + "Data/ace_12h_archive"
+infile = ace_dir +  "Data/ace.archive"#read in full archive file to read most recent data in order
 archive_length_lim = 12 * viol_hour # 12 five-min segments per hour.
 
 
@@ -50,35 +50,33 @@ lockdir = "/tmp/mta"
 if (not os.path.exists(lockdir)):
     os.system(f'mkdir {lockdir}')
 
-lockfile = lockdir + "/ace_nh_viol.out"
-
-bad_e_data = 0 # number of lines with e status != 0
-bad_p_data = 0 # number of lines with p status != 0
+lockfile = lockdir + "/ace_viol.out"
 
 
 #
 #--Loop A: iterating over file lines
 #
 
-count = 0 #counter for 
-for line in reversed(list(open(infile))):#iterating over the file lines in reverse
-    data = line.split()
-    
+VALID_DATA_MARK = False
 
-    if (count >= archive_length_lim):#break for loop after exceeding viol_hour
-        break
-    
-    
-    #electrons
-    if (data[6] != "0"):
-        bad_e_data = bad_e_data + 1
-    #protons
-    if (data[9] != "0"):
-        bad_p_data = bad_p_data + 1
-    
-    count = count + 1 # final step, to increment counter
-
-
+line_count = 0#count of lines in the While loop, one we exceed the archive limit of lines, we leave the While loop
+with open(infile, 'r') as archive_file:
+    while True:
+        line = archive_file.readline()
+        if not line:#end of file reached. This should never happen since the archive file spans years, hence the error warning
+            raise Exception("File reading of ace.archive reaches end. Should stop after reading archive_length_limit number of lines.")
+        if line[0] != "#": #Not a comment line in the archive file
+            line_count += 1
+            data = line.split()
+            print(f'Count: {line_count} - Data: {data}')
+            if (data[6] == "0" or data[9] == "0"):
+                VALID_DATA_MARK = True
+                print('VALID_DATA_MARK found')
+                break
+            if (line_count >= archive_length_lim):
+                print('Archive_Length_Limit reached')
+                break
+archive_file.close()
 
 #
 #--Alert Check: Does not send alerts between midnight and 8 am
@@ -87,7 +85,7 @@ hour_now = int(datetime.now().strftime("%H"))#get current hour
 
 if ((hour_now < 24) and (hour_now > 7)):
 
-    if ((bad_e_data == archive_length_lim) or (bad_p_data == archive_length_lim)):
+    if (not VALID_DATA_MARK):
         #No valid data for viol_hour hours, send out an alert if it has not been sent out yet
         #writing the lock file
         if (os.path.exists(lockfile)):
@@ -101,10 +99,10 @@ if ((hour_now < 24) and (hour_now > 7)):
             lock_handle.write("this message sent to sot_ace_alert\n")
             lock_handle.close()
             os.system(f'cat {lockfile} | mailx -s "ACE no valid data for >{viol_hour}h" sot_ace_alert')
-            #os.system(f'cat {lockfile} | mailx -s "ACE no valid data for >{viol_hour}h" waaron malgosia swolk')
+            #os.system(f'cat {lockfile} | mailx -s "ACE no valid data for >{viol_hour}h" waaron')
 
             
             #store the 12h archive file that triggered the alert
-            os.system(f'cp {infile} {lockdir+"/ace_12h_archive_alert"}')
+            os.system(f'cp {ace12hfile} {lockdir+"/ace_12h_archive_alert"}')
 
             
