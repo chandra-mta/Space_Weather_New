@@ -6,7 +6,7 @@
 #                                                                                           #
 #               author: t. isobe (tiosbe@cfa.harvard.edu)                                   #
 #                                                                                           #
-#               last update: Mar 16, 2021                                                   #
+#               last update: Oct 07, 2021                                                   #
 #                                                                                           #
 #############################################################################################
 
@@ -135,12 +135,12 @@ def create_crm_summary_table():
     line = ''
     line = line + "                    Currently scheduled FPSI, OTG : " + si + ' ' + otg + '\n'
     line = line + "                                     Estimated Kp : " + str(kp) + '\n'
-    line = line + "        ACE EPAM P3 Proton Flux (p/cm^2-s-sr-MeV) : %.2e\n" % (ace) 
-    line = line + "            GOES-R P4 flux, in RADMON P4GM  units : %.2e\n" % (gp_p4)
-   #line = line + "            GOES-S P2 flux, in RADMON P4GM  units : %.2f\n" % (ps_p2)
-    line = line + "            GOES-R P7 flux, in RADMON P41GM units : %.2e\n" % (gp_p7)
+    line = line + "        ACE EPAM P3 Proton Flux (p/cm^2-s-sr-MeV) : %.2e\n" % (check_val(ace))
+    line = line + "            GOES-R P4 flux, in RADMON P4GM  units : %.2e\n" % (check_val(gp_p4))
+   #line = line + "            GOES-S P2 flux, in RADMON P4GM  units : %.2f\n" % (check_val(ps_p2))
+    line = line + "            GOES-R P7 flux, in RADMON P41GM units : %.2e\n" % (check_val(gp_p7))
    #line = line + "            GOES-S P5 flux, in RADMON P41GM units : %.2f\n" % (gp_p7)
-    line = line + "            GOES-R E > 2.0 MeV flux (p/cm^2-s-sr) : %.2e\n" % (gp_e2)
+    line = line + "            GOES-R E > 2.0 MeV flux (p/cm^2-s-sr) : %.2e\n" % (check_val(gp_e2))
     line = line + "                                 Orbit Start Time : " + ostart + '\n'
     line = line + "              Geocentric Distance (km), Orbit Leg : " + str(alt) + ' ' + leg + '\n'
     line = line + "                                       CRM Region : " + str(region) 
@@ -175,6 +175,18 @@ def create_crm_summary_table():
 #
 #    cmd = '/usr/local/bin/idl  ' + crm3_dir + '/Scripts/CRM_plots.idl > /dev/null 2>&1'
 #    os.system(cmd)
+
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+def check_val(val):
+    try:
+        val = float(val)
+    except:
+        val = 0.0
+
+    return val
 
 #-------------------------------------------------------------------------------
 #-- read_goes_p_data: read the current GOES proton fluxes                     --

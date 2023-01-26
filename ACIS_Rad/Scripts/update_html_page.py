@@ -200,8 +200,8 @@ def print_index_html():
     line  = line + '<hr />'
     line  = line + '<div style="padding-top: 15px"></div>\n'
     line  = line + '<p>If you have any questions about this page, please contact '
-    line  = line + '<a href="tisobe@cfa.harvard.edu">tisobe@cfa.harvard.edu</a>\n'
-    line  = line + '<script>\n\tsetTimeout('location.reload()',300000)</script>\n'
+    line  = line + '<a href="mailto:swolk@cfa.harvard.edu">swolk@cfa.harvard.edu</a>\n'
+    line  = line + "<script>\n\tsetTimeout('location.reload()',300000)</script>\n"
 
     line  = line + '</body</html>\n'
 #

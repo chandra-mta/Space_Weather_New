@@ -16,7 +16,7 @@
 '/data/mta4/Space_Weather/CRM3/'            : crm3_dir
 '/data/mta4/Space_Weather/CRMFLX/'          : crmflx_dir
 '/data/mta4/Space_Weather/GSM_plots/'       : gsm_plot_dir
-'/data/mta4/Space_Weather/MTA_Rad/'         : mta_dir
+'/data/mta4/Script/Python3.6/MTA/'          : mta_dir
 '/data/mta4/Space_Weather/ACIS_Rad/'        : acis_dir
 '/data/mta4/Space_Weather/XMM/'             : xmm_dir
 '/data/mta4/www/RADIATION_new/'             : html_dir

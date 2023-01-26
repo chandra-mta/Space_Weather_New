@@ -4,7 +4,7 @@
 #                                                                                                   #
 #       create_radiation_realted_plots.py: control sceript to create radiation realted plots        #
 #                                                                                                   #
-#           author: t. isobe    (tiosbe@cfa.harvard.edu)                                            #
+#           author: t. isobe    (tisobe@cfa.harvard.edu)                                            #
 #                                                                                                   #
 #           last update: Mar 16, 2021                                                               #
 #                                                                                                   #
@@ -89,7 +89,7 @@ def create_radiation_realted_plots():
     year    = int(atemp[0])
     mon     = int(atemp[1])
     day     = int(atemp[2])
-    if day < 3:
+    if day <= 4:
         lmon    = mon -1
         if lmon < 1:
             lmon = 12

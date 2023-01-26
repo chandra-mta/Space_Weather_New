@@ -1,4 +1,4 @@
-#!/usr/bin/env /data/mta4/Script/Python3.6/envs/ska3/bin/python
+#!/usr/bin/env /data/mta4/Script/Python3.8/envs/ska3-shiny/bin/python
 
 #############################################################################################
 #                                                                                           #
@@ -6,7 +6,7 @@
 #                                                                                           #
 #               author: t. isobe (tiosbe@cfa.harvard.edu)                                   #
 #                                                                                           #
-#               last update: Jan 04, 2021                                                   #
+#               last update: Mar 16, 2021                                                   #
 #                                                                                           #
 #############################################################################################
 
@@ -31,7 +31,7 @@ for ent in data:
     line  = atemp[0].strip()
     exec("%s = %s" %(var, line))
 
-sys.path.append('/data/mta4/Script/Python3.6/MTA/')
+sys.path.append('/data/mta4/Script/Python3.8/MTA/')
 import mta_common_functions     as mcf
 
 current = time.strftime('%Y:%j:%H:%M:%S', time.gmtime())

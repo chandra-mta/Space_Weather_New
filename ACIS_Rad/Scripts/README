@@ -89,7 +89,7 @@ index.html
 +++++++++
 cron jobs
 +++++++++
-r2d2-v as mta
+boba-v as mta
 
 45 1 * * * /data/mta4/Space_Weather/ACIS_Rad/Scripts/run_rad_wrap_script     > $HOME/Logs/acis_rad_run_rad_new.cron   2>&1
 43 1 1 * * /data/mta4/Space_Weather/ACIS_Rad/Scripts/update_html_wrap_script > $HOME/Logs/acis_rad_html_page_new.cron 2>&1

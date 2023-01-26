@@ -8,7 +8,7 @@
 #                                                                                               #
 #           author: t. isobe (tisobe@cfa.harvard.edu)                                           #
 #                                                                                               #
-#           last update: mar 16, 2021                                                           #
+#           last update: Mar 16, 2021                                                           #
 #                                                                                               #
 #################################################################################################
 
@@ -179,7 +179,7 @@ def run_test():
 
         cmd = 'cat ' + zspace + '|mailx -s\"Subject: mta_XMM_alert \n\" swolk@cfa.harvard.edu' 
         os.system(cmd)
-        cmd = 'cat ' + zspace + '|mailx -s\"Subject: mta_XMM_alert \n\" tisobe@cfa.harvard.edu' 
+        cmd = 'cat ' + zspace + '|mailx -s\"Subject: mta_XMM_alert \n\" msobolewska@cfa.harvard.edu' 
         os.system(cmd)
 
         cmd = 'rm ' + zspace
@@ -343,7 +343,7 @@ def keep_record(time, alt, l1):
     with open(zspace, 'w') as fo:
         fo.write(line)
 
-    cmd = 'cat ' + zspace + '|mailx -s\"Subject: mta_XMM_alert\n\" tisobe@cfa.harvard.edu' 
+    cmd = 'cat ' + zspace + '|mailx -s\"Subject: mta_XMM_alert\n\" msobolewska@cfa.harvard.edu' 
     os.system(cmd)
     rm_file(zspace)
 

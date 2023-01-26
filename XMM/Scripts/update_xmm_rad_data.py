@@ -68,7 +68,7 @@ def update_xmm_rad_data():
     """
     update xmm radiation flux database
     input: none, but read from:
-            /stage/xmmops_ftp/radmon_02h.dat
+           <xmm_file>
     output: <xmm_dir>/Data/xmm_7day.archive2
     """
 #

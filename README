@@ -1,30 +1,165 @@
 
-==============
-Space Weather 
-==============
+####################
+Script Descriptions
+####################
 
-ACE         --- Update ACE Realtime HTML Page
+ACE             --- ACE related computation
+ACIS_Rad        --- ACIS Radiation Correlations
+ALERTS          --- Radiation Environment Summary
+Comm_data       --- Collecting Comm Contact Data
+CRM3            --- The Chandra Radiation Model
+CRMFLX          --- CRM fotran library: CRMFLX_ver23a is most stable
+Doc             --- this directory
+EPHEM           --- Updating Ephemeris Related Data
+geopack         --- geopack fortran library
+GOES            --- GOES proton/particle monitoring system for Chandra
+GSM_plots       --- Create GSM and GSE plots
+house_keeping   --- keeping house keeping data
+KP              --- Extract K index
+Makefile        --- a make file
+Makefile_local  --- a make file without copying files from the source directory
+MTA_Rad         --- Convert /dsops/... data to mta usable data format
+SOHO            --- Predict and plot the solar wind environment for Chandra
+STEREO          --- Copying data and plots from NOAA STEREO site
+TLE             --- process TLE ephemeris files for XMM and CXO
+Web_dir         --- Saving web directroy
+XMM             --- Real time XMM-Newton radiation observations
 
-ACIS Rad    --- creates ACIS radiation related plots.
+For more details, please read README file in each directory.
 
-ALERTS      --- Update MTA Radiation Environment Summary
+#######################
+Current Directory Paths
+#######################
 
-Comm Dir    --- collect comm contact data
+'/data/mta4/Space_Weather/'                 : spw_dir
+'/data/mta4/Space_Weather/hosue_keeping/'   : house_keeping
+'/data/mta4/Space_Weather/Idl_subs/'        : idl_dir
+'/data/mta4/Space_Weather/ACE/'             : ace_dir
+'/data/mta4/Space_Weather/ALERTS/'          : alerts_dir
+'/data/mta4/Space_Weather/KP/'              : kp_dir
+'/data/mta4/Space_Weather/GOES/'            : goes_dir
+'/data/mta4/Space_Weather/EPHEM/'           : ephem_dir
+'/data/mta4/Space_Weather/geopack/'         : geopack_dir
+'/data/mta4/Space_Weather/SOHO/'            : soho_dir
+'/data/mta4/Space_Weather/TLE/'             : tle_dir
+'/data/mta4/Space_Weather/STEREO/'          : stereo_dir
+'/data/mta4/Space_Weather/Comm_data/'       : comm_dir
+'/data/mta4/Space_Weather/CRM/'             : crm_dir
+'/data/mta4/Space_Weather/CRM2/'            : crm2_dir
+'/data/mta4/Space_Weather/CRM3/'            : crm3_dir
+'/data/mta4/Space_Weather/CRMFLX/'          : crmflx_dir
+'/data/mta4/Space_Weather/GSM_plots/'       : gsm_plot_dir
+'/data/mta4/Space_Weather/MTA_Rad/'         : mta_dir
+'/data/mta4/Space_Weather/ACIS_Rad/'        : acis_dir
+'/data/mta4/Space_Weather/XMM/'             : xmm_dir
+'/data/mta4/www/RADIATION_new/'             : html_dir
+'cxc.cfa.harvard.edu/mta/RADIATION_new/'    : main_web
+'ftp.swpc.noaa.gov/pub/lists/'              : noaa_ftp
+'ftp.swpc.noaa.gov/pub/lists/ace/'          : ace_ftp
+'services.swpc.noaa.gov/'                   : noaa_site
+'ftp.gfz-potsdam.de/pub/home/obs/kp-ap/wdc/': kp_site
+'/proj/web-cxc-dmz/htdocs/'                 : htdocs
+'/proj/sot/ska/data/arc/iFOT_events/'       : ifot_dir
+'/umtof.umd.edu/pm/'                        : umd_site
 
-CRM3        --- Chandra Radiation Model (ver 3)
 
-CRMFLX      --- CRM flux model
+#############
+Web Directory
+#############
 
-EPHEM       --- Updating Ephemeris Related Data
+Html:               http://cxc.cfa.harvard.edu/mta/RADIATION_new/index.html
+Physical Location:  /data/mta4/www/RADIATION_new/
 
-GSM Plot    --- create GSM and GSE plots
 
-KP          --- extract k index
 
-SOHO        --- Solar Wind Density and Speed Prediction
 
-STEREO      --- Copying data and plots from NOAA STEREO site (defunct)
+###############
+FORTRAN Code:
+###############
 
-TLE         --- process TLE ephemeris files for XMM and CXO
+/data/mta4/Space_Weather/CRM3/Scripts/runcrm.f
+        input:  /data/mta4/Space_Weather/EPHEM/Data/PE.EPH.gsme_in_Re
+        output: /data/mta4/Space_Weather/CRM3/Data/CRM3_p.dat<**>
 
-XMM         --- XMM real time radiation observation
+gfortran -std=legacy -ffixed-form -fd-lines-as-comments -ffixed-line-length-non
+    runcrm.f /data/mta4/Space_Weather/CRMFLX/CRMFLX_V33/CRMFLX_V33.f -o runcrm
+
+
+##########
+cron job
+##########
+
+r2d2-v as mta
+
+#
+#--- ACE ---
+#
+2,8,13,18,23,28,33,38,43,48,54 * * * * /data/mta4/Space_Weather/ACE/Scripts/ace_wrap_script > /data/mta4/Space_Weather/Test_Logs/ace_main.cron 2>&1
+#
+#--- ACIS Rad ---
+#
+45 1 * * * cd /data/mta4/Space_Weather/ACIS_Rad/Scripts; run_rad_wrap_script     > /data/mta4/Space_Weather/Test_Logs/acis_rad_run_rad.cron 2>&1
+43 1 1 * * cd /data/mta4/Space_Weather/ACIS_Rad/Scripts; update_html_wrap_script > /data/mta4/Space_Weather/Test_Logs/acis_rad_html_page.cron 2>&1
+#
+#--- Alert summary page ---
+#
+2,12,22,32,42,52 * * * * cd /data/mta4/Space_Weather/ALERTS/Scripts ; /data/mta4/Space_Weather/ALERTS/Scripts/rad_summ_wrap_script > /data/mta4/Space_Weather/Test_Logs/alert_summary.cron 2>&1
+#
+#--- Comm related Data ---
+#
+23 * * * * /data/mta4/Space_Weather/Comm_data/Scripts/comm_wrap_script > /data/mta4/Space_Weather/Test_Logs/comm_collect_comm.cron 2>&1
+#
+#--- CRM ---
+#
+21 3,6,9,12,18,21 * * *                      /data/mta4/Space_Weather/CRM3/Scripts/crm_wrap_script > /data/mta4/Space_Weather/Test_Logs/crm3_runcrm.cron 2>&1
+
+2,7,12,17,22,27,32,37,42,47,52,57 * * * *  /data/mta4/Space_Weather/CRM3/Scripts/crm_table_wrap_script >  /data/mta4/Space_Weather/Test_Logs/crm3_create_table.cron 2>&1
+#
+#--- EPHEM ---
+#
+21 3 * * *  cd /data/mta4/Space_Weather/EPHEM/Scripts; /data/mta4/Space_Weather/EPHEM/Scripts/ephem_copy_wrap_script > /data/mta4/Space_Weather/Test_Logs/ephem_ephem.cron   2>&1
+
+19 3,6,9,12,18,21 * * *   /data/mta4/Space_Weather/EPHEM/Scripts/ephem_shorten_wrap_script > /data/mta4/Space_Weather/Test_Logs/ephem_shorten.cron 2>&1
+#
+#--- GOES ---
+#
+2,7,12,17,22,27,32,37,42,47,52,57 * * * * /data/mta4/Space_Weather/GOES/Scripts/goes_wrap_script      > /data/mta4/Space_Weather/Test_Logs/goes_main.cron 2>&1
+14 2 * * *                                /data/mta4/Space_Weather/GOES/Scripts/goes_long_wrap_script > /data/mta4/Space_Weather/Test_Logs/goes_long_term.cron 2>&1
+14 2 * * *                                /data/mta4/Space_Weather/GOES/Scripts/get_goes_xray_plot.py > /data/mta4/Space_Weather/Test_Logs/goes_x_ray_plot.cron 2>&1
+#
+#--- GSM Plots ---
+#
+2,17,32,47 * * * * cd /data/mta4/Space_Weather/GSM_plots/Scripts/; /data/mta4/Space_Weather/GSM_plots/Scripts/gsm_wrap_script > /data/mta4/Space_Weather/Test_Logs/gsm_plot.cron 2>&1
+#
+#--- KP ---
+#
+14 0,3,6,9,12,15,18,21 * * * /data/mta4/Space_Weather/KP/Scripts/kp_wrap_script  > /data/mta4/Space_Weather/Test_Logs/kp_index_update.cron 2>&1
+#
+#--- SOHO ---
+#
+36 0,3,6,9,12,15,18,21 * * *  cd /data/mta4/Space_Weather/SOHO/Scripts; /data/mta4/Space_Weather/SOHO/Scripts/solar_wind_warp_script 2>&1
+#
+#--- STEREO ---
+#
+2,6,11,16,21,26,31,36,41,46,51,56 * * * * /data/mta4/Space_Weather/STEREO/Scripts/stereo_wrap_script > /data/mta4/Space_Weather/Test_Logs/stereo_data.cron 2>&1
+#
+#--- TLE ---
+#
+22 2 * * *  cd /data/mta4/Space_Weather/TLE/Scripts/;/data/mta4/Space_Weather/TLE/Scripts/create_orbital_warp_script > /data/mta4/Space_Weather/Test_Logs/tle_get.cron 2>&1
+#
+#--- XMM ---
+#
+2,12,22,32,42,52 * * * * cd /data/mta4/Space_Weather/XMM/Scripts ; /data/mta4/Space_Weather/XMM/Scripts/xmm_wrap_script > /data/mta4/Space_Weather/Test_Logs/xmm_main.cron  2>&1
+
+
+c3po-v as mta
+
+daemonized process on c3po-v as mta
+mta      17481  0.0  0.0  12668   436 ?        S    06:46   0:00 interpolate_daemonize
+
+
+#----------
+Changing the Link of this memo:
+
+1,$s/\/data\/mta4\/Space_Weather/\/data\/mta\/Script\/Space_Weather/g
+

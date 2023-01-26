@@ -18,7 +18,7 @@ import random
 import operator
 import math
 import numpy
-import astropy.io.fits  as pyfits
+#import astropy.io.fits  as pyfits
 import time
 import Chandra.Time
 import unittest
@@ -177,7 +177,8 @@ def create_config_plot(start, stop, outname,  mag_plot=1):
 #--- hrc sheild rate plot
 #
     [htime, rate] = erd.read_hrc_data(start, stop)
-    plot_line(ax4, start, stop, htime, rate)
+    if len(htime) > 0:
+        plot_line(ax4, start, stop, htime, rate)
 #
 #--- goes p3 rate plot
 #

@@ -1,4 +1,4 @@
-#!/usr/bin/env /data/mta4/Script/Python3.6/envs/ska3/bin/python
+#!/usr/bin/env /data/mta/Script/Python3.8/envs/ska3-shiny/bin/python
 
 #####################################################################################
 #                                                                                   #
@@ -6,7 +6,7 @@
 #                                                                                   #
 #           author: t. isobe (tisobe@cfa.harvard.edu)                               #
 #                                                                                   #
-#           last updae: Feb 27, 2020                                                #
+#           last updae: Mar 16, 2021                                                #
 #                                                                                   #
 #####################################################################################
 
@@ -21,7 +21,7 @@ import Chandra.Time
 import calendar
 from datetime import datetime
 from geopack  import geopack
-import astropy.io.fits  as pyfits
+#import astropy.io.fits  as pyfits
 
 path = '/data/mta4/Space_Weather/EPHEM/house_keeping/dir_list_py'
 

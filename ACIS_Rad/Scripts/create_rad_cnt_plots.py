@@ -18,7 +18,7 @@ import random
 import operator
 import math
 import numpy
-import astropy.io.fits  as pyfits
+#import astropy.io.fits  as pyfits
 import time
 import Chandra.Time
 

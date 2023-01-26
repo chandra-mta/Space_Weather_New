@@ -19,7 +19,7 @@ import math
 import Chandra.Time
 from datetime import datetime
 from geopack  import geopack
-import astropy.io.fits  as pyfits
+#import astropy.io.fits  as pyfits
 import numpy
 import matplotlib as mpl
 

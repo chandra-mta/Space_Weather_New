@@ -1,5 +1,6 @@
 
 Copying data and plots from NOAA STEREO site
+   #### IT SEEMS STEREO IS DEAD AND NO MORE DATA IS COMING IN (NOTED IN EARLY 2021)
 ############################################
 
 update_stereo_data.py   ---- the script to copy data and plots from noaa site and update a web page.
@@ -28,7 +29,7 @@ Output:
 
 web address:
 ------------
-    http://cxc.cfa.harvard.edu/mta/space_weather/STEREO/stereo.html
+https://cxc.cfa.harvard.edu/mta/RADIATION_new/STEREO/stereo.html
 
 Note: stereo B is not working any more and we dropped the data from appearing.
 
