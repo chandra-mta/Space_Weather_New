@@ -32,7 +32,7 @@ Current Directory Paths
 #######################
 
 '/data/mta4/Space_Weather/'                 : spw_dir
-'/data/mta4/Space_Weather/hosue_keeping/'   : house_keeping
+'/data/mta4/Space_Weather/house_keeping/'   : house_keeping
 '/data/mta4/Space_Weather/Idl_subs/'        : idl_dir
 '/data/mta4/Space_Weather/ACE/'             : ace_dir
 '/data/mta4/Space_Weather/ALERTS/'          : alerts_dir
