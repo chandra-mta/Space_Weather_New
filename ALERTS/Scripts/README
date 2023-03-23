@@ -33,8 +33,8 @@ input:  /pool14/chandra/chandra_psi.snapshot
 output: <html_dir>/Alerts/rad_comm.html
 
 cron job
-han-v as mta
+boba-v as mta
 
-2,12,22,32,42,52 * * * * cd /data/mta4/Space_Weather/ALERTS/Scripts ; /data/mta4/Space_Weather/ALERTS/Scripts/rad_summ_wrap_script > /data/mta4/Space_Weather/Test_Logs/alert_summary.cron 2>&1
+2,12,22,32,42,52 * * * * cd /data/mta4/Space_Weather/ALERTS/Scripts ; /data/mta4/Space_Weather/ALERTS/Scripts/rad_summ_wrap_script >> $HOME/Logs/alert_summary_new.cron 2>&1
 
 

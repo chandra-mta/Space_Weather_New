@@ -1,4 +1,4 @@
-#!/usr/bin/env /proj/sot/ska/bin/python
+#!/proj/sot/ska3/flight/bin/python
 import os
 import sys
 import re

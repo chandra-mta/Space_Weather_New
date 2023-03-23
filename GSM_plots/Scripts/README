@@ -34,6 +34,12 @@ web page:
 
 cronjob:
 --------
+
+mta on boba-v
+2,17,32,47 * * * * cd /data/mta4/Space_Weather/GSM_plots/Scripts/; /data/mta4/Space_Weather/GSM_plots/Scripts/gsm_wrap_script >> $HOME/Logs/gsm_plot_new.cron 2>&1
+
+
+Old Version
 han-v as mta
 
 2,17,32,47 * * * * cd /data/mta4/Space_Weather/GSM_plots/Scripts/; /data/mta4/Space_Weather/GSM_plots/Scripts/gsm_wrap_script > /data/mta4/Space_Weather/Test_Logs/gsm_plot.cron 2>&1

@@ -110,6 +110,10 @@ l1_alt_records
 
 Cron job
 --------
+mta on boba-v
+2,12,22,32,42,52 * * * * cd /data/mta4/Space_Weather/XMM/Scripts ; /data/mta4/Space_Weather/XMM/Scripts/xmm_wrap_script >> $HOME/Logs/xmm_main_new.cron  2>&1
+
+Old Version
 r2d2-v as mta
 2,12,22,32,42,52 * * * * cd /data/mta4/Space_Weather/XMM/Scripts ; /data/mta4/Space_Weather/XMM/Scripts/xmm_wrap_script > /data/mta4/Space_Weather/Test_Logs/xmm_main.cron  2>&1
 

@@ -79,6 +79,15 @@ http://cxc.cfa.harvard.edu/mta/RADIATION_new/GOES/goes_pchan_p.html
 
 Cron job
 --------
+
+mta on boba-v
+
+2,7,12,17,22,27,32,37,42,47,52,57 * * * * /data/mta4/Space_Weather/GOES/Scripts/goes_wrap_script      >> $HOME/Logs/goes_main_new.cron      2>&1
+14 2 * * *                                /data/mta4/Space_Weather/GOES/Scripts/goes_long_wrap_script >> $HOME/Logs/goes_long_term_new.cron 2>&1
+
+
+
+Old Version
 han-v  as mta
 
 2,7,12,17,22,27,32,37,42,47,52,57 * * * * /data/mta4/Space_Weather/GOES/Scripts/goes_wrap_script      > /data/mta4/Space_Weather/Test_Logs/goes_main.cron 2>&1

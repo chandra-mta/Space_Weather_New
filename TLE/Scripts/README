@@ -35,6 +35,10 @@ Two python library is used:
 
 cron job
 --------
+mta on boba-v
+22 2 * * *  cd /data/mta4/Space_Weather/TLE/Scripts/;/data/mta4/Space_Weather/TLE/Scripts/create_orbital_warp_script >> $HOME/Logs/tle_get_new.cron 2>&1
+
+Old Version
 han-v as mta
 
 22 2 * * *  cd /data/mta4/Space_Weather/TLE/Scripts/;/data/mta4/Space_Weather/TLE/Scripts/create_orbital_warp_script > /data/mta4/Space_Weather/Test_Logs/tle_get.cron 2>&1

@@ -40,7 +40,7 @@ read_summary.pl         --- print out on screen about the comm related informati
 
 Cron Job
 ---------
-han-v as mta
+boba-v as mta
 
-23 * * * * /data/mta4/Space_Weather/Comm_data/Scripts/comm_wrap_script > /data/mta4/Space_Weather/Test_Logs/comm_collect_comm.cron 2>&1
+23 * * * * /data/mta4/Space_Weather/Comm_data/Scripts/comm_wrap_script >> $HOME/Logs/comm_collect_comm_new.cron 2>&1
 
