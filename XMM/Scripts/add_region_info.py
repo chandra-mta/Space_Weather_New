@@ -18,8 +18,10 @@ import time
 import math
 import Chandra.Time
 from datetime import datetime
-from geopack  import geopack
 import numpy
+
+sys.path.append('/data/mta4/Script/Python3.8/lib/python3.8/site-packages')
+from geopack import geopack
 #
 #--- reading directory list
 #

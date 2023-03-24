@@ -20,6 +20,8 @@ import math
 import numpy
 import Chandra.Time
 from datetime import datetime
+
+sys.path.append('/data/mta4/Script/Python3.8/lib/python3.8/site-packages')
 from geopack  import geopack
 from sgp4.api import Satrec
 from sgp4.api import jday

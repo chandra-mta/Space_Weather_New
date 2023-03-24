@@ -18,10 +18,12 @@ import time
 import math
 import Chandra.Time
 from datetime import datetime
-from geopack  import geopack
 #import astropy.io.fits  as pyfits
 import numpy
 import matplotlib as mpl
+
+sys.path.append('/data/mta4/Script/Python3.8/lib/python3.8/site-package')
+from geopack import geopack
 
 if __name__ == '__main__':
     mpl.use('Agg')
