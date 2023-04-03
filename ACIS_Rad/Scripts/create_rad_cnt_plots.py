@@ -39,6 +39,10 @@ for ent in data:
     var  = atemp[1].strip()
     line = atemp[0].strip()
     exec("%s = %s" %(var, line))
+#Setting Test Directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 #
 #--- temp writing file name
 #
@@ -141,7 +145,10 @@ def plot_radiation_counts(start, stop, outname):
     #fig.tight_layout()                 #---- this makes too tight; commented out
 #
 #--- save the plot in png format
-#   
+#
+    if (os.getenv('TEST') == 'TEST'):
+        outname = os.path.basename(outname)
+        outname = test_out + "/" + outname
     plt.savefig(outname, format='png', dpi=100)
     plt.close('all')
 
