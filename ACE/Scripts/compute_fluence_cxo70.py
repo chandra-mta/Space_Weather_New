@@ -53,6 +53,10 @@ zspace = '/tmp/zspace' + str(rtail)
 #
 ephem_file       = ephem_dir + 'Data/PE.EPH.gsme_spherical'
 ace_file         = ace_dir   + 'Data/ace_7day_archive'
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 #
 #--- current time
 #
@@ -198,6 +202,8 @@ def compute_fluence_cxo70():
         aline = aline + '              N/A\n'
 
     ofile = html_dir + 'ACE/ace_flux.dat'
+    if (os.getenv('TEST') == 'TEST'):
+        ofile = test_out + '/ace_flux.dat'
     with open(ofile, 'w') as fo:
         fo.write(aline)
 #
@@ -231,7 +237,8 @@ def compute_fluence_cxo70():
 
 
     ofile = html_dir + 'ACE/ace_flux_dat.html'
-
+    if (os.getenv('TEST') == 'TEST'):
+        ofile = test_out + '/ace_flux_data.html'
     with open(ofile , 'w') as fo:
         fo.write(line)
 

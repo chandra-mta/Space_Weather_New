@@ -43,6 +43,11 @@ ace12hfile = ace_dir + "Data/ace_12h_archive"
 infile = ace_dir +  "Data/ace.archive"#read in full archive file to read most recent data in order
 archive_length_lim = 12 * viol_hour # 12 five-min segments per hour.
 
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
+
 
 
 lockdir = "/tmp/mta"
@@ -91,18 +96,24 @@ if ((hour_now < 24) and (hour_now > 7)):
         if (os.path.exists(lockfile)):
             os.system(f'date >> {lockfile}')#touch lockfile, updating the date
         else:
-            lock_handle = open(lockfile,"w+")
-            lock_handle.write(f'Alert Trigger Script: {os.path.realpath(os.path.dirname(__file__)) + "/" + os.path.basename(__file__)} \n')
-            lock_handle.write(f'Alert in file: {infile}\n')
-            lock_handle.write(f'No valid ACE data for at least {viol_hour}h\n')
-            lock_handle.write("Radiation team should investigate\n")
-            lock_handle.write("this message sent to sot_ace_alert\n")
-            lock_handle.close()
+            line = ''
+            line += f'Alert Trigger Script: {os.path.realpath(os.path.dirname(__file__)) + "/" + os.path.basename(__file__)} \n'
+            line += f'Alert in file: {infile}\n'
+            line += f'No valid ACE data for at least {viol_hour}h\n'
+            line += f"Radiation team should investigate\n"
+            line += f"this message sent to sot_ace_alert\n"
+            
+            if (os.getenv('TEST') == "TEST"):
+                lockfile = test_out + "/ace_viol.out"
+            with open(lockfile, "w+") as fo:
+                fo.write(line)
+
             os.system(f'cat {lockfile} | mailx -s "ACE no valid data for >{viol_hour}h" sot_ace_alert')
             #os.system(f'cat {lockfile} | mailx -s "ACE no valid data for >{viol_hour}h" waaron')
 
             
             #store the 12h archive file that triggered the alert
-            os.system(f'cp {ace12hfile} {lockdir+"/ace_12h_archive_alert"}')
+            if (os.getenv('TEST') != 'TEST'):
+                os.system(f'cp {ace12hfile} {lockdir+"/ace_12h_archive_alert"}')
 
             

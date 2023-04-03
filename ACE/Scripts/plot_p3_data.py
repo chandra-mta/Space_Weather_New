@@ -62,6 +62,11 @@ zspace = '/tmp/zspace' + str(rtail)
 data_dir   = ace_dir  + 'Data/'
 web_dir    = html_dir + 'ACE/'
 plot_dir   = web_dir  + 'Plots/'
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
+
 #
 #--- other setting
 #
@@ -287,6 +292,9 @@ def plot_data(ndata):
 #--- save the plot in png format
 #
     outname = plot_dir + 'mta_ace_plot_P3.png'
+    if (os.getenv('TEST') == 'TEST'):
+        outname = test_out + '/mta_ace_plot_P3.png'
+    
     plt.tight_layout()
     plt.savefig(outname, format='png', dpi=300)
 
