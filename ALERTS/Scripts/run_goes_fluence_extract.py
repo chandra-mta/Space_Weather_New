@@ -30,6 +30,10 @@ for ent in data:
     var   = atemp[1].strip()
     line  = atemp[0].strip()
     exec("%s = %s" %(var, line))
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 #
 #--- append path to a private folder
 #
@@ -134,6 +138,9 @@ def run_goes_fluence_extract():
         line = line +  adjust_format(e_acc[0])  + '\n'
 
     ofile = alerts_dir + 'Data/goes_fluence.dat'
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        ofile = test_out + '/goes_fluence.dat'
     with open(ofile, 'w') as fo:
         fo.write(line)
 
