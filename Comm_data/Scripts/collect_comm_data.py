@@ -32,6 +32,10 @@ for ent in data:
     var  = atemp[1].strip()
     line = atemp[0].strip()
     exec("%s = %s" %(var, line))
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 #
 #--- append path to a private folder
 #
@@ -135,11 +139,16 @@ def collect_comm_data():
         dline = dline + atemp[7] + '/' + atemp[9]   + '\n'
 
     out = comm_dir + 'Data/comm_data'
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        out = test_out + '/comm_data'
     with open(out, 'w') as fo:
         fo.write(line)
 
-
     out = comm_dir + 'Data/DSN.sch'
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        out = test_out + '/DSN.sch'
     with open(out, 'w') as fo:
         fo.write(dline)
 
