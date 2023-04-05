@@ -39,6 +39,10 @@ for ent in data:
     var  = atemp[1].strip()
     line = atemp[0].strip()
     exec("%s = %s" %(var, line))
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 #
 #--- append  pathes to private folders to a python directory
 #
@@ -925,6 +929,9 @@ def plot_crm(otime, altitude, orbit_color_list, dsn_start, dsn_stop, inst_start,
     else:
         outname = html_dir + 'Orbit/Plots/' + 'crmplatt.png'
 
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        outname = test_out + "/" + os.path.basename(outname)
     plt.savefig(outname, format='png', dpi=300)
 
     plt.close('all')

@@ -11,6 +11,10 @@ import random
 rtail  = int(time.time() * random.random())
 zspace = '/tmp/zspace' + str(rtail)
 
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 
 f    = open('/data/mta4/www/RADIATION_new/CRM/CRMsummary.dat', 'r')
 line = f.read()
@@ -21,7 +25,11 @@ html = f.read()
 
 html = html.replace("#TEXT#", line)
 
-fo   = open('/data/mta4/www/RADIATION_new/CRM/CRMsummary.html', 'w')
+outfile = '/data/mta4/www/RADIATION_new/CRM/CRMsummary.html'
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    outfile = test_out + "/" + os.path.basename(outfile)
+fo   = open(outfile, 'w')
 fo.write(html)
 fo.close()
 #

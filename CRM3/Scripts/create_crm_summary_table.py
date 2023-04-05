@@ -57,6 +57,10 @@ gpe_dat     = goes_dir  + '/Data/Gp_part_5m.txt'
 #
 sim_file = "/proj/sot/acis/FLU-MON/FPHIST-2001.dat"
 otg_file = "/proj/sot/acis/FLU-MON/GRATHIST-2001.dat"
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 #
 #--- other settings
 #
@@ -120,7 +124,12 @@ def create_crm_summary_table():
 #
     if leg == 'A' and summary[-6] == 'D':
         oend = time.strftime("%Y:%j:%H:%M:%S", time.gmtime())
-        with open(arcdat, 'a') as fo:
+        outfile = arcdat
+        #for writing out files in test directory
+        if (os.getenv('TEST') == 'TEST'):
+            outfile = test_out + "/" + os.path.basename(arcdat)
+            os.system(f"touch {outfile}")
+        with open(outfile, 'a') as fo:
             line = str(ostart) + '  ' +   oend   + '  ' + str(fluence) + '  ' + str(afluence) + '\n'
             fo.write(line)
             ostart = oend
@@ -156,8 +165,11 @@ def create_crm_summary_table():
     #line = line + 'and what used to be P5 is now P7 This message will dissappear\n'
     #line = line + 'in 01/31/2021'
 
-
-    with open(sumdat, 'w') as fo:
+    outfile = sumdat
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        outfile = test_out + "/" + os.path.basename(sumdat)
+    with open(outfile, 'w') as fo:
         fo.write(line)
 #
 #--- back up the data files
@@ -549,6 +561,9 @@ def update_crm_html():
     html = html.replace("#TEXT#", line)
     
     ofile = html_dir + 'index.html'
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        ofile = test_out + "/index.html"
     with open(ofile, 'w') as fo: 
         fo.write(html)
 
@@ -580,7 +595,9 @@ def convert_grathist_format():
         line = line + atemp[3] + '\n'
 
     ofile = crm3_dir + 'Data/grathist.dat'
-
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        ofile = test_out + "/grathist.dat"
     with open(ofile, 'w') as fo:
         fo.write(line)
 
