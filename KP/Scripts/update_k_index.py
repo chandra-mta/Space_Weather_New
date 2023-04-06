@@ -36,6 +36,10 @@ for ent in data:
     var   = atemp[1].strip()
     line  = atemp[0].strip()
     exec("%s = %s" %(var, line))
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 #
 #--- temp writing file name
 #
@@ -86,7 +90,11 @@ def update_k_index(hname=''):
 #
 #--- add the new part on the observed kp list
 #
-    with open(d_file_p, 'a') as fo:
+    appendfile = d_file_p
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        appendfile = test_out + "/" + os.path.basename(appendfile)
+    with open(appendfile, 'a') as fo:
         for k in range(0, len(t_list)):
             if t_list[k] > l_time:
                 line = str(t_list[k]) + '\t' + str(k_list[k]) + '\n'
@@ -100,7 +108,11 @@ def update_k_index(hname=''):
 #--- add predicted part
 #
     [t_list2, k_list2] = futre_k_index(f_k_index)
-    with open(d_file, 'a') as fo:
+    appendfile = d_file
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        appendfile = test_out + "/" + os.path.basename(appendfile)
+    with open(appendfile, 'a') as fo:
         for k in range(0, len(t_list2)):
             if t_list2[k] > t_list[-1]:
                 line = str(t_list2[k]) + '\t' + str(k_list2[k]) + '\n'
@@ -109,7 +121,11 @@ def update_k_index(hname=''):
 #--- add long term guss
 #
     [t_list3, k_list3] = get_long_term_kp()
-    with open(d_file, 'a') as fo:
+    appendfile = d_file
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        appendfile = test_out + "/" + os.path.basename(appendfile)
+    with open(appendfile, 'a') as fo:
         for k in range(0, len(t_list3)):
             if t_list3[k] > t_list2[-1]:
                 line = str(t_list3[k]) + '\t' + str(k_list3[k]) + '\n'

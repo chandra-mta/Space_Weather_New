@@ -31,6 +31,10 @@ for ent in data:
     var  = atemp[1].strip()
     line = atemp[0].strip()
     exec("%s = %s" %(var, line))
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 
 #---------------------------------------------------------------------------------------
 #-- get_kp: copy kp data and create a file to match in the required format            --
@@ -84,8 +88,12 @@ def get_kp():
 #
 #--- if there is  new data, update
 #
+    appendfile = datafilep
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        appendfile = test_out + "/" + os.path.basename(appendfile)
     if line != '':
-        fo  = open(datafilep, 'a')
+        fo  = open(appendfile, 'a')
         fo.write(line)
         fo.close()
 
@@ -121,8 +129,12 @@ def get_kp():
 #
 #--- if there is  new data, update
 #
+    appendfile = datafile
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        appendfile = test_out + "/" + os.path.basename(appendfile)
     if line != '':
-        with open(datafile, 'a') as fo:
+        with open(appendfile, 'a') as fo:
             fo.write(line)
 
 #---------------------------------------------------------------------------------------
