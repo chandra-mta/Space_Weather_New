@@ -31,6 +31,10 @@ for ent in data:
     var   = atemp[1].strip()
     line  = atemp[0].strip()
     exec("%s = %s" %(var, line))
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 #
 #--- append path to a private folder
 #
@@ -116,6 +120,9 @@ def update_goes_differential_page():
 #
     ####outfile = html_dir + 'GOES/goes16_pchan_p.html'
     outfile = html_dir + 'GOES/goes_pchan_p.html'
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        outfile = test_out + "/" + os.path.basename(outfile)
     with open(outfile, 'w') as fo:
         fo.write(line)
 
@@ -254,7 +261,10 @@ def make_two_hour_table():
 #
 #---  print out data file for CRM use
 #
-    outfile = data_dir + 'Gp_pchan_5m.txt'
+    outfile = data_dir + 'Gp_pchan_5m.txt'\
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        outfile = test_out + "/" + os.path.basename(outfile)
     with open(outfile, 'w') as fo:
         fo.write(aline)
 
