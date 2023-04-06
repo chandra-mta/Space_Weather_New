@@ -28,6 +28,10 @@ for ent in data:
     var  = atemp[1].strip()
     line = atemp[0].strip()
     exec("%s = %s" % (var, line))
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 #
 #--- append  pathes to private folders to a python directory
 #
@@ -120,7 +124,10 @@ def ephem_interpolate():
 #
 #--- print out the result
 #
-            with open(o_file, 'w') as fo:
+            outfile = o_file
+            if (os.getenv('TEST') == 'TEST'):
+                outfile = test_out + "/" + os.path.basename(o_file)
+            with open(outfile, 'w') as fo:
                 fo.write(sline)
             
             break

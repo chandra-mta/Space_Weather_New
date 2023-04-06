@@ -30,6 +30,10 @@ for ent in data:
     var   = atemp[1].strip()
     line  = atemp[0].strip()
     exec("%s = %s" %(var, line))
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 
 sys.path.append('/data/mta4/Script/Python3.8/MTA/')
 import mta_common_functions     as mcf
@@ -56,5 +60,7 @@ for ifile in ['PE.EPH.gsme', 'PE.EPH.gsme_in_Re','PE.EPH.gsme_spherical']:
             cnt += 1
     
     ofile = ifile + '_short'
+    if (os.getenv('TEST') == 'TEST'):
+        ofile = test_out + "/" + os.path.basename(ofile)
     with open(ofile, 'w') as fo:
         fo.write(line)
