@@ -32,6 +32,10 @@ for ent in data:
     var  = atemp[1].strip()
     line = atemp[0].strip()
     exec("%s = %s" %(var, line))
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 #
 #--- append  pathes to private folders to a python directory
 #
@@ -79,7 +83,9 @@ def update_stereo_data():
 
     if len(data)> 28:
         outimg =  web_dir + '/Plots/impact_A_5m_7d.gif'
-
+        #for writing out files in test directory
+        if (os.getenv('TEST') == 'TEST'):
+            outimg = test_out + "/" + os.path.basename(outimg)
         cmd = 'wget -q -O' + outimg + ' ' + stereo_gif
         os.system(cmd)
 #
@@ -91,7 +97,11 @@ def update_stereo_data():
 #--- update html page
 #
     cmd = 'cat ./Template/header ' + data_dir +  'stereoAdata  ./Template/imageA  ./Template/footer > ' 
-    cmd = cmd +  web_dir + 'stereo.html'
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        cmd = cmd + test_out + "/stereo.html"
+    else:
+        cmd = cmd +  web_dir + 'stereo.html'
     os.system(cmd)
     
 #
