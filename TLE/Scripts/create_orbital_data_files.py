@@ -40,6 +40,10 @@ for ent in data:
     var  = atemp[1].strip()
     line = atemp[0].strip()
     exec("%s = %s" %(var, line))
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 #
 #--- append  pathes to private folders to a python directory
 #
@@ -242,7 +246,9 @@ def create_spctrk_file(sat, tle, day_before, day_after, interval):
 #--- print out the result
 #
     ofile = tel_data_dir + sat +'.spctrk'
-
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        ofile = test_out + "/" + os.path.basename(ofile)
     with open(ofile, 'w') as fo:
         fo.write(line)
 
@@ -260,11 +266,17 @@ def print_out_element(satellite, idata):
     """
     line  = idata[0] + '\n' + idata[1] + '\n'
     ofile = tle_dir + '/Data/' + satellite + '.tle'
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        ofile = test_out + "/" + os.path.basename(ofile)
     with open(ofile, 'w') as fo:
         fo.write(line)
 
     line  = line + '0 0 0 0\n'
     ofile = tle_dir + '/Data/' + satellite + '.tle2'
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        ofile = test_out + "/" + os.path.basename(ofile)
     with open(ofile, 'w') as fo:
         fo.write(line)
 
@@ -486,6 +498,9 @@ def convert_tle(sat):
 #
 #--- print out the results
 #
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        ofile = test_out + "/" + os.path.basename(ofile)
     with open(ofile, 'w') as fo:
         fo.write(line)
 
@@ -647,7 +662,10 @@ def convert_to_gsm(sat):
 #
     ofile1 = tel_data_dir + sat + '.gsme'
     ofile2 = tel_data_dir + sat + '.gsme_in_Re'
-
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        ofile1 = test_out + "/" + os.path.basename(ofile1)
+        ofile2 = test_out + "/" + os.path.basename(ofile2)
     with open(ofile1, 'w') as fo:
         fo.write(line1)
 
