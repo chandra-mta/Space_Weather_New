@@ -40,6 +40,10 @@ for ent in data:
     var  = atemp[1].strip()
     line = atemp[0].strip()
     exec("%s = %s" %(var, line))
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 #
 #--- append  pathes to private folders to a python directory
 #
@@ -428,6 +432,9 @@ def plot_lon_lat_info(dset, otime, rad, lat, lon, color, dsn_start, dsn_stop):
 #--- save the plot in png format
 #
     outname = html_dir + 'Orbit/Plots/' + dset.upper()+ '.png'
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        outname = test_out + "/" + os.path.basename(outname)
     plt.savefig(outname, format='png', dpi=300)
 
     plt.close('all')
@@ -517,6 +524,9 @@ def update_orbit_html():
     html  = html.replace("#COMM_DATA#", line)
 
     ofile = html_dir + 'Orbit/orbit.html'
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        ofile = test_out + "/" + os.path.basename(ofile)
     with open(ofile, 'w') as fo:
         fo.write(html)
 
