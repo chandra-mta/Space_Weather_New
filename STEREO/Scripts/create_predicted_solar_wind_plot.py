@@ -47,7 +47,7 @@ for ent in data:
 #
 #--- append  pathes to private folders to a python directory
 #
-sys.path.append('/data/mta/Script/Python3.8/MTA/')
+sys.path.append('/data/mta/Script/Python3.10/MTA/')
 #
 #--- import several functions
 #

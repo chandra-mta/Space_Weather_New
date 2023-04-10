@@ -22,7 +22,7 @@ from datetime import datetime
 import numpy
 import matplotlib as mpl
 
-sys.path.append('/data/mta4/Script/Python3.8/lib/python3.8/site-package')
+sys.path.append('/data/mta4/Script/Python3.10/lib/python3.10/site-package')
 from geopack import geopack
 
 if __name__ == '__main__':
@@ -49,7 +49,7 @@ for ent in data:
 #
 #--- append  pathes to private folders to a python directory
 #
-sys.path.append('/data/mta/Script/Python3.8/MTA/')
+sys.path.append('/data/mta/Script/Python3.10/MTA/')
 #
 #--- import several functions
 #

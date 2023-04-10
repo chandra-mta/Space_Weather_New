@@ -22,7 +22,7 @@ for ent in data:
 #
 #--- append paths to private folders to a python directory
 #
-sys.path.append('/data/mta4/Script/Python3.8/MTA/')
+sys.path.append('/data/mta4/Script/Python3.10/MTA/')
 #
 #-command line arguments for reading in different hours before alert
 #

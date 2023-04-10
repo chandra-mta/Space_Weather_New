@@ -31,7 +31,7 @@ for ent in data:
     line  = atemp[0].strip()
     exec("%s = %s" %(var, line))
 
-sys.path.append('/data/mta4/Script/Python3.8/MTA/')
+sys.path.append('/data/mta4/Script/Python3.10/MTA/')
 import mta_common_functions     as mcf
 #
 #--- set a temporary file name

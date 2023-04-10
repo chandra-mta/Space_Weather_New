@@ -35,7 +35,7 @@ if (os.getenv('TEST') == 'TEST'):
     os.system('mkdir -p TestOut')
     test_out = os.getcwd() + '/TestOut'
 
-sys.path.append('/data/mta4/Script/Python3.8/MTA/')
+sys.path.append('/data/mta4/Script/Python3.10/MTA/')
 import mta_common_functions     as mcf
 
 current = time.strftime('%Y:%j:%H:%M:%S', time.gmtime())

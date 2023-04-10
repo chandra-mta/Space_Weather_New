@@ -39,7 +39,7 @@ if (os.getenv('TEST') == 'TEST'):
 #
 #--- append path to a private folder
 #
-sys.path.append('/data/mta/Script/Python3.8/MTA/')
+sys.path.append('/data/mta/Script/Python3.10/MTA/')
 import mta_common_functions     as mcf
 #
 #--- temp writing file name

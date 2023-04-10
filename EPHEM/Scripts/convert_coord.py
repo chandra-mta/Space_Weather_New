@@ -20,7 +20,7 @@ import time
 import Chandra.Time
 import calendar
 from datetime import datetime
-sys.path.append('/data/mta4/Script/Python3.8/lib/python3.8/site-packages')  
+sys.path.append('/data/mta4/Script/Python3.10/lib/python3.10/site-packages')  
 from geopack  import geopack
 #import astropy.io.fits  as pyfits
 
