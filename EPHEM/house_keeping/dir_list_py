@@ -4,5 +4,5 @@
 '/data/mta4/Space_Weather/EPHEM/Data/'              : data_dir
 '/data/mta4/Space_Weather/EPHEM/Data/'              : eph_dir
 '/data/mta/DataSeeker/data/repository/'             : ds_rep
-'/data/mta/Script/Python3.6/MTA/'                   : mta_dir
+'/data/mta4/Script/Python3.10/MTA/'                   : mta_dir
 '/data/mta4/Space_Weather/KP/'                      : kp_dir
