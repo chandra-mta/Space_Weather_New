@@ -1,4 +1,4 @@
-#!/usr/bin/env /data/mta4/Script/Python3.8/envs/ska3-shiny/bin/python
+#!/proj/sot/ska3/flight/bin/python
 
 #####################################################################################################
 #                                                                                                   #
@@ -18,7 +18,7 @@ import random
 import operator
 import math
 import numpy
-import astropy.io.fits  as pyfits
+#import astropy.io.fits  as pyfits
 import time
 import Chandra.Time
 import unittest
@@ -51,6 +51,10 @@ for ent in data:
 bin_dir = acis_dir + 'Scripts/'
 bin_dir = acis_dir + 'Scripts/Test/'
 sys.path.append(bin_dir)
+#Setting Testing directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 #
 #--- import several functions
 #
@@ -177,7 +181,8 @@ def create_config_plot(start, stop, outname,  mag_plot=1):
 #--- hrc sheild rate plot
 #
     [htime, rate] = erd.read_hrc_data(start, stop)
-    plot_line(ax4, start, stop, htime, rate)
+    if len(htime) > 0:
+        plot_line(ax4, start, stop, htime, rate)
 #
 #--- goes p3 rate plot
 #
@@ -260,7 +265,10 @@ def create_config_plot(start, stop, outname,  mag_plot=1):
     #fig.tight_layout()                 #---- this makes too tight; commented out
 #
 #--- save the plot in png format
-#   
+#
+    if (os.getenv('TEST') == 'TEST'):
+        outname = os.path.basename(outname)
+        outname = test_out + "/" + outname
     plt.savefig(outname, format='png', dpi=100)
     plt.close('all')
 

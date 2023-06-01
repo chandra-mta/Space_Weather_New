@@ -25,6 +25,10 @@ get_kp.py                   --- create a summary file kp.dat
 cron job
 --------
 
+mta on boba-v
+14 0,3,6,9,12,15,18,21 * * * /data/mta4/Space_Weather/KP/Scripts/kp_wrap_script  >> $HOME/Logs/kp_index_update.cron 2>&1
+
+Old Version
 han-v as mta
 
 14 0,3,6,9,12,15,18,21 * * * /data/mta4/Space_Weather/KP/Scripts/kp_wrap_script  > /data/mta4/Space_Weather/Test_Logs/kp_index_update.cron 2>&1

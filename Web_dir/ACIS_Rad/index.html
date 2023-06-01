@@ -6,7 +6,7 @@
 
 <script language="JavaScript">
     function MyWindowOpener(imgname) {
-        msgWindow=open("","displayname","toolbar=no,directories=no,menubar=no,location=no,scrollbars=yes,status=no,width=810,height=1010,resize=yes");
+        msgWindow=open("","displayname","toolbar=no,directories=no,menubar=no,location=no,scrollbars=yes,status=no,width=900,height=1100,resize=yes");
         msgWindow.document.close();
         msgWindow.document.write("<html><head><title>Radiaton  plot:   "+imgname+"</title></head>");
         msgWindow.document.write("<body bgcolor='white'>");
@@ -30,27 +30,16 @@
 -->
 <body style="width:95%;margin-left:10px; margin-right;10px;background-color:#FAEBD7;font-family:Georgia, "Times New Roman", Times, serif">
 
-<div style='float:right;'>
-<a href="../../sot.html">SOT home page</a>
-<br />
-<a href="../index.html">Radiation Main Page</a>
-</div>
 
 <h1><center>ACIS Radiation Correlations</center></h1>
-<p>
-GOES Primary, ACE, EPHIN, and ACIS count rates plotted on the same time scale.
+<ul>
+GOES-13, ACE, EPHIN, and ACIS count rates plotted on the same time scale.
 Also shown on the same timescale is a stripchart of Chandra configuration.
-</p>
-<p>
-Note: GOES plot changed from Mar 01, 2020 due to the change of the satellite. 
-The energy bands are different and the rate ranges are quite different before and after
-Mar 2020.
-</p>
-<!--
-<br />
+EPHIN thresholds are shown at 1/3 the RADMON trip levels and
+rad zones are defined as times above these thresholds.<br>
 See also <a href="./Html/rad_time.html">Rad zone timing plots</a>.
+</ul>
 <br/>
--->
 
 <h2>MOST CURRENT DATA:</h2>
 <ul>
@@ -65,20 +54,13 @@ and
 
 data and may be incomplete.
 </ul>
+<br />
 <div style='text-align:center;'>
-<!--
 <a href="javascript:MyWindowOpener('./rad_cnts_curr.gif')">
 <img src="./Plots/rad_cnts_curr.gif" style='width:45%'>
--->
-<a href="javascript:MyWindowOpener('./rad_cnts_curr.png')">
-<img src="./Plots/rad_cnts_curr.png" style='width:45%'>
 </a>
-<!--
 <a href="javascript:MyWindowOpener2('./rad_use_curr.gif')">
 <img src="./Plots/rad_use_curr.gif" style='width:45%;padding-bottom:70px'>
--->
-<a href="javascript:MyWindowOpener('./rad_use_curr.png')">
-<img src="./Plots/rad_use_curr.png" style='width:45%'>
 </a>
 <h4>(Click the plots above to enlarge.)</h4>
 </div>
@@ -88,41 +70,16 @@ data and may be incomplete.
 
 
 <table border=1 cellpadding=10 cellspacing=2>
+<tr>
+<td colspan=13>
+<table border=1 width=100%>
+<tr><th> <a href="./Html/all.html" style="font-size:120%">Mission since JAN2000</a></th></tr>
+</table>
+</td>
+</tr>
 <tr><th>Year</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th>
 <th>Jul</th><th>Aug</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dec</th>
 </tr>
-<tr>
-<th>2020</th>
-<td><a href="./Html/jan20.html">JAN20</a></td>
-<td><a href="./Html/feb20.html">FEB20</a></td>
-<td>MAR20</td>
-<td>APR20</td>
-<td>MAY20</td>
-<td>JUN20</td>
-<td>JUL20</td>
-<td>AUG20</td>
-<td>SEP20</td>
-<td>OCT20</td>
-<td>NOV20</td>
-<td>DEC20</td>
-</tr>
-
-<tr>
-<th>2019</th>
-<td><a href="./Html/jan19.html">JAN19</a></td>
-<td><a href="./Html/feb19.html">FEB19</a></td>
-<td><a href="./Html/mar19.html">MAR19</a></td>
-<td><a href="./Html/apr19.html">APR19</a></td>
-<td><a href="./Html/may19.html">MAY19</a></td>
-<td><a href="./Html/jun19.html">JUN19</a></td>
-<td><a href="./Html/jul19.html">JUL19</a></td>
-<td><a href="./Html/aug19.html">AUG19</a></td>
-<td><a href="./Html/sep19.html">SEP19</a></td>
-<td><a href="./Html/oct19.html">OCT19</a></td>
-<td><a href="./Html/nov19.html">NOV19</a></td>
-<td><a href="./Html/dec19.html">DEC19</a></td>
-</tr>
-
 <tr>
 <th>2018</th>
 <td><a href="./Html/jan18.html">JAN18</a></td>
@@ -131,12 +88,12 @@ data and may be incomplete.
 <td><a href="./Html/apr18.html">APR18</a></td>
 <td><a href="./Html/may18.html">MAY18</a></td>
 <td><a href="./Html/jun18.html">JUN18</a></td>
-<td><a href="./Html/jul18.html">JUL18</a></td>
+<td><a href="./Html/ jul18.html"> JUL18</a></td>
 <td><a href="./Html/aug18.html">AUG18</a></td>
-<td><a href="./Html/sep18.html">SEP18</a></td>
-<td><a href="./Html/oct18.html">OCT18</a></td>
-<td><a href="./Html/nov18.html">NOV18</a></td>
-<td><a href="./Html/dec18.html">DEC18</a></td>
+<td>SEP18</td>
+<td>OCT18</td>
+<td>NOV18</td>
+<td>DEC18</td>
 </tr>
 
 <tr>
@@ -147,7 +104,7 @@ data and may be incomplete.
 <td><a href="./Html/apr17.html">APR17</a></td>
 <td><a href="./Html/may17.html">MAY17</a></td>
 <td><a href="./Html/jun17.html">JUN17</a></td>
-<td><a href="./Html/jul17.html">JUL17</a></td>
+<td><a href="./Html/ jul17.html"> JUL17</a></td>
 <td><a href="./Html/aug17.html">AUG17</a></td>
 <td><a href="./Html/sep17.html">SEP17</a></td>
 <td><a href="./Html/oct17.html">OCT17</a></td>
@@ -163,7 +120,7 @@ data and may be incomplete.
 <td><a href="./Html/apr16.html">APR16</a></td>
 <td><a href="./Html/may16.html">MAY16</a></td>
 <td><a href="./Html/jun16.html">JUN16</a></td>
-<td><a href="./Html/jul16.html">JUL16</a></td>
+<td><a href="./Html/ jul16.html"> JUL16</a></td>
 <td><a href="./Html/aug16.html">AUG16</a></td>
 <td><a href="./Html/sep16.html">SEP16</a></td>
 <td><a href="./Html/oct16.html">OCT16</a></td>
@@ -179,7 +136,7 @@ data and may be incomplete.
 <td><a href="./Html/apr15.html">APR15</a></td>
 <td><a href="./Html/may15.html">MAY15</a></td>
 <td><a href="./Html/jun15.html">JUN15</a></td>
-<td><a href="./Html/jul15.html">JUL15</a></td>
+<td><a href="./Html/ jul15.html"> JUL15</a></td>
 <td><a href="./Html/aug15.html">AUG15</a></td>
 <td><a href="./Html/sep15.html">SEP15</a></td>
 <td><a href="./Html/oct15.html">OCT15</a></td>
@@ -195,7 +152,7 @@ data and may be incomplete.
 <td><a href="./Html/apr14.html">APR14</a></td>
 <td><a href="./Html/may14.html">MAY14</a></td>
 <td><a href="./Html/jun14.html">JUN14</a></td>
-<td><a href="./Html/jul14.html">JUL14</a></td>
+<td><a href="./Html/ jul14.html"> JUL14</a></td>
 <td><a href="./Html/aug14.html">AUG14</a></td>
 <td><a href="./Html/sep14.html">SEP14</a></td>
 <td><a href="./Html/oct14.html">OCT14</a></td>
@@ -211,7 +168,7 @@ data and may be incomplete.
 <td><a href="./Html/apr13.html">APR13</a></td>
 <td><a href="./Html/may13.html">MAY13</a></td>
 <td><a href="./Html/jun13.html">JUN13</a></td>
-<td><a href="./Html/jul13.html">JUL13</a></td>
+<td><a href="./Html/ jul13.html"> JUL13</a></td>
 <td><a href="./Html/aug13.html">AUG13</a></td>
 <td><a href="./Html/sep13.html">SEP13</a></td>
 <td><a href="./Html/oct13.html">OCT13</a></td>
@@ -227,7 +184,7 @@ data and may be incomplete.
 <td><a href="./Html/apr12.html">APR12</a></td>
 <td><a href="./Html/may12.html">MAY12</a></td>
 <td><a href="./Html/jun12.html">JUN12</a></td>
-<td><a href="./Html/jul12.html">JUL12</a></td>
+<td><a href="./Html/ jul12.html"> JUL12</a></td>
 <td><a href="./Html/aug12.html">AUG12</a></td>
 <td><a href="./Html/sep12.html">SEP12</a></td>
 <td><a href="./Html/oct12.html">OCT12</a></td>
@@ -243,7 +200,7 @@ data and may be incomplete.
 <td><a href="./Html/apr11.html">APR11</a></td>
 <td><a href="./Html/may11.html">MAY11</a></td>
 <td><a href="./Html/jun11.html">JUN11</a></td>
-<td><a href="./Html/jul11.html">JUL11</a></td>
+<td><a href="./Html/ jul11.html"> JUL11</a></td>
 <td><a href="./Html/aug11.html">AUG11</a></td>
 <td><a href="./Html/sep11.html">SEP11</a></td>
 <td><a href="./Html/oct11.html">OCT11</a></td>
@@ -259,7 +216,7 @@ data and may be incomplete.
 <td><a href="./Html/apr10.html">APR10</a></td>
 <td><a href="./Html/may10.html">MAY10</a></td>
 <td><a href="./Html/jun10.html">JUN10</a></td>
-<td><a href="./Html/jul10.html">JUL10</a></td>
+<td><a href="./Html/ jul10.html"> JUL10</a></td>
 <td><a href="./Html/aug10.html">AUG10</a></td>
 <td><a href="./Html/sep10.html">SEP10</a></td>
 <td><a href="./Html/oct10.html">OCT10</a></td>
@@ -275,7 +232,7 @@ data and may be incomplete.
 <td><a href="./Html/apr09.html">APR09</a></td>
 <td><a href="./Html/may09.html">MAY09</a></td>
 <td><a href="./Html/jun09.html">JUN09</a></td>
-<td><a href="./Html/jul09.html">JUL09</a></td>
+<td><a href="./Html/ jul09.html"> JUL09</a></td>
 <td><a href="./Html/aug09.html">AUG09</a></td>
 <td><a href="./Html/sep09.html">SEP09</a></td>
 <td><a href="./Html/oct09.html">OCT09</a></td>
@@ -291,7 +248,7 @@ data and may be incomplete.
 <td><a href="./Html/apr08.html">APR08</a></td>
 <td><a href="./Html/may08.html">MAY08</a></td>
 <td><a href="./Html/jun08.html">JUN08</a></td>
-<td><a href="./Html/jul08.html">JUL08</a></td>
+<td><a href="./Html/ jul08.html"> JUL08</a></td>
 <td><a href="./Html/aug08.html">AUG08</a></td>
 <td><a href="./Html/sep08.html">SEP08</a></td>
 <td><a href="./Html/oct08.html">OCT08</a></td>
@@ -307,7 +264,7 @@ data and may be incomplete.
 <td><a href="./Html/apr07.html">APR07</a></td>
 <td><a href="./Html/may07.html">MAY07</a></td>
 <td><a href="./Html/jun07.html">JUN07</a></td>
-<td><a href="./Html/jul07.html">JUL07</a></td>
+<td><a href="./Html/ jul07.html"> JUL07</a></td>
 <td><a href="./Html/aug07.html">AUG07</a></td>
 <td><a href="./Html/sep07.html">SEP07</a></td>
 <td><a href="./Html/oct07.html">OCT07</a></td>
@@ -323,7 +280,7 @@ data and may be incomplete.
 <td><a href="./Html/apr06.html">APR06</a></td>
 <td><a href="./Html/may06.html">MAY06</a></td>
 <td><a href="./Html/jun06.html">JUN06</a></td>
-<td><a href="./Html/jul06.html">JUL06</a></td>
+<td><a href="./Html/ jul06.html"> JUL06</a></td>
 <td><a href="./Html/aug06.html">AUG06</a></td>
 <td><a href="./Html/sep06.html">SEP06</a></td>
 <td><a href="./Html/oct06.html">OCT06</a></td>
@@ -339,7 +296,7 @@ data and may be incomplete.
 <td><a href="./Html/apr05.html">APR05</a></td>
 <td><a href="./Html/may05.html">MAY05</a></td>
 <td><a href="./Html/jun05.html">JUN05</a></td>
-<td><a href="./Html/jul05.html">JUL05</a></td>
+<td><a href="./Html/ jul05.html"> JUL05</a></td>
 <td><a href="./Html/aug05.html">AUG05</a></td>
 <td><a href="./Html/sep05.html">SEP05</a></td>
 <td><a href="./Html/oct05.html">OCT05</a></td>
@@ -355,7 +312,7 @@ data and may be incomplete.
 <td><a href="./Html/apr04.html">APR04</a></td>
 <td><a href="./Html/may04.html">MAY04</a></td>
 <td><a href="./Html/jun04.html">JUN04</a></td>
-<td><a href="./Html/jul04.html">JUL04</a></td>
+<td><a href="./Html/ jul04.html"> JUL04</a></td>
 <td><a href="./Html/aug04.html">AUG04</a></td>
 <td><a href="./Html/sep04.html">SEP04</a></td>
 <td><a href="./Html/oct04.html">OCT04</a></td>
@@ -371,7 +328,7 @@ data and may be incomplete.
 <td><a href="./Html/apr03.html">APR03</a></td>
 <td><a href="./Html/may03.html">MAY03</a></td>
 <td><a href="./Html/jun03.html">JUN03</a></td>
-<td><a href="./Html/jul03.html">JUL03</a></td>
+<td><a href="./Html/ jul03.html"> JUL03</a></td>
 <td><a href="./Html/aug03.html">AUG03</a></td>
 <td><a href="./Html/sep03.html">SEP03</a></td>
 <td><a href="./Html/oct03.html">OCT03</a></td>
@@ -387,7 +344,7 @@ data and may be incomplete.
 <td><a href="./Html/apr02.html">APR02</a></td>
 <td><a href="./Html/may02.html">MAY02</a></td>
 <td><a href="./Html/jun02.html">JUN02</a></td>
-<td><a href="./Html/jul02.html">JUL02</a></td>
+<td><a href="./Html/ jul02.html"> JUL02</a></td>
 <td><a href="./Html/aug02.html">AUG02</a></td>
 <td><a href="./Html/sep02.html">SEP02</a></td>
 <td><a href="./Html/oct02.html">OCT02</a></td>
@@ -403,7 +360,7 @@ data and may be incomplete.
 <td><a href="./Html/apr01.html">APR01</a></td>
 <td><a href="./Html/may01.html">MAY01</a></td>
 <td><a href="./Html/jun01.html">JUN01</a></td>
-<td><a href="./Html/jul01.html">JUL01</a></td>
+<td><a href="./Html/ jul01.html"> JUL01</a></td>
 <td><a href="./Html/aug01.html">AUG01</a></td>
 <td><a href="./Html/sep01.html">SEP01</a></td>
 <td><a href="./Html/oct01.html">OCT01</a></td>
@@ -419,7 +376,7 @@ data and may be incomplete.
 <td><a href="./Html/apr00.html">APR00</a></td>
 <td><a href="./Html/may00.html">MAY00</a></td>
 <td><a href="./Html/jun00.html">JUN00</a></td>
-<td><a href="./Html/jul00.html">JUL00</a></td>
+<td><a href="./Html/ jul00.html"> JUL00</a></td>
 <td><a href="./Html/aug00.html">AUG00</a></td>
 <td><a href="./Html/sep00.html">SEP00</a></td>
 <td><a href="./Html/oct00.html">OCT00</a></td>

@@ -1,4 +1,4 @@
-#!/usr/bin/env /data/mta4/Script/Python3.6/envs/ska3/bin/python
+#!/proj/sot/ska3/flight/bin/python
 
 #############################################################################
 #                                                                           #
@@ -6,7 +6,7 @@
 #                                                                           #
 #               author: t. isobe (tisobe@@cfa.harvard.edu)                  #
 #                                                                           #
-#                   last update: Mar 03, 2020                               #
+#                   last update: Mar 16, 2021                               #
 #                                                                           #
 #############################################################################
 
@@ -29,7 +29,10 @@ for ent in data:
     var  = atemp[1].strip()
     line = atemp[0].strip()
     exec("%s = %s" % (var, line))
-
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 #
 #--- append  pathes to private folders to a python directory
 #
@@ -47,12 +50,12 @@ rtail  = int(time.time() * random.random())
 zspace = '/tmp/zspace' + str(rtail)
 
 #----------------------------------------------------------------------------------
-#-- copy_ephem_data: copy ephem data from /data/mta4/Script/Ephem/EPH_Data/       --
+#-- copy_ephem_data: copy ephem data from /data/mta/Script/Ephem/EPH_Data/       --
 #----------------------------------------------------------------------------------
 
 def copy_ephem_data():
     """
-    copy ephem data from /data/mta4/Script/Ephem/EPH_Data/
+    copy ephem data from /data/mta/Script/Ephem/EPH_Data/
     input:  none, but read from <input_data>/DE*.EPH.dat0
     output: <data_dir>/EPH.dat
             <data_dir>/EPH.gsme
@@ -83,6 +86,9 @@ def copy_ephem_data():
 #--- append the data to the longterm data
 #
             cmd = 'cat ' + ent + '>>' + data_dir + 'longterm/dephem.dat'
+            #for writing out files in test directory
+            if (os.getenv('TEST') == 'TEST'):
+                cmd = 'touch' + test_out + '/dephem.dat ; ' + 'cat' + ent + '>>' + test_out + "/dephem.dat"
             os.system(cmd)
 #
 #--- copied the last entry
@@ -90,11 +96,16 @@ def copy_ephem_data():
         cmd = 'rm -rf ' + data_dir + 'PE.EPH*'
         os.system(cmd)
         ofile = data_dir + 'PE.EPH.dat'
+        if (os.getenv('TEST') == 'TEST'):
+            ofile = test_out + "/" + os.path.basename(ofile)
         cmd = 'cp  '  + ent + ' ' + ofile
         os.system(cmd)
 #
 #--- update the list of copied files
 #
+        #for writing out files in test directory
+        if (os.getenv('TEST') == 'TEST'):
+            sfile = test_out + "/" + os.path.basename(sfile)
         with open(sfile, 'a') as fo:
             fo.write(line)
 #
@@ -111,17 +122,24 @@ def copy_ephem_data():
 #--- print out the results
 #
     out   = data_dir + 'PE.EPH.gsme'
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        out = test_out + "/" + os.path.basename(out)
     with open(out, 'w') as fo:
         for ent in data[0]:
             fo.write(ent)
 
     out   = data_dir + 'PE.EPH.gsme_in_Re'
+    if (os.getenv('TEST') == 'TEST'):
+        out = test_out + "/" + os.path.basename(out)
     with open(out, 'w') as fo:
         for ent in data[1]:
             fo.write(ent)
         
 
     out   = data_dir + 'PE.EPH.gsme_spherical'
+    if (os.getenv('TEST') == 'TEST'):
+        out = test_out + "/" + os.path.basename(out)
     with open(out, 'w') as fo:
         for ent in data[2]:
             fo.write(ent)

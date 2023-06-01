@@ -1,1 +1,1 @@
-TERM=dummy; export TERM; /bin/tcsh  </data/mta4/Space_Weather/CRM3/Scripts/crm_main_script
+TERM=dummy; export TERM;/proj/sot/ska3/flight/bin/skare /bin/tcsh  </data/mta4/Space_Weather/CRM3/Scripts/crm_main_script

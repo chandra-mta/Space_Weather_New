@@ -1,4 +1,4 @@
-#!/usr/bin/env /data/mta/Script/Python3.8/envs/ska3-shiny/bin/python
+#!/proj/sot/ska3/flight/bin/python
 
 #################################################################################################
 #                                                                                               #
@@ -18,8 +18,10 @@ import time
 import math
 import Chandra.Time
 from datetime import datetime
-from geopack  import geopack
 import numpy
+
+sys.path.append('/data/mta4/Script/Python3.10/lib/python3.10/site-packages')
+from geopack import geopack
 #
 #--- reading directory list
 #
@@ -34,10 +36,14 @@ for ent in data:
     var  = atemp[1].strip()
     line = atemp[0].strip()
     exec("%s = %s" %(var, line))
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 #
 #--- append  pathes to private folders to a python directory
 #
-sys.path.append('/data/mta/Script/Python3.8/MTA/')
+sys.path.append('/data/mta4/Script/Python3.10/MTA/')
 sys.path.append('/data/mta4/Space_Weather/EPHEM/Scripts/')
 #
 #--- import several functions
@@ -204,6 +210,9 @@ def write_region_data(xtime, utime,  nkps, xgsm, ygsm, zgsm, alt,  sat):
         line = line + '%4d'   % lid      + '\n'
 
     ofile = xmm_dir + 'Data/crmreg_' + sat + '.dat'
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        ofile = test_out + "/" + os.path.basename(ofile)
     with open(ofile, 'w') as fo:
         fo.write(line)
 

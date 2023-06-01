@@ -1,4 +1,4 @@
-#!/usr/bin/env /data/mta4/Script/Python3.8/envs/ska3-shiny/bin/python
+#!/proj/sot/ska3/flight/bin/python
 
 #########################################################################################
 #                                                                                       #
@@ -34,10 +34,14 @@ for ent in data:
     var  = atemp[1].strip()
     line = atemp[0].strip()
     exec( "%s = %s" %(var, line))
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 #
 #--- append  pathes to private folders to a python directory
 #
-sys.path.append('/data/mta4/Script/Python3.8/MTA/')
+sys.path.append('/data/mta4/Script/Python3.10/MTA/')
 #
 #--- import several functions
 #
@@ -350,6 +354,9 @@ def create_radiation_summary_page():
 #--- update the page
 #
     ofile = html_dir + 'Alerts/rad_summ.html'
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        ofile = test_out +'/rad_summ.html'
     with open(ofile, 'w') as fo:
         fo.write(tline)
 

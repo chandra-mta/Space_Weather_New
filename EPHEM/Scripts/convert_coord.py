@@ -1,4 +1,4 @@
-#!/usr/bin/env /data/mta4/Script/Python3.6/envs/ska3/bin/python
+#!/proj/sot/ska3/flight/bin/python
 
 #####################################################################################
 #                                                                                   #
@@ -6,7 +6,7 @@
 #                                                                                   #
 #           author: t. isobe (tisobe@cfa.harvard.edu)                               #
 #                                                                                   #
-#           last updae: Feb 27, 2020                                                #
+#           last updae: Mar 16, 2021                                                #
 #                                                                                   #
 #####################################################################################
 
@@ -20,8 +20,9 @@ import time
 import Chandra.Time
 import calendar
 from datetime import datetime
+sys.path.append('/data/mta4/Script/Python3.10/lib/python3.10/site-packages')  
 from geopack  import geopack
-import astropy.io.fits  as pyfits
+#import astropy.io.fits  as pyfits
 
 path = '/data/mta4/Space_Weather/EPHEM/house_keeping/dir_list_py'
 

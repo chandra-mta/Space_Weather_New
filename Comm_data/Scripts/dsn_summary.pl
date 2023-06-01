@@ -1,4 +1,5 @@
-#!/usr/bin/env /proj/sot/ska/bin/perl
+#!/proj/sot/ska3/flight/bin/perl
+#/usr/bin/env /proj/sot/ska/bin/perl
 
 # --8<--8<--8<--8<--
 #

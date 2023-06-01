@@ -24,9 +24,9 @@ rtail  = int(time.time() * random.random())
 zspace = '/tmp/zspace' + str(rtail)
 
 #
-#--- Passes in emails from sys args
+#--- Passes in extra emails from sys args
 #
-ADMIN = ['mtadude@cfa.harvard.edu']
+ADMIN  = ['mtadude@cfa.harvard.edu']
 for i in range(1,len(sys.argv)):
     if sys.argv[i][:6] == 'email=':
         ADMIN.append(sys.argv[i][6:])
@@ -76,8 +76,8 @@ def send_email():
     output: email sent to admin
     """
 
-    text = 'daemon process of /data/mta4/Space_Weather/EPHEM/Scripts/ page is not running.\n'
-    text = text + 'Please check mta/c3po-v daemon process.\n'
+    text = 'daemon process of /data/mta4/Script/Space_Weather/EPHEM/Scripts/ page is not running.\n'
+    text = text + 'Please check mta/r2d2-v daemon process.\n'
 
     with open(zspace, 'w') as fo:
         fo.write(text)

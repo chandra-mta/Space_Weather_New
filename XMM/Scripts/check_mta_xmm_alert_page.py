@@ -1,4 +1,4 @@
-#!/usr/bin/env /data/mta4/Script/Python3.8/envs/ska3-shiny/bin/python
+#!/proj/sot/ska3/flight/bin/python
 
 #################################################################################################
 #                                                                                               #
@@ -8,7 +8,7 @@
 #                                                                                               #
 #           author: t. isobe (tisobe@cfa.harvard.edu)                                           #
 #                                                                                               #
-#           last update: mar 16, 2021                                                           #
+#           last update: Mar 16, 2021                                                           #
 #                                                                                               #
 #################################################################################################
 
@@ -34,11 +34,16 @@ for ent in data:
     var  = atemp[1].strip()
     line = atemp[0].strip()
     exec("%s = %s" %(var, line))
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 #
 #--- temp writing file name
 #
 rtail  = int(time.time() * random.random())
 zspace = '/tmp/zspace' + str(rtail)
+ADMIN = ['mtadude@cfa.harvard.edu']
 #
 #-- convert factor to change time to start from 1.1.1998
 #
@@ -110,8 +115,12 @@ def run_test():
         stime  = Chandra.Time.DateTime(r_time).date
         line   = str(stime) + ' : ' + str(r_time) + '\t\t' + str(round(l1,1)) 
         line   = line + '\t\t' + str(round(height,1)) + '\n'
-    
-        with open(l1_file, 'a') as fo:
+
+        outfile = l1_file
+        #for writing out files in test directory
+        if (os.getenv('TEST') == 'TEST'):
+            outfile = test_out + "/" + os.path.basename(outfile)
+        with open(outfile, 'a') as fo:
             fo.write(line)
 #
 #--- if the altitude of the satellite is lower then "alt_limit" during the time period,
@@ -174,21 +183,29 @@ def run_test():
         line = line + '\t\thttps://cxc.cfa.harvard.edu/mta/RADIATION_new/XMM/ '
         line = line + '\n\nfor the current condition.\n'
 
-        with open(zspace, 'w') as fo:
+        outfile = zspace
+        #for writing out files in test directory
+        if (os.getenv('TEST') == 'TEST'):
+            outfile = test_out + "/" + os.path.basename(outfile)
+        with open(outfile, 'w') as fo:
             fo.write(line)
+        #for writing out files in test directory
+        if (os.getenv('TEST') != 'TEST'):  
+        
+            cmd = 'cat ' + zspace + '|mailx -s\"Subject: mta_XMM_alert \n\" ' + ' '.join(ADMIN) 
+            os.system(cmd)
 
-        cmd = 'cat ' + zspace + '|mailx -s\"Subject: mta_XMM_alert \n\" swolk@cfa.harvard.edu' 
-        os.system(cmd)
-        cmd = 'cat ' + zspace + '|mailx -s\"Subject: mta_XMM_alert \n\" tisobe@cfa.harvard.edu' 
-        os.system(cmd)
-
-        cmd = 'rm ' + zspace
-        os.system(cmd)
+            cmd = 'rm ' + zspace
+            os.system(cmd)
 #
 #--- create/renew alert_file
 #
         rm_file(alert_file)
-        cmd = 'touch ' + alert_file
+        newfile = alert_file
+        #for writing out files in test directory
+        if (os.getenv('TEST') == 'TEST'):
+            newfile = test_out + "/" + os.path.basename(newfile)
+        cmd = 'touch ' + newfile
         os.system(cmd)
 
 #--------------------------------------------------------------------------
@@ -340,15 +357,22 @@ def keep_record(time, alt, l1):
 
     line = 'Test threshold crossed, Altitude = ' + str(chigh) + ' kkm with '
     line = line + 'L1 30 min average counts @ ' + str(round(l1,2)) + '.\n'
-    with open(zspace, 'w') as fo:
+    outfile = zspace#for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        outfile = test_out + "/" +os.path.basename(outfile)
+    with open(outfile, 'w') as fo:
         fo.write(line)
 
-    cmd = 'cat ' + zspace + '|mailx -s\"Subject: mta_XMM_alert\n\" tisobe@cfa.harvard.edu' 
-    os.system(cmd)
-    rm_file(zspace)
+    if (os.getenv('TEST') != 'TEST'):
+        cmd = 'cat ' + zspace + '|mailx -s\"Subject: mta_XMM_alert\n\" ' + ' '.join(ADMIN) 
+        os.system(cmd)
+        rm_file(zspace)
 
     out= xmm_dir + 'Data/alt_trip_records'
     line = str(time) + ': ' + str(chigh) + '\t\t' + str(l1) + '\n'
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        out = test_out + "/" +os.path.basename(out)
     with open(out, 'a') as fo:
         fo.write(line)
 

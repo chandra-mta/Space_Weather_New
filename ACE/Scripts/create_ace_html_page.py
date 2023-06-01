@@ -1,4 +1,4 @@
-#!/usr/bin/env /data/mta4/Script/Python3.8/envs/ska3-shiny/bin/python
+#!/proj/sot/ska3/flight/bin/python
 
 #####################################################################################################
 #                                                                                                   #
@@ -36,7 +36,7 @@ for ent in data:
 #
 #--- append  pathes to private folders to a python directory
 #
-sys.path.append('/data/mta4/Script/Python3.8/MTA/')
+sys.path.append('/data/mta4/Script/Python3.10/MTA/')
 #
 #--- import several functions
 #
@@ -53,6 +53,12 @@ data_dir   = ace_dir + 'Data/'
 templ_dir  = ace_dir + 'Scripts/Template/'
 web_dir    = html_dir + 'ACE/'
 plot_dir   = web_dir  + 'Plots/'
+
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
+
 #
 #--- ftp, html site setting
 #
@@ -123,6 +129,9 @@ def create_ace_html_page():
     line  = line + '\n'
 
     out   = web_dir + 'ace.html'
+    if (os.getenv('TEST') == 'TEST'):
+        out = test_out + '/ace.html'
+
     with open(out, 'w') as fo:
         fo.write(line)
 
@@ -515,6 +524,8 @@ def ace_invalid_spec(speci, speci_lim):
 #
 #--- open a file indicating that the mail was sent
 #
+        if (os.getenv('TEST') == 'TEST'):
+            out = test_out + '/prot_spec_violate'
         with open(out, 'w') as fo:
             fo.write(line)
 

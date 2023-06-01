@@ -1,4 +1,4 @@
-#!/usr/bin/env /data/mta4/Script/Python3.8/envs/ska3-shiny/bin/python
+#!/proj/sot/ska3/flight/bin/python
 
 #################################################################################
 #                                                                               #
@@ -30,10 +30,14 @@ for ent in data:
     var  = atemp[1].strip()
     line = atemp[0].strip()
     exec( "%s = %s" %(var, line))
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 #
 #--- append  pathes to private folders to a python directory
 #
-sys.path.append('/data/mta4/Script/Python3.8/MTA/')
+sys.path.append('/data/mta4/Script/Python3.10/MTA/')
 sys.path.append('/data/mta4/Space_Weather/CRMFLX/CRMFLX_PYTHON/')
 #
 #--- import several functions
@@ -125,6 +129,9 @@ def runcrm(ifile=''):
             line = line + '%13.6e\n' % fluxsd
 
         ofile = crm3_dir +  'Data/CRM3_p.dat' + tail[i]
+        #for writing out files in test directory
+        if (os.getenv('TEST') == 'TEST'):
+            ofile = test_out + "/CRM3_p.dat" + tail[i]
         with open(ofile, 'w') as fo:
             fo.write(line)
 

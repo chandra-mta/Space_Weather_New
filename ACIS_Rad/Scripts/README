@@ -31,9 +31,9 @@ update_html_page.py         ----    create and/or update html pages
 Environmental Settings
 +++++++++++++++++++++++
 
-setenv PYTHONPATH "/data/mta4/Script/Python3.8/envs/ska3-shiny/lib/python3.8/site-packages:/data/mta4/Script/Python3.8/lib/python3.8/site-packages/"
+/proj/sot/ska3/flight/bin/skare /bin/tcsh < /data/mta4/Space_Weather/ACIS_Rad/Scripts/*main_script
 
-        (done in *main_script)
+        (done in *wrap_script)
 
 ++++++++++++
 Data Needed
@@ -89,8 +89,9 @@ index.html
 +++++++++
 cron jobs
 +++++++++
-r2d2-v as mta
+boba-v as mta
 
-45 1 * * * /data/mta4/Space_Weather/ACIS_Rad/Scripts/run_rad_wrap_script     > $HOME/Logs/acis_rad_run_rad_new.cron   2>&1
-43 1 1 * * /data/mta4/Space_Weather/ACIS_Rad/Scripts/update_html_wrap_script > $HOME/Logs/acis_rad_html_page_new.cron 2>&1
+45 2 * * * /data/mta4/Space_Weather/ACIS_Rad/Scripts/run_rad_wrap_script     > $HOME/Logs/acis_rad_run_rad_new.cron   2>&1
+43 2 1 * * /data/mta4/Space_Weather/ACIS_Rad/Scripts/update_html_wrap_script > $HOME/Logs/acis_rad_html_page_new.cron 2>&1
+27 3 * * * cp /data/mta/DataSeeker/data/repository/dephem.rdb /data/mta4/Space_Weather/ACIS_Rad/Data/
 

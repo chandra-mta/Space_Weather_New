@@ -1,5 +1,3 @@
 cd /data/mta4/Space_Weather/EPHEM/Scripts
 
-setenv PYTHONPATH "/data/mta4/Script/Python3.6/envs/ska3/lib/python3.6/site-packages:/data/mta4/Script/Python3.6/lib/python3.6/site-packages/"
-
 /data/mta4/Space_Weather/EPHEM/Scripts/copy_ephem_data.py

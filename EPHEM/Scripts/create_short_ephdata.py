@@ -1,4 +1,4 @@
-#!/usr/bin/env /data/mta4/Script/Python3.6/envs/ska3/bin/python
+#!/proj/sot/ska3/flight/bin/python
 
 #############################################################################################
 #                                                                                           #
@@ -6,7 +6,7 @@
 #                                                                                           #
 #               author: t. isobe (tiosbe@cfa.harvard.edu)                                   #
 #                                                                                           #
-#               last update: Jan 04, 2021                                                   #
+#               last update: Mar 16, 2021                                                   #
 #                                                                                           #
 #############################################################################################
 
@@ -30,8 +30,12 @@ for ent in data:
     var   = atemp[1].strip()
     line  = atemp[0].strip()
     exec("%s = %s" %(var, line))
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 
-sys.path.append('/data/mta4/Script/Python3.6/MTA/')
+sys.path.append('/data/mta4/Script/Python3.10/MTA/')
 import mta_common_functions     as mcf
 
 current = time.strftime('%Y:%j:%H:%M:%S', time.gmtime())
@@ -56,5 +60,7 @@ for ifile in ['PE.EPH.gsme', 'PE.EPH.gsme_in_Re','PE.EPH.gsme_spherical']:
             cnt += 1
     
     ofile = ifile + '_short'
+    if (os.getenv('TEST') == 'TEST'):
+        ofile = test_out + "/" + os.path.basename(ofile)
     with open(ofile, 'w') as fo:
         fo.write(line)

@@ -24,6 +24,10 @@ https://cxc.cfa.harvard.edu/mta/RADIATION_new/Orbit/orbit.html
 
 cron job
 --------
+mta on boba-v
+36 0,3,6,9,12,15,18,21 * * *  cd /data/mta4/Space_Weather/SOHO/Scripts; /data/mta4/Space_Weather/SOHO/Scripts/solar_wind_warp_script >> $HOME/Logs/soho_solwin_new.cron 2>&1
+
+Old Version
 han-v as mta
 36 0,3,6,9,12,15,18,21 * * *  cd /data/mta4/Space_Weather/SOHO/Scripts; /data/mta4/Space_Weather/SOHO/Scripts/solar_wind_warp_script 
 

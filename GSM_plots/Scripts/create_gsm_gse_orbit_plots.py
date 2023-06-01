@@ -1,4 +1,4 @@
-#!/usr/bin/env /data/mta/Script/Python3.8/envs/ska3-shiny/bin/python
+#!/proj/sot/ska3/flight/bin/python
 
 #################################################################################
 #                                                                               #
@@ -40,7 +40,10 @@ for ent in data:
     var  = atemp[1].strip()
     line = atemp[0].strip()
     exec("%s = %s" %(var, line))
-
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 data_dir = gsm_plot_dir + 'Data/'
 
 #--------------------------------------------------------------------------------
@@ -127,6 +130,9 @@ def read_gsm_gse_data():
                 line = ent + '\n'
     
     out = data_dir + 'gs_data_2_day'
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        out = test_out + "/" + os.path.basename(out)
     with open(out, 'w') as fo:
         fo.write(line)
     
@@ -168,7 +174,8 @@ def create_orbit_plot(dset, otime, x, y, z):
 #--- tell it that this is 3D plotting
 #
     fig = plt.figure()
-    ax  = fig.gca(projection='3d')
+    #ax  = fig.gca(projection='3d')
+    ax  = fig.add_subplot(projection='3d')
     ax.set_xlim(-20, 20)
     ax.set_ylim(-20, 20)
     ax.set_zlim(-20, 20)
@@ -256,6 +263,9 @@ def create_orbit_plot(dset, otime, x, y, z):
 #
     outname = html_dir + 'Orbit/Plots/' + dset.upper()+ 'ORBIT.png'
     #outname = dset.upper()+ 'ORBIT.png'
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        outname = test_out + "/" + os.path.basename(outname)
     plt.savefig(outname, format='png', dpi=300)
 
     plt.close('all')

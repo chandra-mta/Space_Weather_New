@@ -1,4 +1,4 @@
-#!/usr/bin/env /data/mta4/Script/Python3.8/envs/ska3-shiny/bin/python
+#!/proj/sot/ska3/flight/bin/python
 
 #############################################################################################
 #                                                                                           #
@@ -6,7 +6,7 @@
 #                                                                                           #
 #               author: t. isobe (tiosbe@cfa.harvard.edu)                                   #
 #                                                                                           #
-#               last update: Mar 16, 2021                                                   #
+#               last update: Oct 07, 2021                                                   #
 #                                                                                           #
 #############################################################################################
 
@@ -31,7 +31,7 @@ for ent in data:
     line  = atemp[0].strip()
     exec("%s = %s" %(var, line))
 
-sys.path.append('/data/mta4/Script/Python3.8/MTA/')
+sys.path.append('/data/mta4/Script/Python3.10/MTA/')
 import mta_common_functions     as mcf
 #
 #--- set a temporary file name
@@ -57,6 +57,10 @@ gpe_dat     = goes_dir  + '/Data/Gp_part_5m.txt'
 #
 sim_file = "/proj/sot/acis/FLU-MON/FPHIST-2001.dat"
 otg_file = "/proj/sot/acis/FLU-MON/GRATHIST-2001.dat"
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 #
 #--- other settings
 #
@@ -120,7 +124,12 @@ def create_crm_summary_table():
 #
     if leg == 'A' and summary[-6] == 'D':
         oend = time.strftime("%Y:%j:%H:%M:%S", time.gmtime())
-        with open(arcdat, 'a') as fo:
+        outfile = arcdat
+        #for writing out files in test directory
+        if (os.getenv('TEST') == 'TEST'):
+            outfile = test_out + "/" + os.path.basename(arcdat)
+            os.system(f"touch {outfile}")
+        with open(outfile, 'a') as fo:
             line = str(ostart) + '  ' +   oend   + '  ' + str(fluence) + '  ' + str(afluence) + '\n'
             fo.write(line)
             ostart = oend
@@ -135,12 +144,12 @@ def create_crm_summary_table():
     line = ''
     line = line + "                    Currently scheduled FPSI, OTG : " + si + ' ' + otg + '\n'
     line = line + "                                     Estimated Kp : " + str(kp) + '\n'
-    line = line + "        ACE EPAM P3 Proton Flux (p/cm^2-s-sr-MeV) : %.2e\n" % (ace) 
-    line = line + "            GOES-R P4 flux, in RADMON P4GM  units : %.2e\n" % (gp_p4)
-   #line = line + "            GOES-S P2 flux, in RADMON P4GM  units : %.2f\n" % (ps_p2)
-    line = line + "            GOES-R P7 flux, in RADMON P41GM units : %.2e\n" % (gp_p7)
+    line = line + "        ACE EPAM P3 Proton Flux (p/cm^2-s-sr-MeV) : %.2e\n" % (check_val(ace))
+    line = line + "            GOES-R P4 flux, in RADMON P4GM  units : %.2e\n" % (check_val(gp_p4))
+   #line = line + "            GOES-S P2 flux, in RADMON P4GM  units : %.2f\n" % (check_val(ps_p2))
+    line = line + "            GOES-R P7 flux, in RADMON P41GM units : %.2e\n" % (check_val(gp_p7))
    #line = line + "            GOES-S P5 flux, in RADMON P41GM units : %.2f\n" % (gp_p7)
-    line = line + "            GOES-R E > 2.0 MeV flux (p/cm^2-s-sr) : %.2e\n" % (gp_e2)
+    line = line + "            GOES-R E > 2.0 MeV flux (p/cm^2-s-sr) : %.2e\n" % (check_val(gp_e2))
     line = line + "                                 Orbit Start Time : " + ostart + '\n'
     line = line + "              Geocentric Distance (km), Orbit Leg : " + str(alt) + ' ' + leg + '\n'
     line = line + "                                       CRM Region : " + str(region) 
@@ -156,8 +165,11 @@ def create_crm_summary_table():
     #line = line + 'and what used to be P5 is now P7 This message will dissappear\n'
     #line = line + 'in 01/31/2021'
 
-
-    with open(sumdat, 'w') as fo:
+    outfile = sumdat
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        outfile = test_out + "/" + os.path.basename(sumdat)
+    with open(outfile, 'w') as fo:
         fo.write(line)
 #
 #--- back up the data files
@@ -175,6 +187,18 @@ def create_crm_summary_table():
 #
 #    cmd = '/usr/local/bin/idl  ' + crm3_dir + '/Scripts/CRM_plots.idl > /dev/null 2>&1'
 #    os.system(cmd)
+
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+def check_val(val):
+    try:
+        val = float(val)
+    except:
+        val = 0.0
+
+    return val
 
 #-------------------------------------------------------------------------------
 #-- read_goes_p_data: read the current GOES proton fluxes                     --
@@ -537,6 +561,9 @@ def update_crm_html():
     html = html.replace("#TEXT#", line)
     
     ofile = html_dir + 'index.html'
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        ofile = test_out + "/index.html"
     with open(ofile, 'w') as fo: 
         fo.write(html)
 
@@ -568,7 +595,9 @@ def convert_grathist_format():
         line = line + atemp[3] + '\n'
 
     ofile = crm3_dir + 'Data/grathist.dat'
-
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        ofile = test_out + "/grathist.dat"
     with open(ofile, 'w') as fo:
         fo.write(line)
 

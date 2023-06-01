@@ -1,5 +1,6 @@
 
 Copying data and plots from NOAA STEREO site
+   #### IT SEEMS STEREO IS DEAD AND NO MORE DATA IS COMING IN (NOTED IN EARLY 2021)
 ############################################
 
 update_stereo_data.py   ---- the script to copy data and plots from noaa site and update a web page.
@@ -28,13 +29,18 @@ Output:
 
 web address:
 ------------
-    http://cxc.cfa.harvard.edu/mta/space_weather/STEREO/stereo.html
+https://cxc.cfa.harvard.edu/mta/RADIATION_new/STEREO/stereo.html
 
 Note: stereo B is not working any more and we dropped the data from appearing.
 
 
 Cron job:
 ---------
+mta on boba-v
+2,6,11,16,21,26,31,36,41,46,51,56 * * * * /data/mta4/Space_Weather/STEREO/Scripts/stereo_wrap_script >> $HOME/Logs/stereo_data_new.cron 2>&1
+
+
+Old Version
 han-v as mta
 
 2,6,11,16,21,26,31,36,41,46,51,56 * * * * /data/mta4/Space_Weather/STEREO/Scripts/stereo_wrap_script > /data/mta4/Space_Weather/Test_Logs/stereo_data.cron 2>&1

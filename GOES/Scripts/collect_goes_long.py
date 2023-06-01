@@ -1,4 +1,4 @@
-#!/usr/bin/env /data/mta4/Script/Python3.8/envs/ska3-shiny/bin/python
+#!/proj/sot/ska3/flight/bin/python
 
 #################################################################################
 #                                                                               #
@@ -31,11 +31,15 @@ for ent in data:
     var   = atemp[1].strip()
     line  = atemp[0].strip()
     exec("%s = %s" %(var, line))
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 #
 #--- append path to a private folder
 #
 sys.path.append(goes_dir)
-sys.path.append('/data/mta4/Script/Python3.8/MTA/')
+sys.path.append('/data/mta4/Script/Python3.10/MTA/')
 
 #import mta_common_functions     as mcf
 #
@@ -132,7 +136,11 @@ def collect_goes_long():
 #
 #---  print out data file for ACIS Rad use
 #
-    with open(outfile, 'a') as fo:
+    appendout = outfile
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        appendout = test_out + "/" + os.path.basename(appendout)
+    with open(appendout, 'a') as fo:
         fo.write(line)
 
 #----------------------------------------------------------------------------

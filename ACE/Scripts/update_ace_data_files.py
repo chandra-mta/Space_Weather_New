@@ -1,4 +1,4 @@
-#!/usr/bin/env /data/mta4/Script/Python3.8/envs/ska3-shiny/bin/python
+#!/proj/sot/ska3/flight/bin/python
 
 #####################################################################################
 #                                                                                   #
@@ -36,7 +36,7 @@ for ent in data:
 #
 #--- append  pathes to private folders to a python directory
 #
-sys.path.append('/data/mta4/Script/Python3.8/MTA/')
+sys.path.append('/data/mta4/Script/Python3.10/MTA/')
 #
 #--- import several functions
 #
@@ -58,6 +58,11 @@ fluence_archive  = ace_dir   + 'Data/fluace.arc'
 falert_file      = ace_dir   + 'Data/falert.dat'
 ace_web          = html_dir  + 'ACE/'
 ace_data         = ace_dir   + 'Data/'
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
+
 #
 #--- ftp address
 #
@@ -578,7 +583,10 @@ def update_ace_archive(updated_data, head):
             line = line + '\n'
 
     ofile = ace_data + 'ace.archive'
-
+    
+    if (os.getenv('TEST') == 'TEST'):
+        ofile = test_out + '/ace.archive'
+    
     with open(ofile, 'w') as fo:
         fo.write(line)
 
@@ -655,6 +663,9 @@ def update_long_term_data(ndata):
         line = line + '%7.2f' % ndata[11][m]
         line = line + '\n'
 
+    if (os.getenv('TEST') == 'TEST'):
+        dfile = test_out + '/ace_data.txt'
+    
     with open(dfile, 'a') as fo:
         fo.write(line)
 
@@ -708,6 +719,9 @@ def create_new_table(dfile, ndata, tstart, cut):
         line = line + line_adjust(ndata[10][m])
         line = line + '%7.2f' % ndata[11][m]
         line = line + '\n'
+    
+    if (os.getenv('TEST') == 'TEST'):
+        dfile = test_out + '/' + os.path.split(dfile)[1]
 
     with open(dfile, 'w') as fo:
         fo.write(line)
@@ -848,6 +862,10 @@ def updat_fluace_data_file(data_set, header,  c_start):
     line = line + '\n'
     
     ofile = ace_data + 'fluace.dat'
+    
+    if (os.getenv('TEST') == 'TEST'):
+        ofile = test_out + '/fluance.dat'
+    
     with open(ofile, 'w') as fo:
         fo.write(line)
 
@@ -905,6 +923,9 @@ def update_kp_data_file():
     
     ofile = ace_data + 'kp.dat'
     
+    if (os.getenv('TEST') == 'TEST'):
+        ofile = test_out + '/kp.dat'
+
     with open(ofile, 'w') as fo:
         fo.write(line)
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env /data/mta/Script/Python3.8/envs/ska3-shiny/bin/python
+#!/proj/sot/ska3/flight/bin/python
 
 #####################################################################################
 #                                                                                   #
@@ -19,6 +19,11 @@ import time
 from datetime import datetime
 from time import gmtime, strftime, localtime
 import Chandra.Time
+
+#for writing out files in test directory
+if (os.getenv('TEST') == 'TEST'):
+    os.system('mkdir -p TestOut')
+    test_out = os.getcwd() + '/TestOut'
 
 head =        '# Prepared by Helmholtz Centre Potsdam.\n'
 head = head + '# See: https://www.gfz-potsdam.de/en/kp-index/ \n'
@@ -65,7 +70,11 @@ def get_kp():
     line  = ldate + '\t\t' + ldate + '\t\t' + kval + '\t\t\t' + ldate + '\t\t' + kval + '\t\t' + kval + '\n'
     line  = head + line
 
-    with open('/data/mta4/Space_Weather/KP/Data/kp.dat', 'w') as fo:
+    outfile = '/data/mta4/Space_Weather/KP/Data/kp.dat'
+    #for writing out files in test directory
+    if (os.getenv('TEST') == 'TEST'):
+        outfile = test_out + "/" + os.path.basename(outfile)
+    with open(outfile, 'w') as fo:
         fo.write(line)
 
 #---------------------------------------------------------------------------------------
