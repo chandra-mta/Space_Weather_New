@@ -13,24 +13,23 @@
 
 import sys
 import os
-import string
+import requests
+import zipfile
 import re
-import numpy
-import getopt
 import time
 import urllib.request
 import json
 import Chandra.Time
-#import copy 
-from copy  import deepcopy
-import matplotlib as mpl
+from astropy.table import Table
+import astropy.units as u
 
+import matplotlib as mpl
 if __name__ == '__main__':
     mpl.use('Agg')
 from pylab import *
-import matplotlib.pyplot       as plt
+import matplotlib.pyplot as plt
 import matplotlib.font_manager as font_manager
-import matplotlib.lines        as lines
+
 #
 #--- reading directory list
 #
@@ -63,12 +62,6 @@ import random
 rtail  = int(time.time() * random.random())
 zspace = '/tmp/zspace' + str(rtail)
 #
-#--- data sources
-#
-#swepam = 'ftp://ftp.swpc.noaa.gov/pub/lists/ace2'
-swepam = 'https://services.swpc.noaa.gov/json/ace/swepam/ace_swepam_1h.json'
-mtof   = 'http://umtof.umd.edu/pm/crn/archive/'
-#
 #--- current time
 #
 current_time_date    = time.strftime('%Y:%j:%H:%M:%S', time.gmtime())
@@ -76,6 +69,11 @@ current_chandra_time = Chandra.Time.DateTime(current_time_date).secs
 this_year            = int(float(time.strftime('%Y', time.gmtime())))
 this_doy             = int(float(time.strftime('%j', time.gmtime())))
 year_start           = Chandra.Time.DateTime(str(this_year) + ':001:00:00:00').secs
+#
+#--- data sources
+#
+swepam = 'https://services.swpc.noaa.gov/json/ace/swepam/ace_swepam_1h.json'
+mtof = f"https://l1.umd.edu/data/{this_year}_CELIAS_Proton_Monitor_5min.zip"
 
 #-------------------------------------------------------------------------
 #-- create_predicted_solar_wind_plot: create predicted soloar wind speed and density plot
@@ -93,7 +91,7 @@ def create_predicted_solar_wind_plot():
 #
 #-- ace swepam data
 #
-    [stime_list, sdensity, sspeed]       = download_swepam()
+    [stime_list, sdensity, sspeed] = download_swepam()
 #
 #--- soho mtof data
 #
@@ -167,88 +165,6 @@ def download_swepam():
 
 
 #-------------------------------------------------------------------------
-#-- download_swepam_xx: RETIRED....
-#-------------------------------------------------------------------------
-
-def download_swepam_xx():
-    """    
-    download ace swepam data from ftp site
-    input: none but read from:
-            ftp://ftp.swpc.noaa.gov/pub/lists/ace2
-    output: time_list   --- a list of time in chandra time in hr unit
-            density     --- dictionary of particle density; key chandra time in hr unit
-            speed       --- dictionary of solar wind speed; key chandra time in hr unit
-    """
-#
-#--- find available data (_ace_swepam_1h.txt)
-#
-    with urllib.request.urlopen(swepam_f) as url:
-        bdata = url.read()
-#
-#--- downloaded data is in binary format; convert it into string
-#
-    sdata = bdata.decode('utf8')
-    data  = re.split('\n+', sdata)
-
-    swep_data = []
-    for ent in data:
-        ent = ent.strip()
-        mc = re.search('ace_swepam_1h', ent)
-        if mc is not None:
-            atemp = re.split('\s+', ent)
-            swep_data.append(atemp[-1])
-#
-#--- sort the data
-#
-    swep_data = sorted(swep_data)
-
-    time_list    = []
-    density = {}
-    speed   = {}
-    temp    = {}
-#
-#--- read only the last 6 data files
-# 
-    for ent in swep_data[-6:]:
-        durl = swepam_f + '/' + ent
-        #print(durl)
-        with urllib.request.urlopen(durl) as url:
-            bdata = url.read()
-        sdata = bdata.decode('utf8')
-        data  = re.split('\n+', sdata)
-
-        for ent in data:
-            ent.strip()
-            atemp = re.split('\s+', ent)
-            if not mcf.is_neumeric(atemp[0]):
-                continue
-            ltime = atemp[0] + ':' + atemp[1] + ':' + atemp[2] + ':' 
-            ltime = ltime + atemp[3][0] + atemp[3][1] + ':00:00'
-            ltime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(ltime, '%Y:%m:%d:%H:%M:%S'))
-            ltime = int(Chandra.Time.DateTime(ltime).secs/3600.0)
-            try:
-#
-#--- use only good data
-#
-                if float(atemp[6]) in [0, 1]:
-                    time_list.append(ltime)
-                    val1 = float(atemp[7])
-                    val2 = float(atemp[8])
-                    val3 = float(atemp[9])
-                    density[ltime] =  val1
-                    speed[ltime]   =  val2
-                    temp[ltime]    =  val3
-                else:
-                    continue
-            except:
-                continue
-
-    time_list = list(set(time_list))
-    time_list = sorted(time_list)
-
-    return [time_list, density, speed]
-
-#-------------------------------------------------------------------------
 #-- download_mtof: download soho mtof data from html site              ---
 #-------------------------------------------------------------------------
 
@@ -261,75 +177,55 @@ def download_mtof():
             density     --- dictionary of particle density; key chandra time in hr unit
             speed       --- dictionary of solar wind speed; key chandra time in hr unit
     """
-#
-#--- find available data (CRN_*.USED)
-#
-    with urllib.request.urlopen(mtof) as url:
-        bdata = url.read()
-#
-#--- downloaded data is in binary format; convert it into string
-#
-    sdata = bdata.decode('utf8')
-    data  = re.split('\n+', sdata)
 
-    crn_data = []
-    for ent in data:
-        ent = ent.strip()
-        atemp = re.split('\,', ent)
-        mc = re.search('USED', atemp[0])
-        if mc is not None:
-            btemp = re.split('USED\"\>', atemp[0])
-            ctemp = re.split('\<\/A', btemp[1])
-            crn_data.append(ctemp[0])
-#
-#--- sort the data
-#
-    crn_data = sorted(crn_data)
+    r = requests.get(mtof, allow_redirects=True)
+    open('mtof.zip', 'wb').write(r.content)
 
-    time_list    = []
+    with zipfile.ZipFile('mtof.zip', 'r') as f:
+        f.extractall('mtof')
+    os.remove("mtof.zip")
+
+    with open("mtof/2023_CELIAS_Proton_Monitor_5min.txt", 'r') as f:
+        lines = f.readlines()
+
+    # keep only list items that start with a digit
+    ok = [line[0].isdigit() for line in lines]
+    data = np.array(lines)[ok]
+
+    t = Table(names=('yy', 'mon', 'dd', 'doy', 'speed', 'np', 'vth', 'ns', 'vhe',
+                     'gse_x', 'gse_y', 'gse_z', 'range', 'hglat', 'hglong', 'crne'),
+              dtype=(float, str, float, str, float, float, float, float, float,
+                     float, float, float, float, float, float, float))
+
+    for d in data[-31680:]: # 110 days of data with 5 min bins
+        d.strip()
+        row_items = d.split()
+        t.add_row(row_items)
+
+    time = [f"{str(int(2000 + x['yy']))}:{x['doy']}" for x in t]
+    time = [Chandra.Time.DateTime(tt).secs / 3600 for tt in time] # in hours
+
+    # Only one entry for each int(time)
+    t['time_int'] = [int(x) for x in time]
+    t['time_int'].unit = u.hr
+    t_by_time_int = t.group_by('time_int')
+
+    # Remove mon and doy columns, type str, before aggregation
+    t_by_time_int.remove_columns(['mon', 'doy'])
+    t_median = t_by_time_int.groups.aggregate(np.median)
+
+    # Format required by TI's code: a dictionary with a key being Chandra.Time in hours
     density = {}
-    speed   = {}
-#
-#--- read only the last 6 data files
-# 
-    for ent in crn_data[-6:]:
-        #print(ent)
-        durl = mtof + '/' + ent
-        with urllib.request.urlopen(durl) as url:
-            bdata = url.read()
-        sdata = bdata.decode('utf8')
-        data  = re.split('\n+', sdata)
+    for dd, tt in zip(t_median['np'], t_median['time_int']):
+        density[tt] = dd
 
-        for ent in data:
-            ent.strip()
-            atemp = re.split('\s+', ent)
-            if not mcf.is_neumeric(atemp[0]):
-                continue
-            ltime = atemp[0] + ':' + atemp[1]
-            ltime = int(Chandra.Time.DateTime(ltime).secs/3600.0)
-            try:
-                angle = float(atemp[2])
-                vth   = float(atemp[3])
-                dens  = float(atemp[4])
-                vsw   = float(atemp[5])
-                pmmin = float(atemp[6])
-                pmmax = float(atemp[7])
-            except:
-                continue
-#
-#--- drop bad data
-#
-            if pmmax == -1:
-                continue
+    speed = {}
+    for ss, tt in zip(t_median['speed'], t_median['time_int']):
+        speed[tt] = ss
 
-            time_list.append(ltime)
-            density[ltime] = dens
-            speed[ltime]   = vsw
-    time_list = list(set(time_list))
-    time_list = sorted(time_list)
+    return list(t_median['time_int']), density, speed
 
-    return [time_list, density, speed]
-    
+
 #-------------------------------------------------------------------------
 #-- read_gsme_data: read gsme data                                      --
 #-------------------------------------------------------------------------
