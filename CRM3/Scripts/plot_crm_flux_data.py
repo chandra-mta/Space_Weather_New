@@ -46,7 +46,7 @@ if (os.getenv('TEST') == 'TEST'):
 #
 #--- append  pathes to private folders to a python directory
 #
-    sys.path.append('/data/mta4/Script/Python3.10/MTA/')
+sys.path.append('/data/mta4/Script/Python3.10/MTA/')
 #
 #--- import several functions
 #
