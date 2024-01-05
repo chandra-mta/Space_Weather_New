@@ -33,35 +33,18 @@ import matplotlib.font_manager as font_manager
 import matplotlib.lines        as lines
 
 #
-#--- reading directory list
+#--- Defining Directory Pathing
 #
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
+HTML_DIR = "/data/mta4/www/RADIATION_new"
+WEB_DIR = os.path.join(HTML_DIR,"GOES")
+PLOT_DIR = os.path.join(WEB_DIR,"Plots")
 
-f= open(path, 'r')
-data = [line.strip() for line in f.readlines()]
-f.close()
-
-for ent in data:
-    atemp = re.split(':', ent)
-    var  = atemp[1].strip()
-    line = atemp[0].strip()
-    exec("%s = %s" %(var, line))
-#for writing out files in test directory
-if (os.getenv('TEST') == 'TEST'):
-    os.system('mkdir -p TestOut')
-    test_out = os.getcwd() + '/TestOut'
 #
 #--- temp writing file name
 #
 rtail  = int(time.time())
 zspace = '/tmp/zspace' + str(rtail)
-#
-#--- set direcotries
-#
-data_dir   = goes_dir + 'Data/'
-templ_dir  = goes_dir + 'Scripts/Template/'
-web_dir    = html_dir + 'GOES/'
-plot_dir   = web_dir  + 'Plots/'
+
 #
 #--- json data
 #
@@ -330,7 +313,7 @@ def plot_data(dtime, py0, py1, py2, ylabel, title, ind):
 
         plim1  = 300.0 /3.3
         plim2  = 8.47 / 12.0
-        outname = plot_dir + 'goes_protons.png'
+        outname = f"{PLOT_DIR}/goes_protons.png"
         ymin  = 1.e-3
         ymax  = 1.e4
 #
@@ -340,7 +323,7 @@ def plot_data(dtime, py0, py1, py2, ylabel, title, ind):
         l_list  = ['>10MeV', '>50MeV', '. >100Mev']
         plim1   = 13.0
         plim2   = ''
-        outname =  plot_dir + 'goes_particles.png'
+        outname = f"{PLOT_DIR}/goes_particles.png"
         ymin  = 1.e-2
         ymax  = 1.e4
         #ymin  = min(min(py0), min(py1), min(py2))
@@ -373,9 +356,6 @@ def plot_data(dtime, py0, py1, py2, ylabel, title, ind):
 #
 #--- save the plot in png format
 #
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        outname = test_out + "/" + os.path.basename(outname)
     plt.savefig(outname, format='png', dpi=300)
 
     plt.close('all')
