@@ -133,21 +133,29 @@ def convert_to_arrays(data):
 #-- extract_goes_data: extract GOES satellite flux data                    --
 #----------------------------------------------------------------------------
 
-def extract_goes_data(jweb, energy_list, factor):
+def extract_goes_data(jlink, energy_list, factor):
     """
     extract GOES satellite flux data
-    input: jweb--- json web address
+    input: jlink--- json web address or file
     energy_list --- a list of energy designation 
     output: <data_dir>/<out file>
     """
+    if jlink.startswith('http'):
 #
 #--- read json file from the web
 #
-    try:
-        with urllib.request.urlopen(jweb) as url:
-            data = json.loads(url.read().decode())
-    except:
-        data = []
+        try:
+            with urllib.request.urlopen(jlink) as url:
+                data = json.loads(url.read().decode())
+        except:
+            data = []
+    else:
+        if os.path.isfile(jlink):
+            try:
+                with open(jlink) as f:
+                    data = json.load(f)
+            except:
+                data = []
     if len(data) < 1:
         exit(1)
 #
