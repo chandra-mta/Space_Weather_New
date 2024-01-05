@@ -40,39 +40,29 @@ WEB_DIR = os.path.join(HTML_DIR,"GOES")
 PLOT_DIR = os.path.join(WEB_DIR,"Plots")
 
 #
-#--- temp writing file name
-#
-rtail  = int(time.time())
-zspace = '/tmp/zspace' + str(rtail)
-
-#
 #--- json data
 #
-dlink = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json'
-clink = 'https://services.swpc.noaa.gov/json/goes/primary/integral-protons-3-day.json'
+DLINK = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json'
+CLINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-protons-3-day.json'
 #
 #--- protone energy designations and output file names
 #
-diff_list = ['1020-1860 keV',   '1900-2300 keV',   '2310-3340 keV',    '3400-6480 keV',\
+DIFF_LIST = ['1020-1860 keV',   '1900-2300 keV',   '2310-3340 keV',    '3400-6480 keV',\
              '5840-11000 keV',  '11640-23270 keV', '25900-38100 keV',  '40300-73400 keV',\
              '83700-98500 keV', '99900-118000 keV','115000-143000 keV','160000-242000 keV',\
              '276000-404000 keV']
 
-cum_list  = ['>=1 MeV',  '>=5 MeV',   '>=10 MeV', '>=30 MeV', '>=50 MeV',\
+CUM_LIST  = ['>=1 MeV',  '>=5 MeV',   '>=10 MeV', '>=30 MeV', '>=50 MeV',\
              '>=60 MeV', '>=100 MeV', '>=500 MeV']
 
-
-p_file = ['goes_protons.png', 'goes_particles.png']
-u_list = ["p/cm2-s-sr-MeV", "p/cm2-s-sr"]
-t_list = ['Proton Flux', 'Proton Flux']
 #
 #--- other setting
 #
-m_list = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+M_LIST = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 #
 #--- current goes satellite #
 #
-gsatellite = 'Primary'
+GSATELLITE = 'Primary'
 #---------------------------------------------------------------------------------------------------
 #-- plot_goes_data: get goes data and plot the data                                               --
 #---------------------------------------------------------------------------------------------------
@@ -83,20 +73,20 @@ def plot_goes_data():
     input:  none but read from: 
         https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json
         https://services.swpc.noaa.gov/json/goes/primary/integral-protons-3-day.json
-    output: <plot_dir>/goes_perticls.png
+    output: <plot_dir>/goes_particles.png
             <plot_dir>/goes_proton.png
     """
-    ddata = extract_goes_data(dlink, diff_list, 1e3)
+    ddata = extract_goes_data(DLINK, DIFF_LIST, 1e3)
     dtime = convert_in_ydate(ddata[0][0])
     [p1, p2, p3, p4, p5, p6] = compute_p_vals(ddata)
-    plot_data(dtime, p1, p2, p4, u_list[0], t_list[0], 0)
+    plot_data(dtime, p1, p2, p4, "p/cm2-s-sr-MeV", "Proton Flux", 0)
 
-    pdata = extract_goes_data(clink, cum_list, 1.0)
+    pdata = extract_goes_data(CLINK, CUM_LIST, 1.0)
     dtime = convert_in_ydate(pdata[0][0])
     i2    = pdata[2][1]
     i3    = pdata[4][1]
     i5    = pdata[6][1]
-    plot_data(dtime, i2, i3, i5, u_list[1], t_list[1], 1)
+    plot_data(dtime, i2, i3, i5, "p/cm2-s-sr", "Proton Flux", 1)
 
 
 #---------------------------------------------------------------------------------------------------
@@ -144,10 +134,10 @@ def convert_to_arrays(data):
 #-- extract_goes_data: extract GOES satellite flux data                    --
 #----------------------------------------------------------------------------
 
-def extract_goes_data(dlink, energy_list, factor):
+def extract_goes_data(jweb, energy_list, factor):
     """
     extract GOES satellite flux data
-    input: dlink--- json web address
+    input: jweb--- json web address
     energy_list --- a list of energy designation 
     output: <data_dir>/<out file>
     """
@@ -155,7 +145,7 @@ def extract_goes_data(dlink, energy_list, factor):
 #--- read json file from the web
 #
     try:
-        with urllib.request.urlopen(dlink) as url:
+        with urllib.request.urlopen(jweb) as url:
             data = json.loads(url.read().decode())
     except:
         data = []
@@ -342,7 +332,7 @@ def plot_data(dtime, py0, py1, py2, ylabel, title, ind):
 #
     ax0 = plt.subplot(111)
     create_panel(ax0, xmin, xmax, ymin, ymax, dtime, py0, py1, py2, plim1, plim2,\
-                 ylabel, gsatellite, l_list, c_list, title, ind)
+                 ylabel, GSATELLITE, l_list, c_list, title, ind)
 
 #--- add x ticks label 
 #
@@ -365,7 +355,7 @@ def plot_data(dtime, py0, py1, py2, ylabel, title, ind):
 #---------------------------------------------------------------------------------------------------
 
 def create_panel(ax, xmin, xmax, ymin, ymax, s_time, y0, y1, y2, plim1, plim2, ylabel,\
-                 gsatellite, l_list, c_list, title, ind):
+                 GSATELLITE, l_list, c_list, title, ind):
     """
     create a plot for a given panel
     input:  ax  --- panel
@@ -496,7 +486,7 @@ def create_time_label():
         x_l_pos.append(int(yday))
 
         k     = mon -1
-        lmon  = m_list[k]
+        lmon  = M_LIST[k]
         lab   = lmon + ' ' + atemp[2]
         x_label.append(lab)
 
