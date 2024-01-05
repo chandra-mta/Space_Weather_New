@@ -638,7 +638,7 @@ if __name__ == "__main__":
 #
         OUT_DIR = os.path.join(os.getcwd(),"test","outTest")
         PLOT_DIR = os.path.join(OUT_DIR,"GOES", "Plots")
-        os.makedirs(PLOT_DIR)
+        os.makedirs(PLOT_DIR, exist_ok=True)
         plot_goes_data()
     else:
 #
