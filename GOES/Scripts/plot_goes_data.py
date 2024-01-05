@@ -31,13 +31,12 @@ from pylab import *
 import matplotlib.pyplot       as plt
 import matplotlib.font_manager as font_manager
 import matplotlib.lines        as lines
-
+import argparse
 #
 #--- Defining Directory Pathing
 #
 HTML_DIR = "/data/mta4/www/RADIATION_new"
-WEB_DIR = os.path.join(HTML_DIR,"GOES")
-PLOT_DIR = os.path.join(WEB_DIR,"Plots")
+PLOT_DIR = os.path.join(HTML_DIR,"GOES", "Plots")
 
 #
 #--- json data
@@ -618,20 +617,36 @@ def is_learyear(year):
 #---------------------------------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-t", "--test", required=False, action='store_true', help="Boolean to determine running as test.")
+    args = parser.parse_args()
+
+#
+#--- Determine if running in test mode and change pathing if so
+#
+    if args.test:
+#
+#--- Path output to same location as unit tests
+#
+        OUT_DIR = os.path.join(os.getcwd(),"test","outTest")
+        PLOT_DIR = os.path.join(OUT_DIR,"GOES", "Plots")
+        os.makedirs(PLOT_DIR)
+        plot_goes_data()
+    else:
 #
 #--- Create a lock file and exit strategy in case of race conditions
 #
-    import getpass
-    name = os.path.basename(__file__).split(".")[0]
-    user = getpass.getuser()
-    if os.path.isfile(f"/tmp/{user}/{name}.lock"):
-        sys.exit(f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog.")
-    else:
-        os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
+        import getpass
+        name = os.path.basename(__file__).split(".")[0]
+        user = getpass.getuser()
+        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
+            sys.exit(f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog.")
+        else:
+            os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
 
-    plot_goes_data()
+        plot_goes_data()
 
 #
 #--- Remove lock file once process is completed
 #
-    os.system(f"rm /tmp/{user}/{name}.lock")
+        os.system(f"rm /tmp/{user}/{name}.lock")
