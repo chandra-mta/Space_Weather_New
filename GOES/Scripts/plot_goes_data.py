@@ -78,14 +78,14 @@ def plot_goes_data():
     ddata = extract_goes_data(DLINK, DIFF_LIST, 1e3)
     dtime = convert_in_ydate(ddata[0][0])
     [p1, p2, p3, p4, p5, p6] = compute_p_vals(ddata)
-    plot_data(dtime, p1, p2, p4, "p/cm2-s-sr-MeV", "Proton Flux", 0)
+    plot_data(dtime, p1, p2, p4, "p/cm2-s-sr-MeV", "Proton Flux", f"{PLOT_DIR}/goes_protons.png", 0)
 
     pdata = extract_goes_data(CLINK, CUM_LIST, 1.0)
     dtime = convert_in_ydate(pdata[0][0])
     i2    = pdata[2][1]
     i3    = pdata[4][1]
     i5    = pdata[6][1]
-    plot_data(dtime, i2, i3, i5, "p/cm2-s-sr", "Proton Flux", 1)
+    plot_data(dtime, i2, i3, i5, "p/cm2-s-sr", "Proton Flux", f"{PLOT_DIR}/goes_particles.png", 1)
 
 
 #---------------------------------------------------------------------------------------------------
@@ -281,7 +281,7 @@ def compute_p_vals(data):
 #-- plot_data: create two panel plot                                                              --
 #---------------------------------------------------------------------------------------------------
 
-def plot_data(dtime, py0, py1, py2, ylabel, title, ind):
+def plot_data(dtime, py0, py1, py2, ylabel, title, outname, ind):
     """
     create two panel plot
     input:  p_data  --- a list of data arrays of the primary data
@@ -310,7 +310,6 @@ def plot_data(dtime, py0, py1, py2, ylabel, title, ind):
 
         plim1  = 300.0 /3.3
         plim2  = 8.47 / 12.0
-        outname = f"{PLOT_DIR}/goes_protons.png"
         ymin  = 1.e-3
         ymax  = 1.e4
 #
@@ -320,7 +319,6 @@ def plot_data(dtime, py0, py1, py2, ylabel, title, ind):
         l_list  = ['>10MeV', '>50MeV', '. >100Mev']
         plim1   = 13.0
         plim2   = ''
-        outname = f"{PLOT_DIR}/goes_particles.png"
         ymin  = 1.e-2
         ymax  = 1.e4
         #ymin  = min(min(py0), min(py1), min(py2))
