@@ -76,14 +76,14 @@ def plot_goes_data():
     ddata = extract_goes_data(DLINK, DIFF_LIST, 1e3)
     dtime = convert_in_ydate(ddata[0][0])
     [p1, p2, p3, p4, p5, p6] = compute_p_vals(ddata)
-    plot_data(dtime, p1, p2, p4, "p/cm2-s-sr-MeV", "Proton Flux", f"{PLOT_DIR}/goes_protons.png", 0)
+    plot_data(dtime, p1, p2, p4, "p/cm2-s-sr-MeV", "Proton Flux (Differential)", f"{PLOT_DIR}/goes_protons.png", 0)
 
     pdata = extract_goes_data(CLINK, CUM_LIST, 1.0)
     dtime = convert_in_ydate(pdata[0][0])
     i2    = pdata[2][1]
     i3    = pdata[4][1]
     i5    = pdata[6][1]
-    plot_data(dtime, i2, i3, i5, "p/cm2-s-sr", "Proton Flux", f"{PLOT_DIR}/goes_particles.png", 1)
+    plot_data(dtime, i2, i3, i5, "p/cm2-s-sr", "Proton Flux (Integral)", f"{PLOT_DIR}/goes_particles.png", 1)
 
 #----------------------------------------------------------------------------
 #-- extract_goes_data: extract GOES satellite flux data                    --
@@ -185,7 +185,7 @@ def compute_p_vals(data):
     p5 = []                 #--- c9 + c10;  99MeV  - 143MeV
     p6 = []                 #--- c11 + c12: 160MeV - 404MeV
 #
-#--- sometime each channel has a different number of entries--- ususlly  no difference
+#--- sometime each channel has a different number of entries--- usually  no difference
 #--- but occasionally 1 or 2 differnces; if that is the case use one before at the end
 #
     for  k in range(0, len(c0)):
