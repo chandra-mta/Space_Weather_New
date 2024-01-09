@@ -18,7 +18,7 @@ import random
 import operator
 import time
 import datetime
-import numpy
+import numpy as np
 import Chandra.Time
 import urllib.request
 import json
@@ -26,8 +26,6 @@ import matplotlib as mpl
 
 if __name__ == '__main__':
     mpl.use('Agg')
-
-from pylab import *
 import matplotlib.pyplot       as plt
 import matplotlib.font_manager as font_manager
 import matplotlib.lines        as lines
@@ -87,48 +85,6 @@ def plot_goes_data():
     i5    = pdata[6][1]
     plot_data(dtime, i2, i3, i5, "p/cm2-s-sr", "Proton Flux", f"{PLOT_DIR}/goes_particles.png", 1)
 
-
-#---------------------------------------------------------------------------------------------------
-#-- convert_to_arrays: convert data into array data                                               --
-#---------------------------------------------------------------------------------------------------
-
-def convert_to_arrays(data):
-    """
-    convert data into array data
-    input:  data--- n line data set
-    output: nave--- a linst of arrays
-    """
-    
-    c_len = len(re.split('\s+', data[0]))
-    save  = []
-    for k in range(0, c_len):
-        save.append([])
-    
-    for ent in data:
-        atemp = re.split('\s+', ent)
-        for k in range(0, c_len):
-            save[k].append(float(atemp[k]))
-#
-#--- sort the array by time
-#--- col 4: julian time / col 5: seconds of the day
-#
-    tsave  = []
-    for k in range(0, len(save[0])):
-        val = float(save[4][k]) + float(save[5][k]) / 86400.0
-        tsave.append(val)
-
-    tarray = numpy.array(tsave)
-    inds   = tarray.argsort()
-
-    nsave = []
-    for k in range(0, c_len):
-
-        tarray = numpy.array(save[k])
-        sarray = tarray[inds[::-1]]
-        nsave.append(sarray)
-
-    return nsave
-
 #----------------------------------------------------------------------------
 #-- extract_goes_data: extract GOES satellite flux data                    --
 #----------------------------------------------------------------------------
@@ -167,20 +123,12 @@ def extract_goes_data(jlink, energy_list, factor):
         t_list = []
         f_list = []
         energy = energy_list[k]
-#
-#        ltime  = check_last_entry_time(data)
-#        ctime  = ltime -  86400.0 * 3
+
         for ent in data:
-#
-#--- get the data from a specified satellite
-#
-#            if ent['satellite'] != gsatellite:
-#                continue
 #
 #--- read time and flux of the given energy range
 #
             if ent['energy'] == energy:
-                #flux  = float(ent['flux']) * 1e-3   #--- keV to MeV
                 flux  = float(ent['flux']) * factor
 #
 #--- convert time into seconds from 1998.1.1
@@ -188,9 +136,6 @@ def extract_goes_data(jlink, energy_list, factor):
                 otime = ent['time_tag']
                 otime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(otime, '%Y-%m-%dT%H:%M:%SZ'))
                 stime = int(Chandra.Time.DateTime(otime).secs)
-         
-#                if stime <= ctime:
-#                    continue
          
                 t_list.append(otime)
                 f_list.append(flux)
@@ -321,11 +266,6 @@ def plot_data(dtime, py0, py1, py2, ylabel, title, outname, ind):
         plim2   = ''
         ymin  = 1.e-2
         ymax  = 1.e4
-        #ymin  = min(min(py0), min(py1), min(py2))
-        #ymax  = max(max(py0), max(py1), max(py2))
-        #ydiff = ymax - ymin
-        #ymin -= 0.08 *ydiff
-        #ymax += 0.15 *ydiff
 
     plt.close('all')
 #
@@ -346,7 +286,7 @@ def plot_data(dtime, py0, py1, py2, ylabel, title, outname, ind):
 #
 #--- set the size of the plotting area in inch (width: 10.0in, height 2.08in x number of panels)
 #
-    fig = matplotlib.pyplot.gcf()
+    fig = plt.gcf()
     fig.set_size_inches(8.0, 5.0)
 #
 #--- save the plot in png format
@@ -421,7 +361,6 @@ def create_panel(ax, xmin, xmax, ymin, ymax, s_time, y0, y1, y2, plim1, plim2, y
     else:
         ax.yaxis.set_label_position("right")
         pass
-        #p, = plt.semilogy([xmin, xmax], [plim1, plim1], color='green', lw=2)
 #
 #--- add labels
 #
@@ -432,13 +371,13 @@ def create_panel(ax, xmin, xmax, ymin, ymax, s_time, y0, y1, y2, plim1, plim2, y
 
     plt.title(line, fontsize=12, fontweight='bold', fontstyle='italic')
 
-    text(x1, yp, l_list[0], color=c_list[0], fontsize=12)
-    text(x2, yp, l_list[1], color=c_list[1], fontsize=12)
-    text(x3, yp, l_list[2], color=c_list[2], fontsize=12)
+    plt.text(x1, yp, l_list[0], color=c_list[0], fontsize=12)
+    plt.text(x2, yp, l_list[1], color=c_list[1], fontsize=12)
+    plt.text(x3, yp, l_list[2], color=c_list[2], fontsize=12)
 
     if ind == 0:
-        text(xpos, 0.5 *plim1, 'P4GM\nLimit', color=c_list[1], fontsize=10)
-        text(xpos, 0.5 *plim2, 'P41GM\nLimit', color=c_list[2], fontsize=10)
+        plt.text(xpos, 0.5 *plim1, 'P4GM\nLimit', color=c_list[1], fontsize=10)
+        plt.text(xpos, 0.5 *plim2, 'P41GM\nLimit', color=c_list[2], fontsize=10)
 
 #---------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------
@@ -564,7 +503,7 @@ def convert_in_yday(y, m, d, sec):
             m   --- month
             d   --- day
             sec --- seconds in the day
-    output: yda --- yday
+    output: yday --- yday
     """
 
     m     = add_lead_zero(int(m))
