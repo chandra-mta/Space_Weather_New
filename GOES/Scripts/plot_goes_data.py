@@ -30,6 +30,8 @@ import matplotlib.pyplot       as plt
 import matplotlib.font_manager as font_manager
 import matplotlib.lines        as lines
 import argparse
+import traceback
+from astropy.table import Table
 #
 #--- Defining Directory Pathing
 #
@@ -127,6 +129,39 @@ def plot_goes_data():
     i3    = pdata[4][1]
     i5    = pdata[6][1]
     plot_data(dtime, i2, i3, i5, "p/cm2-s-sr", "Proton Flux (Integral)", f"{PLOT_DIR}/goes_particles.png", 1)
+
+#----------------------------------------------------------------------------
+#-- extract_goes_table: extract GOES satellite flux data                   --
+#----------------------------------------------------------------------------
+
+def extract_goes_table(jlink):
+    """
+    extract GOES satellite flux data
+    input: jlink--- json web address or file
+    output: table--- astropy table of the JSON GOES data.
+    """
+    if jlink.startswith('http'):
+#
+#--- read json file from the web
+#
+        try:
+            with urllib.request.urlopen(jlink) as url:
+                data = json.loads(url.read().decode())
+        except:
+            traceback.print_exc()
+            data = []
+    else:
+        if os.path.isfile(jlink):
+            try:
+                with open(jlink) as f:
+                    data = json.load(f)
+            except:
+                traceback.print_exc()
+                data = []
+    if len(data) < 1:
+        exit(1)
+    data = Table(data)
+    return data
 
 #----------------------------------------------------------------------------
 #-- extract_goes_data: extract GOES satellite flux data                    --
