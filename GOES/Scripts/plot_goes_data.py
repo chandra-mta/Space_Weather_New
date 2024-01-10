@@ -90,7 +90,7 @@ class Group_Info():
 #
 #--- Group Selection by channel: Determined by Band Limits to mimic ACE channels.
 #
-GROUP_SELECTION = [Group_Info(('P1','P2A','P2B')),
+DIFF_GROUP_SELECTION = [Group_Info(('P1','P2A','P2B')),
                    Group_Info(('P3','P4')),
                    Group_Info(('P7','P8A'))]
 
@@ -162,6 +162,44 @@ def extract_goes_table(jlink):
         exit(1)
     data = Table(data)
     return data
+
+#----------------------------------------------------------------------------------
+#-- calc_ACE_p: format the GOES differential flux into ACE flux channel values   --
+#----------------------------------------------------------------------------------
+
+def calc_ACE_p(table):
+    """
+    create combined flux data of astropy table based on weighted average
+    input: table --- astropy table of the differential protons.
+    output: numpy array of combined flux data.
+    """
+    data_dict = {'plot_data':[]}
+
+    for group_info in DIFF_GROUP_SELECTION:
+#
+#--- Initialize group data arrays
+#
+        channel = group_info.channel_tuple[0]
+        sel = table['channel'] == channel
+        subtable = table[sel]
+        if 'times' not in data_dict.keys():
+            data_dict['times'] = subtable['time_tag']
+#
+#--- Flux averaged across energy bands from protons/cm2-s-ster-KeV to protons/cm2-s-ster-MeV
+#
+        avgs = subtable['flux'] * 1e3 * group_info.weights[0]
+
+        for i in range(1,len(group_info.channel_tuple)):
+            #Iterate over the rest of the channels to calulate the averages
+            channel = group_info.channel_tuple[i]
+            sel = table['channel'] == channel
+            subtable = table[sel]
+            avgs = avgs + subtable['flux'] * 1e3 * group_info.weights[i]
+        
+        avgs = avgs/(group_info.max - group_info.min)
+        data_dict['plot_data'].append(avgs)
+    return data_dict
+
 
 #----------------------------------------------------------------------------
 #-- extract_goes_data: extract GOES satellite flux data                    --
