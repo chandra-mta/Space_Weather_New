@@ -88,11 +88,19 @@ class Group_Info():
             weights.append(round(BAND_LIMITS[channel][1] - BAND_LIMITS[channel][0],2))
         self.weights = weights
 #
-#--- Group Selection by channel: Determined by Band Limits to mimic ACE channels.
+#--- Differential Group Selection by channel: Determined by Band Limits to mimic ACE channels.
 #
 DIFF_GROUP_SELECTION = [Group_Info(('P1','P2A','P2B')),
                    Group_Info(('P3','P4')),
                    Group_Info(('P7','P8A'))]
+
+#
+#--- Integral Group Selection:
+#
+INTG_GROUP_SELECTION = ['>=10 MeV',
+                        '>=50 MeV',
+                        '>=100 MeV']
+
 
 CUM_LIST  = ['>=1 MeV',  '>=5 MeV',   '>=10 MeV', '>=30 MeV', '>=50 MeV',\
              '>=60 MeV', '>=100 MeV', '>=500 MeV']
