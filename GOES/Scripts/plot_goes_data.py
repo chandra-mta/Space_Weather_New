@@ -48,6 +48,49 @@ DIFF_LIST = ['1020-1860 keV',   '1900-2300 keV',   '2310-3340 keV',    '3400-648
              '5840-11000 keV',  '11640-23270 keV', '25900-38100 keV',  '40300-73400 keV',\
              '83700-98500 keV', '99900-118000 keV','115000-143000 keV','160000-242000 keV',\
              '276000-404000 keV']
+#
+#--- Band limits by GOES channel in MeV
+#
+BAND_LIMITS = {'P1':[1.02, 1.86],
+                'P2A':[1.9, 2.3],
+                'P2B':[2.31, 3.34],
+                'P3':[3.4, 6.48],
+                'P4':[5.84, 11.0],
+                'P5':[11.64, 23.27],
+                'P6':[25.9, 38.1],
+                'P7':[40.3, 73.4],
+                'P8A':[83.7, 98.5],
+                'P8B':[99.9, 118.0],
+                'P8C':[115.0, 143.0],
+                'P9':[160.0, 242.0],
+                'P10':[276.0, 404.0]}
+#
+#--- Class storing values used for averaging differential flux of channel groups
+#
+class Group_Info():
+    def __init__(self,channel_tuple):
+        self.channel_tuple = channel_tuple
+        self.find_lims()
+        self.find_weights()
+        
+    def find_lims(self):
+        lims = []
+        for channel in self.channel_tuple:
+            lims = lims + BAND_LIMITS[channel]
+        self.min = min(lims)
+        self.max = max(lims)
+    
+    def find_weights(self):
+        weights = []
+        for channel in self.channel_tuple:
+            weights.append(round(BAND_LIMITS[channel][1] - BAND_LIMITS[channel][0],2))
+        self.weights = weights
+#
+#--- Group Selection by channel: Determined by Band Limits to mimic ACE channels.
+#
+GROUP_SELECTION = [Group_Info(('P1','P2A','P2B')),
+                   Group_Info(('P3','P4')),
+                   Group_Info(('P7','P8A'))]
 
 CUM_LIST  = ['>=1 MeV',  '>=5 MeV',   '>=10 MeV', '>=30 MeV', '>=50 MeV',\
              '>=60 MeV', '>=100 MeV', '>=500 MeV']
