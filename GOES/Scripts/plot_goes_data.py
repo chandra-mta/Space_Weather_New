@@ -116,26 +116,45 @@ OFFSET_TICK_FORMATTING = ['', # offest ticks are mostly years
 #-- plot_goes_data: get goes data and plot the data                                               --
 #---------------------------------------------------------------------------------------------------
 
-def plot_goes_data():
+def plot_goes_data(dlink = DLINK, clink = CLINK, choice=['diff','intg']):
     """
     get goes data and plot the data
-    input:  none but read from: 
+    input:  JSON file path or read from: 
         https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json
         https://services.swpc.noaa.gov/json/goes/primary/integral-protons-3-day.json
     output: <plot_dir>/goes_particles.png
             <plot_dir>/goes_proton.png
     """
-    ddata = extract_goes_data(DLINK, DIFF_LIST, 1e3)
-    dtime = convert_in_ydate(ddata[0][0])
-    [p1, p2, p3, p4, p5, p6] = compute_p_vals(ddata)
-    plot_data(dtime, p1, p2, p4, "p/cm2-s-sr-MeV", "Proton Flux (Differential)", f"{PLOT_DIR}/goes_protons.png", 0)
+    if 'diff' in choice:
+        diff_table = extract_goes_table(dlink)
+        diff_data_dict = calc_ACE_p(diff_table)
+#
+#--- Define extra plotting variables
+#
+        diff_data_dict['units'] = "p/cm2-s-sr-MeV"
+        diff_data_dict['title'] = "Proton Flux (Differential)"
+        diff_data_dict['filename'] = f"{PLOT_DIR}/goes_protons.png"
+        diff_data_dict['labels'] = [f"{x.min}-{x.max} Mev" for x in DIFF_GROUP_SELECTION]
+        diff_data_dict['colors'] = ['fuchsia', 'green', 'blue']
+        diff_data_dict['limits'] = {'y_min':1e-3, 'y_max':1e4}
+        diff_data_dict['limit_lines'] = {'P4GM':90.91,
+                                         'P41GM':0.71}
+        plot_data(diff_data_dict)
+        
+    if 'intg' in choice:
+        intg_table = extract_goes_table(clink)
+        intg_data_dict = format_intg_data(intg_table)
+#
+#--- Define extra plotting variables
+#
+        intg_data_dict['units'] = "p/cm2-s-sr"
+        intg_data_dict['title'] = "Proton Flux (Integral)"
+        intg_data_dict['filename'] = f"{PLOT_DIR}/goes_particles.png"
+        intg_data_dict['labels'] = INTG_GROUP_SELECTION
+        intg_data_dict['colors'] = ['red', 'blue', '#51FF3B']
+        intg_data_dict['limits'] = {'y_min':1e-2, 'y_max':1e4}
+        plot_data(intg_data_dict)
 
-    pdata = extract_goes_data(CLINK, CUM_LIST, 1.0)
-    dtime = convert_in_ydate(pdata[0][0])
-    i2    = pdata[2][1]
-    i3    = pdata[4][1]
-    i5    = pdata[6][1]
-    plot_data(dtime, i2, i3, i5, "p/cm2-s-sr", "Proton Flux (Integral)", f"{PLOT_DIR}/goes_particles.png", 1)
 
 #----------------------------------------------------------------------------
 #-- extract_goes_table: extract GOES satellite flux data                   --
