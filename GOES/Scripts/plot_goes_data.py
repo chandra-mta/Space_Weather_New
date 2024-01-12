@@ -226,6 +226,29 @@ def calc_ACE_p(table):
         data_dict['plot_data'].append(avgs)
     return data_dict
 
+#--------------------------------------------------------------------------------
+#-- calc_ACE_p: format the GOES integral flux into plottaable data dictionary  --
+#--------------------------------------------------------------------------------
+
+def format_intg_data(intg_table):
+    """
+    Formats the GOES integral flux astropy table into a data table
+    input: intg_table --- astropy table of the integral protons
+    output: dictionary of integral data
+    """
+    intg_data_dict = {'plot_data':[]}
+    sel = intg_table['energy'] == INTG_GROUP_SELECTION[0]
+    subtable  = intg_table[sel]
+    intg_data_dict['times'] = [datetime.strptime(x,ASTROPY_FORMATTING) for x in subtable['time_tag'].data]
+    intg_data_dict['plot_data'].append(subtable['flux'])
+
+    for i in range(1,len(INTG_GROUP_SELECTION)):
+        sel = intg_table['energy'] == INTG_GROUP_SELECTION[i]
+        subtable = intg_table[sel]
+        intg_data_dict['plot_data'].append(subtable['flux'])
+    return intg_data_dict
+
+
 #----------------------------------------------------------------------------
 #-- extract_goes_data: extract GOES satellite flux data                    --
 #----------------------------------------------------------------------------
