@@ -227,7 +227,7 @@ def calc_ACE_p(table):
     return data_dict
 
 #--------------------------------------------------------------------------------
-#-- calc_ACE_p: format the GOES integral flux into plottaable data dictionary  --
+#-- calc_ACE_p: Format the GOES integral flux into plottable data dictionary   --
 #--------------------------------------------------------------------------------
 
 def format_intg_data(intg_table):
@@ -248,6 +248,76 @@ def format_intg_data(intg_table):
         intg_data_dict['plot_data'].append(subtable['flux'])
     return intg_data_dict
 
+#-------------------------------------------------------------
+#-- plot_data: Process a data dictionary to generate plots  --
+#-------------------------------------------------------------
+
+def plot_data(data_dict):
+    plt.close('all')
+#
+#---- set a few parameters
+#
+    mpl.rcParams['font.size'] = 14
+    props = font_manager.FontProperties(size=14)
+    plt.subplots_adjust(hspace=0.10)
+    ax = plt.subplot(111)
+    ax.set_ylim(ymin=data_dict['limits']['y_min'], 
+                ymax=data_dict['limits']['y_max'],
+                auto=False)
+    
+#Plotting section
+
+    for i in range(len(data_dict['plot_data'])):
+        p, = plt.semilogy(
+                          data_dict['times'],
+                          data_dict['plot_data'][i],
+                          color=data_dict['colors'][i],
+                          label=data_dict['labels'][i],
+                          marker='.',
+                          markersize=0,
+                          lw=0.8
+                        )
+    #Format Tick marks automatically around days
+    major_locator = DayLocator()
+    ax.xaxis.set_major_locator(major_locator)
+    formatter = ConciseDateFormatter(major_locator, 
+                                     formats=TICK_FORMATTING, 
+                                     offset_formats=OFFSET_TICK_FORMATTING)
+    ax.xaxis.set_major_formatter(formatter)
+    
+    xticks = ax.get_xticks()
+    for tick in xticks:
+        ax.vlines(tick,
+                  data_dict['limits']['y_min'],
+                  data_dict['limits']['y_max'],
+                  linestyle = 'dotted',
+                  colors = 'black'
+                 )
+    
+    if 'limit_lines' in data_dict.keys():
+        #Define positioning for limit line text
+        xbound = ax.get_xbound()
+        xpos = xbound[-1] + 0.01 * (xbound[-1] - xbound[0])
+        for k,v in data_dict['limit_lines'].items():
+            plt.axhline(v, color ='#F05D5D')
+            plt.text(xpos, v, f"{k}\nLimit", color = 'black')
+    
+    ax.set_xlabel("Coordinated Universal Time")
+    ax.set_ylabel(data_dict['units'])
+    ax.legend(loc='upper left')
+    plt.grid(axis='y')
+    plt.title(data_dict['title'])
+#
+#--- set the size of the plotting area in inch (width: 10.0in, height 2.08in x number of panels)
+#
+    fig = plt.gcf()
+    fig.set_size_inches(8.0, 5.0)
+#
+#--- save the plot in png format
+#
+    plt.savefig(data_dict['filename'], format='png', dpi=300)
+
+    plt.close('all')
 
 #----------------------------------------------------------------------------
 #-- extract_goes_data: extract GOES satellite flux data                    --
