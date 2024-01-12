@@ -197,7 +197,7 @@ def calc_ACE_p(table):
     """
     create combined flux data of astropy table based on weighted average
     input: table --- astropy table of the differential protons.
-    output: numpy array of combined flux data.
+    output: dictionary of combined flux data.
     """
     data_dict = {'plot_data':[]}
 
@@ -209,7 +209,7 @@ def calc_ACE_p(table):
         sel = table['channel'] == channel
         subtable = table[sel]
         if 'times' not in data_dict.keys():
-            data_dict['times'] = subtable['time_tag']
+            data_dict['times'] = [datetime.strptime(x,ASTROPY_FORMATTING) for x in subtable['time_tag'].data]
 #
 #--- Flux averaged across energy bands from protons/cm2-s-ster-KeV to protons/cm2-s-ster-MeV
 #
@@ -225,7 +225,6 @@ def calc_ACE_p(table):
         avgs = avgs/(group_info.max - group_info.min)
         data_dict['plot_data'].append(avgs)
     return data_dict
-
 
 #----------------------------------------------------------------------------
 #-- extract_goes_data: extract GOES satellite flux data                    --
