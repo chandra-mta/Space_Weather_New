@@ -10,28 +10,25 @@
 #                                                                                                   #
 #####################################################################################################
 
-import os
 import sys
-import re
-import string
-import random
-import operator
-import time
-import datetime
-import numpy as np
-import Chandra.Time
-import urllib.request
+import os
 import json
+import numpy as np
+import urllib.request
+from astropy.table import Table
+from datetime import datetime, timedelta
+
+
 import matplotlib as mpl
 
 if __name__ == '__main__':
     mpl.use('Agg')
 import matplotlib.pyplot       as plt
 import matplotlib.font_manager as font_manager
-import matplotlib.lines        as lines
+from matplotlib.dates import DayLocator, ConciseDateFormatter
+
 import argparse
 import traceback
-from astropy.table import Table
 #
 #--- Defining Directory Pathing
 #
@@ -43,13 +40,7 @@ PLOT_DIR = os.path.join(HTML_DIR,"GOES", "Plots")
 #
 DLINK = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json'
 CLINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-protons-3-day.json'
-#
-#--- protone energy designations and output file names
-#
-DIFF_LIST = ['1020-1860 keV',   '1900-2300 keV',   '2310-3340 keV',    '3400-6480 keV',\
-             '5840-11000 keV',  '11640-23270 keV', '25900-38100 keV',  '40300-73400 keV',\
-             '83700-98500 keV', '99900-118000 keV','115000-143000 keV','160000-242000 keV',\
-             '276000-404000 keV']
+
 #
 #--- Band limits by GOES channel in MeV
 #
@@ -101,18 +92,26 @@ INTG_GROUP_SELECTION = ['>=10 MeV',
                         '>=50 MeV',
                         '>=100 MeV']
 
+#
+#--- String formatting used in date conversion and plotting axes
+#
+ASTROPY_FORMATTING = "%Y-%m-%dT%H:%M:%SZ"
 
-CUM_LIST  = ['>=1 MeV',  '>=5 MeV',   '>=10 MeV', '>=30 MeV', '>=50 MeV',\
-             '>=60 MeV', '>=100 MeV', '>=500 MeV']
+TICK_FORMATTING = ['%y', #ticks are mostly years
+           '%b %d',     # ticks are mostly months
+           '%b %d',     # ticks are mostly days
+           '%H:%M',  # hrs
+           '%H:%M',  # min
+           '%S.%f', ] #seconds
 
-#
-#--- other setting
-#
-M_LIST = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-#
-#--- current goes satellite #
-#
-GSATELLITE = 'Primary'
+OFFSET_TICK_FORMATTING = ['', # offest ticks are mostly years
+                          '', # offset ticks are mostly months
+                          '', # offset ticks are mostly days
+                          '', #hrs
+                          '', # min
+                          ''] #seconds
+
+
 #---------------------------------------------------------------------------------------------------
 #-- plot_goes_data: get goes data and plot the data                                               --
 #---------------------------------------------------------------------------------------------------
