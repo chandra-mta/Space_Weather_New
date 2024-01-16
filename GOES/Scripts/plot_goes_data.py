@@ -323,13 +323,13 @@ def plot_data(data_dict):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-t", "--test", required=False, action='store_true', help="Boolean to determine running as test.")
+    parser.add_argument("-m", "--mode", choices=['flight','test'], required=True, help="Determine running mode.")
     args = parser.parse_args()
 
 #
 #--- Determine if running in test mode and change pathing if so
 #
-    if args.test:
+    if args.mode == "test":
 #
 #--- Path output to same location as unit tests
 #
@@ -337,7 +337,7 @@ if __name__ == "__main__":
         PLOT_DIR = os.path.join(OUT_DIR,"GOES", "Plots")
         os.makedirs(PLOT_DIR, exist_ok=True)
         plot_goes_data()
-    else:
+    elif args.mode == "flight":
 #
 #--- Create a lock file and exit strategy in case of race conditions
 #
