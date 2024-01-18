@@ -36,7 +36,7 @@ HTML_DIR = "/data/mta4/www/RADIATION_new"
 PLOT_DIR = os.path.join(HTML_DIR,"GOES", "Plots")
 
 #
-#--- json data
+#--- JSON data web links
 #
 DLINK = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json'
 CLINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-protons-3-day.json'
@@ -57,16 +57,29 @@ BAND_LIMITS = {'P1':[1.02, 1.86],
                 'P8C':[115.0, 143.0],
                 'P9':[160.0, 242.0],
                 'P10':[276.0, 404.0]}
-#
-#--- Class storing values used for averaging differential flux of channel groups
-#
+
 class Group_Info():
+    """
+    Stores info used in averaging differential flux data from GOES energy band channels 
+    into an ACE energy band channel format.
+    """
     def __init__(self,channel_tuple):
+        """
+        Initialize a Group_Info object
+        input: channel_tuple --- a tuple of strings naming GOES energy band channels
+        output: Group_Info object
+        """
         self.channel_tuple = channel_tuple
         self.find_lims()
         self.find_weights()
         
     def find_lims(self):
+        """
+        Determine minimum and maximum energy values across channel selection
+        input: none but reads from self.channel_tuple
+        output: self.max --- greatest energy value across all channels in self.channel_tuple
+                self.min --- smallest energy value across all channels in self.channel_tuple
+        """
         lims = []
         for channel in self.channel_tuple:
             lims = lims + BAND_LIMITS[channel]
@@ -74,6 +87,11 @@ class Group_Info():
         self.max = max(lims)
     
     def find_weights(self):
+        """
+        Determines weight used in averaging algorithm converting GOES energy bands into ACE energy bands
+        input: none but reads from self.channel_tuple
+        output: self.weights --- averaging weight for a GOES energy band
+        """
         weights = []
         for channel in self.channel_tuple:
             weights.append(round(BAND_LIMITS[channel][1] - BAND_LIMITS[channel][0],2))
@@ -118,7 +136,7 @@ OFFSET_TICK_FORMATTING = ['', # offest ticks are mostly years
 
 def plot_goes_data(dlink = DLINK, clink = CLINK, choice=['diff','intg']):
     """
-    get goes data and plot the data
+    get GOES data and plot the data
     input:  JSON file path or read from: 
         https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json
         https://services.swpc.noaa.gov/json/goes/primary/integral-protons-3-day.json
@@ -163,8 +181,8 @@ def plot_goes_data(dlink = DLINK, clink = CLINK, choice=['diff','intg']):
 def extract_goes_table(jlink):
     """
     extract GOES satellite flux data
-    input: jlink--- json web address or file
-    output: table--- astropy table of the JSON GOES data.
+    input: jlink--- JSON web address or file
+    output: table--- astropy table of the GOES data.
     """
     if jlink.startswith('http'):
 #
@@ -197,9 +215,9 @@ def calc_ACE_p(table):
     """
     create combined flux data of astropy table based on weighted average
     input: table --- astropy table of the differential protons.
-    output: dictionary of combined flux data.
+    output: diff_data_dict --- dictionary of combined flux data averaged into ACE energy bands.
     """
-    data_dict = {'plot_data':[]}
+    diff_data_dict = {'plot_data':[]}
 
     for group_info in DIFF_GROUP_SELECTION:
 #
@@ -208,23 +226,25 @@ def calc_ACE_p(table):
         channel = group_info.channel_tuple[0]
         sel = table['channel'] == channel
         subtable = table[sel]
-        if 'times' not in data_dict.keys():
-            data_dict['times'] = [datetime.strptime(x,ASTROPY_FORMATTING) for x in subtable['time_tag'].data]
+        if 'times' not in diff_data_dict.keys():
+            diff_data_dict['times'] = [datetime.strptime(x,ASTROPY_FORMATTING) for x in subtable['time_tag'].data]
 #
 #--- Flux averaged across energy bands from protons/cm2-s-ster-KeV to protons/cm2-s-ster-MeV
 #
         avgs = subtable['flux'] * 1e3 * group_info.weights[0]
 
         for i in range(1,len(group_info.channel_tuple)):
-            #Iterate over the rest of the channels to calulate the averages
+#
+#--- Iterate over the rest of the channels to calulate the averages
+#
             channel = group_info.channel_tuple[i]
             sel = table['channel'] == channel
             subtable = table[sel]
             avgs = avgs + subtable['flux'] * 1e3 * group_info.weights[i]
         
         avgs = avgs/(group_info.max - group_info.min)
-        data_dict['plot_data'].append(avgs)
-    return data_dict
+        diff_data_dict['plot_data'].append(avgs)
+    return diff_data_dict
 
 #--------------------------------------------------------------------------------
 #-- calc_ACE_p: Format the GOES integral flux into plottable data dictionary   --
@@ -234,7 +254,7 @@ def format_intg_data(intg_table):
     """
     Formats the GOES integral flux astropy table into a data table
     input: intg_table --- astropy table of the integral protons
-    output: dictionary of integral data
+    output: intg_data_dict --- dictionary of integral data
     """
     intg_data_dict = {'plot_data':[]}
     sel = intg_table['energy'] == INTG_GROUP_SELECTION[0]
@@ -253,9 +273,14 @@ def format_intg_data(intg_table):
 #-------------------------------------------------------------
 
 def plot_data(data_dict):
+    """
+    Generate a plot and save to a png file.
+    input: data_dict - dictionary of plotting data, both x,y data numpy arrays and plot design parameters
+    output: none but save a png file of the generated plot
+    """
     plt.close('all')
 #
-#---- set a few parameters
+#--- set a few parameters
 #
     mpl.rcParams['font.size'] = 14
     props = font_manager.FontProperties(size=14)
@@ -264,9 +289,9 @@ def plot_data(data_dict):
     ax.set_ylim(ymin=data_dict['limits']['y_min'], 
                 ymax=data_dict['limits']['y_max'],
                 auto=False)
-    
-#Plotting section
-
+#    
+#--- Plotting section
+#
     for i in range(len(data_dict['plot_data'])):
         p, = plt.semilogy(
                           data_dict['times'],
@@ -277,7 +302,9 @@ def plot_data(data_dict):
                           markersize=0,
                           lw=0.8
                         )
-    #Format Tick marks automatically around days
+#
+#--- Format Tick marks automatically around days
+#
     major_locator = DayLocator()
     ax.xaxis.set_major_locator(major_locator)
     formatter = ConciseDateFormatter(major_locator, 
@@ -295,7 +322,9 @@ def plot_data(data_dict):
                  )
     
     if 'limit_lines' in data_dict.keys():
-        #Define positioning for limit line text
+#
+#--- Define positioning for limit line text
+#
         xbound = ax.get_xbound()
         xpos = xbound[-1] + 0.01 * (xbound[-1] - xbound[0])
         for k,v in data_dict['limit_lines'].items():
@@ -325,7 +354,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--mode", choices=['flight','test'], required=True, help="Determine running mode.")
     args = parser.parse_args()
-
 #
 #--- Determine if running in test mode and change pathing if so
 #
