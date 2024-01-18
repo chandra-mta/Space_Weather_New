@@ -44,19 +44,21 @@ CLINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-protons-3-day
 #
 #--- Band limits by GOES channel in MeV
 #
-BAND_LIMITS = {'P1':[1.02, 1.86],
-                'P2A':[1.9, 2.3],
-                'P2B':[2.31, 3.34],
-                'P3':[3.4, 6.48],
-                'P4':[5.84, 11.0],
-                'P5':[11.64, 23.27],
-                'P6':[25.9, 38.1],
-                'P7':[40.3, 73.4],
-                'P8A':[83.7, 98.5],
-                'P8B':[99.9, 118.0],
-                'P8C':[115.0, 143.0],
-                'P9':[160.0, 242.0],
-                'P10':[276.0, 404.0]}
+
+BAND_LIMITS = {'P1' : {'min' : 1.02, 'max' : 1.86},
+                'P2A' : {'min' : 1.9, 'max' : 2.3},
+                'P2B' : {'min' : 2.31, 'max' : 3.34},
+                'P3' : {'min' : 3.4, 'max' : 6.48},
+                'P4' : {'min' : 5.84, 'max' : 11.0},
+                'P5' : {'min' : 11.64, 'max' : 23.27},
+                'P6' : {'min' : 25.9, 'max' : 38.1},
+                'P7' : {'min' : 40.3, 'max' : 73.4},
+                'P8A' : {'min' : 83.7, 'max' : 98.5},
+                'P8B' : {'min' : 99.9, 'max' : 118.0},
+                'P8C' : {'min' : 115.0, 'max' : 143.0},
+                'P9' : {'min' : 160.0, 'max' : 242.0},
+                'P10' : {'min' : 276.0, 'max' : 404.0}}
+
 
 class Group_Info():
     """
@@ -82,7 +84,7 @@ class Group_Info():
         """
         lims = []
         for channel in self.channel_tuple:
-            lims = lims + BAND_LIMITS[channel]
+            lims = lims + list(BAND_LIMITS[channel].values())
         self.min = min(lims)
         self.max = max(lims)
     
@@ -94,7 +96,7 @@ class Group_Info():
         """
         weights = []
         for channel in self.channel_tuple:
-            weights.append(round(BAND_LIMITS[channel][1] - BAND_LIMITS[channel][0],2))
+            weights.append(round(BAND_LIMITS[channel]['max'] - BAND_LIMITS[channel]['min'],2))
         self.weights = weights
 #
 #--- Differential Group Selection by channel: Determined by Band Limits to mimic ACE channels.
