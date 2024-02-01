@@ -563,6 +563,7 @@ def is_learyear(year):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-t", "--test", required=False, action='store_true', help="Boolean to determine running as test.")
+    parser.add_argument("-p", "--path", required=False, help="Directory path to determine output location of plot.")
     args = parser.parse_args()
 
 #
@@ -574,6 +575,8 @@ if __name__ == "__main__":
 #
         OUT_DIR = f"{os.getcwd()}/test/outTest"
         PLOT_DIR = f"{OUT_DIR}/GOES/Plots"
+        if args.path:
+            PLOT_DIR = args.path
         os.makedirs(PLOT_DIR, exist_ok=True)
         plot_goes_data()
     else:
