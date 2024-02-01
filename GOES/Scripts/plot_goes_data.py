@@ -356,6 +356,7 @@ def plot_data(data_dict):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--mode", choices=['flight','test'], required=True, help="Determine running mode.")
+    parser.add_argument("-p", "--path", required=False, help="Directory path to determine output location of plot.")
     args = parser.parse_args()
 #
 #--- Determine if running in test mode and change pathing if so
@@ -366,6 +367,8 @@ if __name__ == "__main__":
 #
         OUT_DIR = f"{os.getcwd()}/test/outTest"
         PLOT_DIR = f"{OUT_DIR}/GOES/Plots"
+        if args.path:
+           PLOT_DIR = args.path
         os.makedirs(PLOT_DIR, exist_ok=True)
         plot_goes_data()
     elif args.mode == "flight":
