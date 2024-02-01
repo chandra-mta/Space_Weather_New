@@ -185,27 +185,28 @@ def extract_goes_table(jlink):
     extract GOES satellite flux data
     input: jlink--- JSON web address or file
     output: table--- astropy table of the GOES data.
-    """
-    if jlink.startswith('http'):
+    """    
 #
-#--- read json file from the web
+#--- read json file from a file or the web
 #
+    if os.path.isfile(jlink):
+        try:
+            with open(jlink) as f:
+                data = json.load(f)
+        except:
+            traceback.print_exc()
+            data = []
+    else:
         try:
             with urllib.request.urlopen(jlink) as url:
                 data = json.loads(url.read().decode())
         except:
             traceback.print_exc()
             data = []
-    else:
-        if os.path.isfile(jlink):
-            try:
-                with open(jlink) as f:
-                    data = json.load(f)
-            except:
-                traceback.print_exc()
-                data = []
+
     if len(data) < 1:
         exit(1)
+
     data = Table(data)
     return data
 
