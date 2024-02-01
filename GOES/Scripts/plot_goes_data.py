@@ -34,7 +34,7 @@ import argparse
 #--- Defining Directory Pathing
 #
 HTML_DIR = "/data/mta4/www/RADIATION_new"
-PLOT_DIR = os.path.join(HTML_DIR,"GOES", "Plots")
+PLOT_DIR = f"{HTML_DIR}/GOES/Plots"
 
 #
 #--- json data
@@ -573,8 +573,8 @@ if __name__ == "__main__":
 #
 #--- Path output to same location as unit tests
 #
-        OUT_DIR = os.path.join(os.getcwd(),"test","outTest")
-        PLOT_DIR = os.path.join(OUT_DIR,"GOES", "Plots")
+        OUT_DIR = f"{os.getcwd()}/test/outTest"
+        PLOT_DIR = f"{OUT_DIR}/GOES/Plots"
         os.makedirs(PLOT_DIR, exist_ok=True)
         plot_goes_data()
     else:
