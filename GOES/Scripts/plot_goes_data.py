@@ -65,7 +65,7 @@ class Group_Info():
     Stores info used in averaging differential flux data from GOES energy band channels 
     into an ACE energy band channel format.
     """
-    def __init__(self,channel_tuple):
+    def __init__(self, channel_tuple):
         """
         Initialize a Group_Info object
         input: channel_tuple --- a tuple of strings naming GOES energy band channels
@@ -96,14 +96,14 @@ class Group_Info():
         """
         weights = []
         for channel in self.channel_tuple:
-            weights.append(round(BAND_LIMITS[channel]['max'] - BAND_LIMITS[channel]['min'],2))
+            weights.append(round(BAND_LIMITS[channel]['max'] - BAND_LIMITS[channel]['min'], 2))
         self.weights = weights
 #
 #--- Differential Group Selection by channel: Determined by Band Limits to mimic ACE channels.
 #
-DIFF_GROUP_SELECTION = [Group_Info(('P1','P2A','P2B')),
-                   Group_Info(('P3','P4')),
-                   Group_Info(('P7','P8A'))]
+DIFF_GROUP_SELECTION = [Group_Info(('P1', 'P2A', 'P2B')),
+                   Group_Info(('P3', 'P4')),
+                   Group_Info(('P7', 'P8A'))]
 
 #
 #--- Integral Group Selection:
@@ -136,7 +136,7 @@ OFFSET_TICK_FORMATTING = ['', # offest ticks are mostly years
 #-- plot_goes_data: get goes data and plot the data                                               --
 #---------------------------------------------------------------------------------------------------
 
-def plot_goes_data(dlink = DLINK, clink = CLINK, choice=['diff','intg']):
+def plot_goes_data(dlink = DLINK, clink = CLINK, choice = ['diff', 'intg']):
     """
     get GOES data and plot the data
     input:  JSON file path or read from: 
@@ -156,9 +156,9 @@ def plot_goes_data(dlink = DLINK, clink = CLINK, choice=['diff','intg']):
         diff_data_dict['filename'] = f"{PLOT_DIR}/goes_protons.png"
         diff_data_dict['labels'] = [f"{x.min}-{x.max} Mev" for x in DIFF_GROUP_SELECTION]
         diff_data_dict['colors'] = ['fuchsia', 'green', 'blue']
-        diff_data_dict['limits'] = {'y_min':1e-3, 'y_max':1e4}
-        diff_data_dict['limit_lines'] = {'P4GM':90.91,
-                                         'P41GM':0.71}
+        diff_data_dict['limits'] = {'y_min' : 1e-3, 'y_max' : 1e4}
+        diff_data_dict['limit_lines'] = {'P4GM' : 90.91,
+                                         'P41GM' : 0.71}
         plot_data(diff_data_dict)
         
     if 'intg' in choice:
@@ -172,7 +172,7 @@ def plot_goes_data(dlink = DLINK, clink = CLINK, choice=['diff','intg']):
         intg_data_dict['filename'] = f"{PLOT_DIR}/goes_particles.png"
         intg_data_dict['labels'] = INTG_GROUP_SELECTION
         intg_data_dict['colors'] = ['red', 'blue', '#51FF3B']
-        intg_data_dict['limits'] = {'y_min':1e-2, 'y_max':1e4}
+        intg_data_dict['limits'] = {'y_min' : 1e-2, 'y_max' : 1e4}
         plot_data(intg_data_dict)
 
 
@@ -230,13 +230,13 @@ def calc_ACE_p(table):
         sel = table['channel'] == channel
         subtable = table[sel]
         if 'times' not in diff_data_dict.keys():
-            diff_data_dict['times'] = [datetime.strptime(x,ASTROPY_FORMATTING) for x in subtable['time_tag'].data]
+            diff_data_dict['times'] = [datetime.strptime(x, ASTROPY_FORMATTING) for x in subtable['time_tag'].data]
 #
 #--- Flux averaged across energy bands from protons/cm2-s-ster-KeV to protons/cm2-s-ster-MeV
 #
         avgs = subtable['flux'] * 1e3 * group_info.weights[0]
 
-        for i in range(1,len(group_info.channel_tuple)):
+        for i in range(1, len(group_info.channel_tuple)):
 #
 #--- Iterate over the rest of the channels to calulate the averages
 #
@@ -245,7 +245,7 @@ def calc_ACE_p(table):
             subtable = table[sel]
             avgs = avgs + subtable['flux'] * 1e3 * group_info.weights[i]
         
-        avgs = avgs/(group_info.max - group_info.min)
+        avgs = avgs / (group_info.max - group_info.min)
         diff_data_dict['plot_data'].append(avgs)
     return diff_data_dict
 
@@ -259,13 +259,13 @@ def format_intg_data(intg_table):
     input: intg_table --- astropy table of the integral protons
     output: intg_data_dict --- dictionary of integral data
     """
-    intg_data_dict = {'plot_data':[]}
+    intg_data_dict = {'plot_data' : []}
     sel = intg_table['energy'] == INTG_GROUP_SELECTION[0]
     subtable  = intg_table[sel]
-    intg_data_dict['times'] = [datetime.strptime(x,ASTROPY_FORMATTING) for x in subtable['time_tag'].data]
+    intg_data_dict['times'] = [datetime.strptime(x, ASTROPY_FORMATTING) for x in subtable['time_tag'].data]
     intg_data_dict['plot_data'].append(subtable['flux'])
 
-    for i in range(1,len(INTG_GROUP_SELECTION)):
+    for i in range(1, len(INTG_GROUP_SELECTION)):
         sel = intg_table['energy'] == INTG_GROUP_SELECTION[i]
         subtable = intg_table[sel]
         intg_data_dict['plot_data'].append(subtable['flux'])
@@ -286,12 +286,12 @@ def plot_data(data_dict):
 #--- set a few parameters
 #
     mpl.rcParams['font.size'] = 14
-    props = font_manager.FontProperties(size=14)
-    plt.subplots_adjust(hspace=0.10)
+    props = font_manager.FontProperties(size = 14)
+    plt.subplots_adjust(hspace = 0.10)
     ax = plt.subplot(111)
-    ax.set_ylim(ymin=data_dict['limits']['y_min'], 
-                ymax=data_dict['limits']['y_max'],
-                auto=False)
+    ax.set_ylim(ymin = data_dict['limits']['y_min'], 
+                ymax = data_dict['limits']['y_max'],
+                auto = False)
 #    
 #--- Plotting section
 #
@@ -299,11 +299,11 @@ def plot_data(data_dict):
         p, = plt.semilogy(
                           data_dict['times'],
                           data_dict['plot_data'][i],
-                          color=data_dict['colors'][i],
-                          label=data_dict['labels'][i],
-                          marker='.',
-                          markersize=0,
-                          lw=0.8
+                          color = data_dict['colors'][i],
+                          label = data_dict['labels'][i],
+                          marker = '.',
+                          markersize = 0,
+                          lw = 0.8
                         )
 #
 #--- Format Tick marks automatically around days
@@ -311,8 +311,8 @@ def plot_data(data_dict):
     major_locator = DayLocator()
     ax.xaxis.set_major_locator(major_locator)
     formatter = ConciseDateFormatter(major_locator, 
-                                     formats=TICK_FORMATTING, 
-                                     offset_formats=OFFSET_TICK_FORMATTING)
+                                     formats = TICK_FORMATTING, 
+                                     offset_formats = OFFSET_TICK_FORMATTING)
     ax.xaxis.set_major_formatter(formatter)
     
     xticks = ax.get_xticks()
@@ -331,13 +331,13 @@ def plot_data(data_dict):
         xbound = ax.get_xbound()
         xpos = xbound[-1] + 0.01 * (xbound[-1] - xbound[0])
         for k,v in data_dict['limit_lines'].items():
-            plt.axhline(v, color ='#F05D5D')
+            plt.axhline(v, color = '#F05D5D')
             plt.text(xpos, v, f"{k}\nLimit", color = 'black')
     
     ax.set_xlabel("Coordinated Universal Time")
     ax.set_ylabel(data_dict['units'])
-    ax.legend(loc='upper left')
-    plt.grid(axis='y')
+    ax.legend(loc = 'upper left')
+    plt.grid(axis = 'y')
     plt.title(data_dict['title'])
 #
 #--- set the size of the plotting area in inch (width: 10.0in, height 2.08in x number of panels)
@@ -347,7 +347,7 @@ def plot_data(data_dict):
 #
 #--- save the plot in png format
 #
-    plt.savefig(data_dict['filename'], format='png', dpi=300)
+    plt.savefig(data_dict['filename'], format = 'png', dpi = 300)
 
     plt.close('all')
 
@@ -355,8 +355,8 @@ def plot_data(data_dict):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--mode", choices=['flight','test'], required=True, help="Determine running mode.")
-    parser.add_argument("-p", "--path", required=False, help="Directory path to determine output location of plot.")
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    parser.add_argument("-p", "--path", required = False, help = "Directory path to determine output location of plot.")
     args = parser.parse_args()
 #
 #--- Determine if running in test mode and change pathing if so
@@ -369,7 +369,7 @@ if __name__ == "__main__":
         PLOT_DIR = f"{OUT_DIR}/GOES/Plots"
         if args.path:
            PLOT_DIR = args.path
-        os.makedirs(PLOT_DIR, exist_ok=True)
+        os.makedirs(PLOT_DIR, exist_ok = True)
         plot_goes_data()
     elif args.mode == "flight":
 #
