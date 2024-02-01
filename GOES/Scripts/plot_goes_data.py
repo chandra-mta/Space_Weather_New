@@ -96,22 +96,21 @@ def extract_goes_data(jlink, energy_list, factor):
     energy_list --- a list of energy designation 
     output: <data_dir>/<out file>
     """
-    if jlink.startswith('http'):
 #
-#--- read json file from the web
+#--- read json file from a file or the web
 #
+    if os.path.isfile(jlink):
+        try:
+            with open(jlink) as f:
+                data = json.load(f)
+        except:
+            data = []
+    else:
         try:
             with urllib.request.urlopen(jlink) as url:
                 data = json.loads(url.read().decode())
         except:
             data = []
-    else:
-        if os.path.isfile(jlink):
-            try:
-                with open(jlink) as f:
-                    data = json.load(f)
-            except:
-                data = []
     if len(data) < 1:
         exit(1)
 #
