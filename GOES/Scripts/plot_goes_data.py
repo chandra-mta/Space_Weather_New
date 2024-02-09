@@ -147,7 +147,7 @@ def plot_goes_data(dlink = DLINK, clink = CLINK, choice = ['diff', 'intg']):
     """
     if 'diff' in choice:
         diff_table = extract_goes_table(dlink)
-        diff_data_dict = calc_ACE_p(diff_table)
+        diff_data_dict = format_differential_data(diff_table)
 #
 #--- Define extra plotting variables
 #
@@ -163,7 +163,7 @@ def plot_goes_data(dlink = DLINK, clink = CLINK, choice = ['diff', 'intg']):
         
     if 'intg' in choice:
         intg_table = extract_goes_table(clink)
-        intg_data_dict = format_intg_data(intg_table)
+        intg_data_dict = format_integral_data(intg_table)
 #
 #--- Define extra plotting variables
 #
@@ -210,11 +210,11 @@ def extract_goes_table(jlink):
     data = Table(data)
     return data
 
-#----------------------------------------------------------------------------------
-#-- calc_ACE_p: format the GOES differential flux into ACE flux channel values   --
-#----------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------
+#-- format_differential_data: format the GOES differential flux into ACE flux channel values   --
+#------------------------------------------------------------------------------------------------
 
-def calc_ACE_p(table):
+def format_differential_data(table):
     """
     create combined flux data of astropy table based on weighted average
     input: table --- astropy table of the differential protons.
@@ -249,11 +249,11 @@ def calc_ACE_p(table):
         diff_data_dict['plot_data'].append(avgs)
     return diff_data_dict
 
-#--------------------------------------------------------------------------------
-#-- calc_ACE_p: Format the GOES integral flux into plottable data dictionary   --
-#--------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------
+#-- format_integral_data: Format the GOES integral flux into plottable data dictionary   --
+#------------------------------------------------------------------------------------------
 
-def format_intg_data(intg_table):
+def format_integral_data(intg_table):
     """
     Formats the GOES integral flux astropy table into a data table
     input: intg_table --- astropy table of the integral protons
