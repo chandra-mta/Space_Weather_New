@@ -25,7 +25,7 @@ if __name__ == '__main__':
     mpl.use('Agg')
 import matplotlib.pyplot       as plt
 import matplotlib.font_manager as font_manager
-from matplotlib.dates import DayLocator, ConciseDateFormatter
+from matplotlib.dates import AutoDateLocator, ConciseDateFormatter
 
 import argparse
 import traceback
@@ -117,19 +117,19 @@ INTG_GROUP_SELECTION = ['>=10 MeV',
 #
 ASTROPY_FORMATTING = "%Y-%m-%dT%H:%M:%SZ"
 
-TICK_FORMATTING = ['%y', #ticks are mostly years
-           '%b %d',     # ticks are mostly months
-           '%b %d',     # ticks are mostly days
+TICK_FORMATTING = ['%Y', #ticks are mostly years
+           '%b-%d',     # ticks are mostly months
+           '%b-%d',     # ticks are mostly days
            '%H:%M',  # hrs
            '%H:%M',  # min
            '%S.%f', ] #seconds
 
 OFFSET_TICK_FORMATTING = ['', # offest ticks are mostly years
-                          '', # offset ticks are mostly months
-                          '', # offset ticks are mostly days
-                          '', #hrs
-                          '', # min
-                          ''] #seconds
+                          '%Y', # offset ticks are mostly months
+                          '%Y-%b', # offset ticks are mostly days
+                          '%Y-%b', #hrs
+                          '%H:%M', # min
+                          '%H:%M'] #seconds
 
 
 #---------------------------------------------------------------------------------------------------
@@ -308,7 +308,7 @@ def plot_data(data_dict):
 #
 #--- Format Tick marks automatically around days
 #
-    major_locator = DayLocator()
+    major_locator = AutoDateLocator()
     ax.xaxis.set_major_locator(major_locator)
     formatter = ConciseDateFormatter(major_locator, 
                                      formats = TICK_FORMATTING, 
