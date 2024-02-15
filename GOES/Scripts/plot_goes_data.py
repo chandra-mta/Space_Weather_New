@@ -18,7 +18,7 @@ import random
 import operator
 import time
 import datetime
-import numpy
+import numpy as np
 import Chandra.Time
 import urllib.request
 import json
@@ -26,70 +26,40 @@ import matplotlib as mpl
 
 if __name__ == '__main__':
     mpl.use('Agg')
-
-from pylab import *
 import matplotlib.pyplot       as plt
 import matplotlib.font_manager as font_manager
 import matplotlib.lines        as lines
+import argparse
+#
+#--- Defining Directory Pathing
+#
+HTML_DIR = "/data/mta4/www/RADIATION_new"
+PLOT_DIR = f"{HTML_DIR}/GOES/Plots"
 
-#
-#--- reading directory list
-#
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
-
-f= open(path, 'r')
-data = [line.strip() for line in f.readlines()]
-f.close()
-
-for ent in data:
-    atemp = re.split(':', ent)
-    var  = atemp[1].strip()
-    line = atemp[0].strip()
-    exec("%s = %s" %(var, line))
-#for writing out files in test directory
-if (os.getenv('TEST') == 'TEST'):
-    os.system('mkdir -p TestOut')
-    test_out = os.getcwd() + '/TestOut'
-#
-#--- temp writing file name
-#
-rtail  = int(time.time())
-zspace = '/tmp/zspace' + str(rtail)
-#
-#--- set direcotries
-#
-data_dir   = goes_dir + 'Data/'
-templ_dir  = goes_dir + 'Scripts/Template/'
-web_dir    = html_dir + 'GOES/'
-plot_dir   = web_dir  + 'Plots/'
 #
 #--- json data
 #
-dlink = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json'
-clink = 'https://services.swpc.noaa.gov/json/goes/primary/integral-protons-3-day.json'
+DLINK = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json'
+CLINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-protons-3-day.json'
 #
 #--- protone energy designations and output file names
 #
-diff_list = ['1020-1860 keV',   '1900-2300 keV',   '2310-3340 keV',    '3400-6480 keV',\
+DIFF_LIST = ['1020-1860 keV',   '1900-2300 keV',   '2310-3340 keV',    '3400-6480 keV',\
              '5840-11000 keV',  '11640-23270 keV', '25900-38100 keV',  '40300-73400 keV',\
              '83700-98500 keV', '99900-118000 keV','115000-143000 keV','160000-242000 keV',\
              '276000-404000 keV']
 
-cum_list  = ['>=1 MeV',  '>=5 MeV',   '>=10 MeV', '>=30 MeV', '>=50 MeV',\
+CUM_LIST  = ['>=1 MeV',  '>=5 MeV',   '>=10 MeV', '>=30 MeV', '>=50 MeV',\
              '>=60 MeV', '>=100 MeV', '>=500 MeV']
 
-
-p_file = ['goes_protons.png', 'goes_particles.png']
-u_list = ["p/cm2-s-sr-MeV", "p/cm2-s-sr"]
-t_list = ['Proton Flux', 'Proton Flux']
 #
 #--- other setting
 #
-m_list = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+M_LIST = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 #
 #--- current goes satellite #
 #
-gsatellite = 'Primary'
+GSATELLITE = 'Primary'
 #---------------------------------------------------------------------------------------------------
 #-- plot_goes_data: get goes data and plot the data                                               --
 #---------------------------------------------------------------------------------------------------
@@ -100,82 +70,47 @@ def plot_goes_data():
     input:  none but read from: 
         https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json
         https://services.swpc.noaa.gov/json/goes/primary/integral-protons-3-day.json
-    output: <plot_dir>/goes_perticls.png
+    output: <plot_dir>/goes_particles.png
             <plot_dir>/goes_proton.png
     """
-    ddata = extract_goes_data(dlink, diff_list, 1e3)
+    ddata = extract_goes_data(DLINK, DIFF_LIST, 1e3)
     dtime = convert_in_ydate(ddata[0][0])
     [p1, p2, p3, p4, p5, p6] = compute_p_vals(ddata)
-    plot_data(dtime, p1, p2, p4, u_list[0], t_list[0], 0)
+    plot_data(dtime, p1, p2, p4, "p/cm2-s-sr-MeV", "Proton Flux (Differential)", f"{PLOT_DIR}/goes_protons.png", 0)
 
-    pdata = extract_goes_data(clink, cum_list, 1.0)
+    pdata = extract_goes_data(CLINK, CUM_LIST, 1.0)
     dtime = convert_in_ydate(pdata[0][0])
     i2    = pdata[2][1]
     i3    = pdata[4][1]
     i5    = pdata[6][1]
-    plot_data(dtime, i2, i3, i5, u_list[1], t_list[1], 1)
-
-
-#---------------------------------------------------------------------------------------------------
-#-- convert_to_arrays: convert data into array data                                               --
-#---------------------------------------------------------------------------------------------------
-
-def convert_to_arrays(data):
-    """
-    convert data into array data
-    input:  data--- n line data set
-    output: nave--- a linst of arrays
-    """
-    
-    c_len = len(re.split('\s+', data[0]))
-    save  = []
-    for k in range(0, c_len):
-        save.append([])
-    
-    for ent in data:
-        atemp = re.split('\s+', ent)
-        for k in range(0, c_len):
-            save[k].append(float(atemp[k]))
-#
-#--- sort the array by time
-#--- col 4: julian time / col 5: seconds of the day
-#
-    tsave  = []
-    for k in range(0, len(save[0])):
-        val = float(save[4][k]) + float(save[5][k]) / 86400.0
-        tsave.append(val)
-
-    tarray = numpy.array(tsave)
-    inds   = tarray.argsort()
-
-    nsave = []
-    for k in range(0, c_len):
-
-        tarray = numpy.array(save[k])
-        sarray = tarray[inds[::-1]]
-        nsave.append(sarray)
-
-    return nsave
+    plot_data(dtime, i2, i3, i5, "p/cm2-s-sr", "Proton Flux (Integral)", f"{PLOT_DIR}/goes_particles.png", 1)
 
 #----------------------------------------------------------------------------
 #-- extract_goes_data: extract GOES satellite flux data                    --
 #----------------------------------------------------------------------------
 
-def extract_goes_data(dlink, energy_list, factor):
+def extract_goes_data(jlink, energy_list, factor):
     """
     extract GOES satellite flux data
-    input: dlink--- json web address
+    input: jlink--- json web address or file
     energy_list --- a list of energy designation 
     output: <data_dir>/<out file>
     """
 #
-#--- read json file from the web
+#--- read json file from a file or the web
 #
-    try:
-        with urllib.request.urlopen(dlink) as url:
-            data = json.loads(url.read().decode())
-    except:
-        data = []
+    if os.path.isfile(jlink):
+        try:
+            with open(jlink) as f:
+                data = json.load(f)
+        except:
+            data = []
+    else:
+        try:
+            with urllib.request.urlopen(jlink) as url:
+                data = json.loads(url.read().decode())
+        except:
+            data = []
     if len(data) < 1:
         exit(1)
 #
@@ -187,20 +122,12 @@ def extract_goes_data(dlink, energy_list, factor):
         t_list = []
         f_list = []
         energy = energy_list[k]
-#
-#        ltime  = check_last_entry_time(data)
-#        ctime  = ltime -  86400.0 * 3
+
         for ent in data:
-#
-#--- get the data from a specified satellite
-#
-#            if ent['satellite'] != gsatellite:
-#                continue
 #
 #--- read time and flux of the given energy range
 #
             if ent['energy'] == energy:
-                #flux  = float(ent['flux']) * 1e-3   #--- keV to MeV
                 flux  = float(ent['flux']) * factor
 #
 #--- convert time into seconds from 1998.1.1
@@ -208,9 +135,6 @@ def extract_goes_data(dlink, energy_list, factor):
                 otime = ent['time_tag']
                 otime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(otime, '%Y-%m-%dT%H:%M:%SZ'))
                 stime = int(Chandra.Time.DateTime(otime).secs)
-         
-#                if stime <= ctime:
-#                    continue
          
                 t_list.append(otime)
                 f_list.append(flux)
@@ -260,7 +184,7 @@ def compute_p_vals(data):
     p5 = []                 #--- c9 + c10;  99MeV  - 143MeV
     p6 = []                 #--- c11 + c12: 160MeV - 404MeV
 #
-#--- sometime each channel has a different number of entries--- ususlly  no difference
+#--- sometime each channel has a different number of entries--- usually  no difference
 #--- but occasionally 1 or 2 differnces; if that is the case use one before at the end
 #
     for  k in range(0, len(c0)):
@@ -301,7 +225,7 @@ def compute_p_vals(data):
 #-- plot_data: create two panel plot                                                              --
 #---------------------------------------------------------------------------------------------------
 
-def plot_data(dtime, py0, py1, py2, ylabel, title, ind):
+def plot_data(dtime, py0, py1, py2, ylabel, title, outname, ind):
     """
     create two panel plot
     input:  p_data  --- a list of data arrays of the primary data
@@ -330,7 +254,6 @@ def plot_data(dtime, py0, py1, py2, ylabel, title, ind):
 
         plim1  = 300.0 /3.3
         plim2  = 8.47 / 12.0
-        outname = plot_dir + 'goes_protons.png'
         ymin  = 1.e-3
         ymax  = 1.e4
 #
@@ -340,14 +263,8 @@ def plot_data(dtime, py0, py1, py2, ylabel, title, ind):
         l_list  = ['>10MeV', '>50MeV', '. >100Mev']
         plim1   = 13.0
         plim2   = ''
-        outname =  plot_dir + 'goes_particles.png'
         ymin  = 1.e-2
         ymax  = 1.e4
-        #ymin  = min(min(py0), min(py1), min(py2))
-        #ymax  = max(max(py0), max(py1), max(py2))
-        #ydiff = ymax - ymin
-        #ymin -= 0.08 *ydiff
-        #ymax += 0.15 *ydiff
 
     plt.close('all')
 #
@@ -359,7 +276,7 @@ def plot_data(dtime, py0, py1, py2, ylabel, title, ind):
 #
     ax0 = plt.subplot(111)
     create_panel(ax0, xmin, xmax, ymin, ymax, dtime, py0, py1, py2, plim1, plim2,\
-                 ylabel, gsatellite, l_list, c_list, title, ind)
+                 ylabel, GSATELLITE, l_list, c_list, title, ind)
 
 #--- add x ticks label 
 #
@@ -368,14 +285,11 @@ def plot_data(dtime, py0, py1, py2, ylabel, title, ind):
 #
 #--- set the size of the plotting area in inch (width: 10.0in, height 2.08in x number of panels)
 #
-    fig = matplotlib.pyplot.gcf()
+    fig = plt.gcf()
     fig.set_size_inches(8.0, 5.0)
 #
 #--- save the plot in png format
 #
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        outname = test_out + "/" + os.path.basename(outname)
     plt.savefig(outname, format='png', dpi=300)
 
     plt.close('all')
@@ -385,7 +299,7 @@ def plot_data(dtime, py0, py1, py2, ylabel, title, ind):
 #---------------------------------------------------------------------------------------------------
 
 def create_panel(ax, xmin, xmax, ymin, ymax, s_time, y0, y1, y2, plim1, plim2, ylabel,\
-                 gsatellite, l_list, c_list, title, ind):
+                 GSATELLITE, l_list, c_list, title, ind):
     """
     create a plot for a given panel
     input:  ax  --- panel
@@ -446,7 +360,6 @@ def create_panel(ax, xmin, xmax, ymin, ymax, s_time, y0, y1, y2, plim1, plim2, y
     else:
         ax.yaxis.set_label_position("right")
         pass
-        #p, = plt.semilogy([xmin, xmax], [plim1, plim1], color='green', lw=2)
 #
 #--- add labels
 #
@@ -457,13 +370,13 @@ def create_panel(ax, xmin, xmax, ymin, ymax, s_time, y0, y1, y2, plim1, plim2, y
 
     plt.title(line, fontsize=12, fontweight='bold', fontstyle='italic')
 
-    text(x1, yp, l_list[0], color=c_list[0], fontsize=12)
-    text(x2, yp, l_list[1], color=c_list[1], fontsize=12)
-    text(x3, yp, l_list[2], color=c_list[2], fontsize=12)
+    plt.text(x1, yp, l_list[0], color=c_list[0], fontsize=12)
+    plt.text(x2, yp, l_list[1], color=c_list[1], fontsize=12)
+    plt.text(x3, yp, l_list[2], color=c_list[2], fontsize=12)
 
     if ind == 0:
-        text(xpos, 0.5 *plim1, 'P4GM\nLimit', color=c_list[1], fontsize=10)
-        text(xpos, 0.5 *plim2, 'P41GM\nLimit', color=c_list[2], fontsize=10)
+        plt.text(xpos, 0.5 *plim1, 'P4GM\nLimit', color=c_list[1], fontsize=10)
+        plt.text(xpos, 0.5 *plim2, 'P41GM\nLimit', color=c_list[2], fontsize=10)
 
 #---------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------
@@ -516,7 +429,7 @@ def create_time_label():
         x_l_pos.append(int(yday))
 
         k     = mon -1
-        lmon  = m_list[k]
+        lmon  = M_LIST[k]
         lab   = lmon + ' ' + atemp[2]
         x_label.append(lab)
 
@@ -589,7 +502,7 @@ def convert_in_yday(y, m, d, sec):
             m   --- month
             d   --- day
             sec --- seconds in the day
-    output: yda --- yday
+    output: yday --- yday
     """
 
     m     = add_lead_zero(int(m))
@@ -648,5 +561,39 @@ def is_learyear(year):
 #---------------------------------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-t", "--test", required=False, action='store_true', help="Boolean to determine running as test.")
+    parser.add_argument("-p", "--path", required=False, help="Directory path to determine output location of plot.")
+    args = parser.parse_args()
 
-    plot_goes_data()
+#
+#--- Determine if running in test mode and change pathing if so
+#
+    if args.test:
+#
+#--- Path output to same location as unit tests
+#
+        OUT_DIR = f"{os.getcwd()}/test/outTest"
+        PLOT_DIR = f"{OUT_DIR}/GOES/Plots"
+        if args.path:
+            PLOT_DIR = args.path
+        os.makedirs(PLOT_DIR, exist_ok=True)
+        plot_goes_data()
+    else:
+#
+#--- Create a lock file and exit strategy in case of race conditions
+#
+        import getpass
+        name = os.path.basename(__file__).split(".")[0]
+        user = getpass.getuser()
+        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
+            sys.exit(f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog.")
+        else:
+            os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
+
+        plot_goes_data()
+
+#
+#--- Remove lock file once process is completed
+#
+        os.system(f"rm /tmp/{user}/{name}.lock")
