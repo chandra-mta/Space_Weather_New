@@ -420,7 +420,7 @@ def create_ace_data_table(cdata, l_vals):
 #
     if p130f > 360000000:
         val = "%.4e" % p130f
-        ace_violation_protons(val)
+        #ace_violation_protons(val)
 
     p5_p6_lim = 1.0                 #----????? this is what given in the original, but use below
     p5_p6_lim = 1.0e10
@@ -586,10 +586,10 @@ def curr_state():
     start = Chandra.Time.DateTime(ctime).secs 
     stop  = start + 3.0 * 86400.
 
-    ifile = ephem_dir + 'dsn_summary.dat'
+    ifile = comm_dir + 'Data/dsn_summary.dat'
     data  = mcf.read_data_file(ifile)
-    data  = data[2:]
     line  = line + data[0] + '\n' + data[1] + '\n'
+    data  = data[2:]
     for ent in data:
         atemp = re.split('\s+', ent)
         year  = atemp[10]
@@ -609,8 +609,8 @@ def curr_state():
 def convert_to_stime(year, yday):
 
     atemp = re.split('\.', yday)
-    frac  = float(atemp[1]) 
-    val   = 24. * frac
+    frac  = float(f"0.{atemp[1]}") 
+    val   = 24 * frac
     hh    = int(val)
     diff  = val - hh
     val   = 60 * diff
@@ -618,8 +618,7 @@ def convert_to_stime(year, yday):
     diff  = val - mm
     ss    = int(60 *diff)
 
-    htime = str(year) + ':' + atemp[0] + ':' + str(hh) + ':' + str(mm) + ':' + str(ss)
-    
+    htime = str(year).zfill(4) + ':' + atemp[0].zfill(3) + ':' + str(hh).zfill(2) + ':' + str(mm).zfill(2) + ':' + str(ss).zfill(2)
     stime = Chandra.Time.DateTime(htime).secs 
 
     return stime

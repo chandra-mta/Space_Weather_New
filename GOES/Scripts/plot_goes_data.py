@@ -185,7 +185,7 @@ def extract_goes_table(jlink):
     extract GOES satellite flux data
     input: jlink--- JSON web address or file
     output: table--- astropy table of the GOES data.
-    """    
+    """
 #
 #--- read json file from a file or the web
 #
@@ -355,6 +355,7 @@ def plot_data(data_dict):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+
     parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
     parser.add_argument("-p", "--path", required = False, help = "Directory path to determine output location of plot.")
     args = parser.parse_args()
