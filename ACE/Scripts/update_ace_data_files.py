@@ -20,6 +20,7 @@ import time
 from datetime import datetime
 import Chandra.Time
 import copy 
+import subprocess
 #
 #--- reading directory list
 #
@@ -630,8 +631,8 @@ def update_long_term_data(ndata):
     output: <ace_dir>/Data/longterm/ace_data.txt
     """
     dfile = ace_data + 'longterm/ace_data.txt'
-    data  = mcf.read_data_file(dfile)
-    atemp = re.split('\s+', data[-1])
+    last_line = subprocess.check_output(f"tail -n 1 {dfile}", shell=True, executable='/bin/csh').decode()
+    atemp = re.split('\s+', last_line)
 #
 #--- convert time in Chandra Time
 #
