@@ -157,8 +157,8 @@ def plot_goes_data(dlink = DLINK, clink = CLINK, choice = ['diff', 'intg']):
         diff_data_dict['labels'] = [f"{x.min}-{x.max} Mev" for x in DIFF_GROUP_SELECTION]
         diff_data_dict['colors'] = ['fuchsia', 'green', 'blue']
         diff_data_dict['limits'] = {'y_min' : 1e-3, 'y_max' : 1e4}
-        diff_data_dict['limit_lines'] = {'P4GM' : 90.91,
-                                         'P41GM' : 0.71}
+        diff_data_dict['limit_lines'] = {'P4GM' : (90.91, diff_data_dict['colors'][1]),
+                                         'P41GM' : (0.71, diff_data_dict['colors'][2])}
         plot_data(diff_data_dict)
         
     if 'intg' in choice:
@@ -331,8 +331,8 @@ def plot_data(data_dict):
         xbound = ax.get_xbound()
         xpos = xbound[-1] + 0.01 * (xbound[-1] - xbound[0])
         for k,v in data_dict['limit_lines'].items():
-            plt.axhline(v, color = '#F05D5D')
-            plt.text(xpos, v, f"{k}\nLimit", color = 'black')
+            plt.axhline(v[0], color = '#F05D5D')
+            plt.text(xpos, v[0], f"{k}\nLimit", color = v[1])
     
     ax.set_xlabel("Coordinated Universal Time")
     ax.set_ylabel(data_dict['units'])
