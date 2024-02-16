@@ -651,18 +651,18 @@ def update_long_term_data(ndata):
             if ndata[2][m] != 0 or ndata[5][m] != 0:
                 continue
 
-        line = line + ndata[1][m]
-        line = line + '%3d'   % ndata[2][m]
-        line = line + line_adjust(ndata[3][m])
-        line = line + line_adjust(ndata[4][m])
-        line = line + '%3d'   % ndata[5][m]
-        line = line + line_adjust(ndata[6][m])
-        line = line + line_adjust(ndata[7][m])
-        line = line + line_adjust(ndata[8][m])
-        line = line + line_adjust(ndata[9][m])
-        line = line + line_adjust(ndata[10][m])
-        line = line + '%7.2f' % ndata[11][m]
-        line = line + '\n'
+            line = line + ndata[1][m]
+            line = line + '%3d'   % ndata[2][m]
+            line = line + line_adjust(ndata[3][m])
+            line = line + line_adjust(ndata[4][m])
+            line = line + '%3d'   % ndata[5][m]
+            line = line + line_adjust(ndata[6][m])
+            line = line + line_adjust(ndata[7][m])
+            line = line + line_adjust(ndata[8][m])
+            line = line + line_adjust(ndata[9][m])
+            line = line + line_adjust(ndata[10][m])
+            line = line + '%7.2f' % ndata[11][m]
+            line = line + '\n'
 
     if (os.getenv('TEST') == 'TEST'):
         dfile = test_out + '/ace_data.txt'
