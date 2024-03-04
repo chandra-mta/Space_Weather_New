@@ -31,8 +31,11 @@ OLD_GEN_HRC_PROXY = {'CHANNELS': {'P4': 6000,
 
 #In use for transition period between GOES-15 and GOES-16+ (2020)
 HRC_PROXY_V1 = {'CHANNELS': {'P5': 6000,
+                             'P6': 6000,
                              'P7': 270000,
-                             'P8A': 100000},
+                             'P8A': 100000,
+                             'P8B': 100000,
+                             'P8C': 100000},
                 'CONSTANT': 0}
 
 #In use for new generation GOES-16+ (post 2020)
