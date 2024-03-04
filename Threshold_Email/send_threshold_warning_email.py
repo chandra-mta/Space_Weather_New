@@ -21,6 +21,31 @@ HRC_ADMIN = ['sot_red_alert@cfa.harvard.edu']
 ACE_ADMIN = ['william.aaron@cfa.harvard.edu']
 HRC_ADMIN = ['william.aaron@cfa.harvard.edu']
 
+#
+#--- Determine HRC proxy linear combination parameters.
+#
+
+#TODO - Move this proxy combination info into a JSON file for use across all Space_Weather scripts
+
+#In use for old generation GOES-1 to GOES-15
+#DOES NOT MAP DIRECTLY TO NEW GOES CHANNELS
+OLD_GEN_HRC_PROXY = {'P4': 6000,
+                     'P5': 270000,
+                     'P6': 100000,
+                     'CONSTANT': 0}
+
+#In use for transition period between GOES-15 and GOES-16+ (2020)
+HRC_PROXY_V1 = {'P5': 6000,
+                'P7': 270000,
+                'P8A': 100000,
+                'CONSTANT': 0}
+
+#In use for new generation GOES-16+ (post 2020)
+HRC_PROXY_V2 = {'P5': 143,
+                'P6': 64738,
+                'P7': 162505,
+                'CONSTANT': 4127}
+
 #----------------------------------------------------------------------------------
 #-- send_email_to_admin: send out a notification email to admin                  --
 #----------------------------------------------------------------------------------
@@ -43,7 +68,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.mode == 'test':
-
 #
 #--- Redefine Admin for sending notification email in test mode
 #
