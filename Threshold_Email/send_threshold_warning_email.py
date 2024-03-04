@@ -13,8 +13,8 @@ ACE_DATA_SOURCE = 'https://services.swpc.noaa.gov/json/ace/epam/ace_epam_5m.json
 GOES_DATA_SOURCE = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-6-hour.json'
 
 #TODO which email group to send for ACE and which to send for HRC Prox using GOES?
-ACE_ADMIN = ['sot_ace_alert@cfa.harvard.edu']
-HRC_ADMIN = ['sot_red_alert@cfa.harvard.edu']
+#ACE_ADMIN = ['sot_ace_alert@cfa.harvard.edu']
+#HRC_ADMIN = ['sot_red_alert@cfa.harvard.edu']
 
 #Reset for testing right now
 ACE_ADMIN = ['william.aaron@cfa.harvard.edu']
@@ -51,7 +51,7 @@ HRC_PROXY_V2 = {'CHANNELS': {'P5': 143,
 #TODO - Move these thresholds into the future MTA limits combined SQLite database
 
 #Based on Fluence calculated over time
-ACE_THRESHOLD = {'Violation': 3.6e8}
+ACE_THRESHOLD = {'Warning': 3.6e8}
 
 #Based on HRC Proxy value as specific time
 HRC_THRESHOLD = {'Warning': 6.2e4,
@@ -91,7 +91,6 @@ def extract_data_table(jlink):
 
     if len(data) < 1:
         exit(1)
-
     data = Table(data)
     return data
 
@@ -103,12 +102,18 @@ def ace_violation(table):
 #
 #--- Average over the past 2 hour timeframe.
 #
-    p130a = table['P3'][:24].data.mean()
+    stop = table['time_tag'][0]
+    start = table['time_tag'][24]
+    p130a = table['p3'][:24].data.mean()
     # Compute fluence over two hours from the averaged rate
     p130f = p130a * 7200
+    print(f"p130f: {p130f}")
+    print(f"start: {start}")
+    print(f"stop: {stop}")
 
     if p130f > ACE_THRESHOLD['Warning']:
-        content = f"WARNING: A Radiation violation of P3 (130Kev) has been observed by ACE\n"
+        content = f"WARNING: A Radiation violation of P3 (130Kev) has been observed by ACE.\n"
+        content = f"Occuring between {start} and {stop}\.n"
         content += f"Observed: {p130f} \n"
         content += f"Limit: {ACE_THRESHOLD['Warning']} particles/cm2-ster-MeV within 2 hours.\n"
         content += f"see http://cxc.harvard.edu/mta/ace.html or https://cxc.harvard.edu/mta/RADIATION_new/ACE/ace.html\n"
@@ -124,23 +129,31 @@ def hrc_violation(table):
     """
 
     #TODO Send email for multiple proxies? Current just run for v2
-    calc_proxy = 0
-    for channel in HRC_PROXY_V2['CHANNELS'].keys():
-        calc_proxy += HRC_PROXY_V2['CHANNELS'][channel] * table[channel]
-    calc_proxy += HRC_PROXY_V2['CONSTANT']
-    
+    proxy = 0
+#
+#--- select the latest data point
+#
+    time = table['time_tag'][-1]
+    sel = table['time_tag'] == time
+    table = table[sel]
+
+    for chan in HRC_PROXY_V2['CHANNELS'].keys():
+        proxy += HRC_PROXY_V2['CHANNELS'][chan] * table[table['channel'] == chan]['flux'].data[0]
+    proxy += HRC_PROXY_V2['CONSTANT']
+    print(f"proxy: {proxy}")
+    print(f"time: {time}")
     content = ''
     subject = ''
-    if calc_proxy > HRC_THRESHOLD['Warning']:
-        content = f"WARNING: A HRC GOES proxy violation has been observerd by GOES\n"
-        content += f"Observed: {calc_proxy} \n"
+    if proxy > HRC_THRESHOLD['Warning']:
+        content = f"WARNING: A HRC GOES proxy violation has been observerd by GOES at {time}\n"
+        content += f"Observed: {proxy} \n"
         content += f"LIMIT:{HRC_THRESHOLD['Warning']} counts/sec.\n"
 
         subject = f"[sot_red_alert] Warning: HRC proxy"
     
-    if calc_proxy > HRC_THRESHOLD['Violation']:
-        content = f"VIOLATION: A HRC GOES proxy violation has been observerd by GOES\n"
-        content += f"Observed: {calc_proxy} \n"
+    if proxy > HRC_THRESHOLD['Violation']:
+        content = f"VIOLATION: A HRC GOES proxy violation has been observerd by GOES at {time}\n"
+        content += f"Observed: {proxy} \n"
         content += f"LIMIT:{HRC_THRESHOLD['Violation']} counts/sec.\n"
 
         subject = f"[sot_red_alert] Violation: HRC proxy"
@@ -157,12 +170,9 @@ def send_mail(content, subject, admin):
     input:  admin --- list of emails
     output: email to admin
     """
-    content += f"This message was send to {" ".join(admin)}"
+    content += f'This message was send to {" ".join(admin)}'
     cmd = f'echo "{content}" | mailx -s "{subject}" {" ".join(admin)}'
     os.system(cmd)
-
-def check_data_for_viol():
-    pass
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
