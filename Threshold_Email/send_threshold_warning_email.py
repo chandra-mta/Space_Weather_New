@@ -75,19 +75,11 @@ def extract_data_table(jlink):
 #--- read json file from a file or the web
 #
     if os.path.isfile(jlink):
-        try:
-            with open(jlink) as f:
-                data = json.load(f)
-        except:
-            traceback.print_exc()
-            data = []
+        with open(jlink) as f:
+            data = json.load(f)
     else:
-        try:
-            with urllib.request.urlopen(jlink) as url:
-                data = json.loads(url.read().decode())
-        except:
-            traceback.print_exc()
-            data = []
+        with urllib.request.urlopen(jlink) as url:
+            data = json.loads(url.read().decode())
 
     if len(data) < 1:
         exit(1)
@@ -107,16 +99,13 @@ def ace_violation(table):
     p130a = table['p3'][:24].data.mean()
     # Compute fluence over two hours from the averaged rate
     p130f = p130a * 7200
-    print(f"p130f: {p130f}")
-    print(f"start: {start}")
-    print(f"stop: {stop}")
 
     if p130f > ACE_THRESHOLD['Warning']:
         content = f"WARNING: A Radiation violation of P3 (130Kev) has been observed by ACE.\n"
-        content = f"Occuring between {start} and {stop}\.n"
-        content += f"Observed: {p130f} \n"
-        content += f"Limit: {ACE_THRESHOLD['Warning']} particles/cm2-ster-MeV within 2 hours.\n"
-        content += f"see http://cxc.harvard.edu/mta/ace.html or https://cxc.harvard.edu/mta/RADIATION_new/ACE/ace.html\n"
+        content += f"Occuring between {start} and {stop}.\n"
+        content += f"Observed: {p130f:.5e} \n"
+        content += f"Limit: {ACE_THRESHOLD['Warning']:.3e} particles/cm2-ster-MeV within 2 hours.\n"
+        content += f"See http://cxc.harvard.edu/mta/ace.html or https://cxc.harvard.edu/mta/RADIATION_new/ACE/ace.html\n"
         content += f"The ACIS on-call person should review the data and call a telecon if necessary.\n"
 
         subject = f"[sot_ace_alert] ACE_p3"
@@ -140,21 +129,19 @@ def hrc_violation(table):
     for chan in HRC_PROXY_V2['CHANNELS'].keys():
         proxy += HRC_PROXY_V2['CHANNELS'][chan] * table[table['channel'] == chan]['flux'].data[0]
     proxy += HRC_PROXY_V2['CONSTANT']
-    print(f"proxy: {proxy}")
-    print(f"time: {time}")
     content = ''
     subject = ''
     if proxy > HRC_THRESHOLD['Warning']:
         content = f"WARNING: A HRC GOES proxy violation has been observerd by GOES at {time}\n"
-        content += f"Observed: {proxy} \n"
-        content += f"LIMIT:{HRC_THRESHOLD['Warning']} counts/sec.\n"
+        content += f"Observed: {proxy:.5e} \n"
+        content += f"Limit: {HRC_THRESHOLD['Warning']:.3e} counts/sec.\n"
 
         subject = f"[sot_red_alert] Warning: HRC proxy"
     
     if proxy > HRC_THRESHOLD['Violation']:
         content = f"VIOLATION: A HRC GOES proxy violation has been observerd by GOES at {time}\n"
-        content += f"Observed: {proxy} \n"
-        content += f"LIMIT:{HRC_THRESHOLD['Violation']} counts/sec.\n"
+        content += f"Observed: {proxy:.5e} \n"
+        content += f"Limit: {HRC_THRESHOLD['Violation']:.3e} counts/sec.\n"
 
         subject = f"[sot_red_alert] Violation: HRC proxy"
     
@@ -189,6 +176,12 @@ if __name__ == "__main__":
             HRC_ADMIN = args.email
         else:
             ADMIN = [os.popen(f"getent aliases | grep {getpass.getuser()} ").read().split(":")[1].strip()]
-        check_data_for_viol()
+        try:
+            check_data_for_viol()
+        except:
+            traceback.print_exc()
     else:
-        check_data_for_viol()
+        try:
+            check_data_for_viol()
+        except:
+            traceback.print_exc()
