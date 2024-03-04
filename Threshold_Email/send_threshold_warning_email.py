@@ -13,12 +13,8 @@ ACE_DATA_SOURCE = 'https://services.swpc.noaa.gov/json/ace/epam/ace_epam_5m.json
 GOES_DATA_SOURCE = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-6-hour.json'
 
 #TODO which email group to send for ACE and which to send for HRC Prox using GOES?
-#ACE_ADMIN = ['sot_ace_alert@cfa.harvard.edu']
-#HRC_ADMIN = ['sot_red_alert@cfa.harvard.edu']
-
-#Reset for testing right now
-ACE_ADMIN = ['william.aaron@cfa.harvard.edu']
-HRC_ADMIN = ['william.aaron@cfa.harvard.edu']
+ACE_ADMIN = ['sot_ace_alert@cfa.harvard.edu']
+HRC_ADMIN = ['sot_red_alert@cfa.harvard.edu']
 
 #
 #--- Determine HRC proxy linear combination parameters.
