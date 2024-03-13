@@ -171,17 +171,13 @@ def extract_goes_data(dlink, energy_list):
         t_list = []
         f_list = []
         energy = energy_list[k]
+        last_time = time.strptime(data[0]['time_tag'], '%Y-%m-%dT%H:%M:%SZ')
 #
 #--- check the last entry time and select only last 2hrs
 #
         ltime  = check_last_entry_time(data)
         ctime  = ltime - 3600.0 * 2
         for ent in data:
-#
-#--- get the data from a specified satellite
-#
-#            if ent['satellite'] != satellite:
-#                continue
 #
 #--- read time and flux of the given energy range
 #
@@ -192,10 +188,23 @@ def extract_goes_data(dlink, energy_list):
 #
                 otime = ent['time_tag']
                 #dtime = time.strftime('%Y:%j:%H:%M',    time.strptime(otime, '%Y-%m-%dT%H:%M:%SZ'))
-                otime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(otime, '%Y-%m-%dT%H:%M:%SZ'))
+                otime =  time.strptime(otime, '%Y-%m-%dT%H:%M:%SZ')
 
-                t_list.append(otime)
+                #If the otime is more than five minutes after the last_time
+                #then that means the data set is missing an entry for this energy band and zero values should be appened.
+                diff = time.mktime(otime) - time.mktime(last_time)
+                if diff > 300:
+                    #All times should be in divisions of 5 minutes/300 seconds.
+                    for i in range(300,int(diff),300):
+                        missing_time = time.localtime(time.mktime(last_time) + i)
+                        t_list.append(time.strftime('%Y:%j:%H:%M:%S',missing_time))
+                        #assume missing data is zero
+                        f_list.append(0)
+
+                #record time as string
+                t_list.append(time.strftime('%Y:%j:%H:%M:%S',otime))
                 f_list.append(flux)
+                last_time = otime
 
         d_save.append([t_list, f_list])
 
