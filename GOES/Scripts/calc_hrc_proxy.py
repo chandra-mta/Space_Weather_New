@@ -1,6 +1,7 @@
 #!/proj/sot/ska3/flight/bin/python
 
 import os
+import sys
 import argparse
 import getpass
 import traceback
@@ -104,8 +105,11 @@ def pull_GOES(cutoff = '', ifile = GOES_DATA_FILE):
         t = ascii.read(ifile)
     else:
         #cutoff provides a time stamp to slice the file towards. 
-        linecut = subprocess.check_output(f'grep -n "{cutoff}" {GOES_DATA_FILE}', shell=True, executable='/bin/csh').decode().split(":")[0]
-        data = subprocess.check_output(f"tail -n +{linecut} {GOES_DATA_FILE}", shell=True, executable='/bin/csh').decode()
+        linecut = int(subprocess.check_output(f'grep -n "{cutoff}" {GOES_DATA_FILE}', shell=True, executable='/bin/csh').decode().split(":")[0])
+        data = subprocess.check_output(f"tail -n +{linecut+1} {GOES_DATA_FILE}", shell=True, executable='/bin/csh').decode()
+        if data == '':
+            #No goes data past desired cutoff. Stop process
+            sys.exit(0)
         t = ascii.read(data, delimiter ="\s")
     
     #rename columns since to names found at top
@@ -134,7 +138,7 @@ def calc_hrc_proxy():
     #Determine cut off time for pulling in new data from GOES. If no HRC proxy data, calculate the last 24 hrs
     if len(hrc_proxy_table) == 0:
         #new table
-        now = datetime.datetime.now()
+        now = datetime.datetime.utcnow()
         cut_struct = now - datetime.timedelta(days = 0, minutes = now.minute % 5, seconds = now.second, microseconds = now.microsecond)
         cutoff = cut_struct.strftime('%Y:%j:%H:%M:%S')
     else:
