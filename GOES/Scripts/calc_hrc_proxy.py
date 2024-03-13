@@ -4,7 +4,16 @@ import os
 import argparse
 import getpass
 import traceback
-from astropy.io import misc
+from astropy.io import misc, ascii
+from astropy.table import Table
+
+#
+#--- Define Directory Pathing
+#
+GOES_DIR = "/data/mta4/Space_Weather/GOES/Data"
+GOES_DATA_FILE = f"{GOES_DIR}/goes_data_r.txt"
+HRC_PROXY_DATA_FILE = f"{GOES_DIR}/hrc_proxy.h5"
+
 
 #Alert Email Addresses
 ACE_ADMIN = ['sot_ace_alert@cfa.harvard.edu']
@@ -18,12 +27,9 @@ HRC_ADMIN = ['sot_ace_alert@cfa.harvard.edu']
 #
 
 #In use for transition period between GOES-15 and GOES-16+ (2020)
-HRC_PROXY_V1 = {'CHANNELS': {'P5': 6000,
-                             'P6': 6000,
+HRC_PROXY_V1 = {'CHANNELS': {'P5P6': 6000,
                              'P7': 270000,
-                             'P8A': 100000,
-                             'P8B': 100000,
-                             'P8C': 100000},
+                             'P8ABC': 100000},
                 'CONSTANT': 0}
 
 #In use for new generation GOES-16+ (post 2020)
@@ -75,7 +81,7 @@ COLNAMES = ['Time',
             'P10',
             'HRC_Proxy']
 
-def combine_rates_h5(dat, chans):
+def combine_rates(dat, chans):
     """
     Return combined rates for multiple channels
     """
@@ -85,3 +91,23 @@ def combine_rates_h5(dat, chans):
         
     delta_e = DE[chans[-1]][0] - DE[chans[0]][1]
     return combined / delta_e
+
+
+def pull_GOES(ifile = GOES_DATA_FILE):
+    """
+    Pull data from MTA GOES DATA directory
+    """
+    t = ascii.read(ifile)
+    for i, col in enumerate(t.colnames):
+        t.rename_column(col,COLNAMES[i])
+
+def pull_HRC_proxy(ifile = HRC_PROXY_DATA_FILE):
+    """
+    Pull current data table for HRC proxy in MTA GOES DATA directory
+    """
+    if os.path.isfile(ifile):
+        pass
+    else:
+        hrc_proxy_table = Table(names = ['Time', 'Proxy_V1', 'Proxy_V2'],
+                                dtype = ['<U17', 'int64', 'int64'])
+    return hrc_proxy_table
