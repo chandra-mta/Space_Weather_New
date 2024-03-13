@@ -4,6 +4,9 @@ import os
 import argparse
 import getpass
 import traceback
+import time
+import subprocess
+import datetime
 from astropy.io import misc, ascii
 from astropy.table import Table
 
@@ -93,13 +96,24 @@ def combine_rates(dat, chans):
     return combined / delta_e
 
 
-def pull_GOES(ifile = GOES_DATA_FILE):
+def pull_GOES(cutoff = '', ifile = GOES_DATA_FILE):
     """
     Pull data from MTA GOES DATA directory
     """
-    t = ascii.read(ifile)
+    if cutoff == '':
+        t = ascii.read(ifile)
+    else:
+        #cutoff provides a time stamp to slice the file towards. 
+        linecut = subprocess.check_output(f'grep -n "{cutoff}" {GOES_DATA_FILE}', shell=True, executable='/bin/csh').decode().split(":")[0]
+        data = subprocess.check_output(f"tail -n +{linecut} {GOES_DATA_FILE}", shell=True, executable='/bin/csh').decode()
+        t = ascii.read(data, delimiter ="\s")
+    
+    #rename columns since to names found at top
     for i, col in enumerate(t.colnames):
         t.rename_column(col,COLNAMES[i])
+    t['P5P6'] = combine_rates(t,('P5','P6'))
+    t['P8ABC'] = combine_rates(t,('P8A','P8B', 'P8A'))
+    return t
 
 def pull_HRC_proxy(ifile = HRC_PROXY_DATA_FILE):
     """
@@ -111,3 +125,22 @@ def pull_HRC_proxy(ifile = HRC_PROXY_DATA_FILE):
         hrc_proxy_table = Table(names = ['Time', 'Proxy_V1', 'Proxy_V2'],
                                 dtype = ['<U17', 'int64', 'int64'])
     return hrc_proxy_table
+
+def calc_hrc_proxy():
+    """
+    Pull MTA GOES DATA and calcualte the RHC proxy, alert if in violation, then store calculated proxy
+    """
+    hrc_proxy_table = pull_HRC_proxy()
+    #Determine cut off time for pulling in new data from GOES. If no HRC proxy data, calculate the last 24 hrs
+    if len(hrc_proxy_table) == 0:
+        #new table
+        now = datetime.datetime.now()
+        cut_struct = now - datetime.timedelta(days = 0, minutes = now.minute % 5, seconds = now.second, microseconds = now.microsecond)
+        cutoff = cut_struct.strftime('%Y:%j:%H:%M:%S')
+    else:
+        cutoff = hrc_proxy_table['Time'][-1]
+
+    goes_table = pull_GOES(cutoff = cutoff)
+
+    
+    return hrc_proxy_table, goes_table
