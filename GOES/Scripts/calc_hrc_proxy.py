@@ -20,7 +20,6 @@ HRC_PROXY_DATA_FILE = f"{GOES_DIR}/hrc_proxy.h5"
 
 
 #Alert Email Addresses
-ACE_ADMIN = ['sot_ace_alert@cfa.harvard.edu']
 HRC_ADMIN = ['sot_ace_alert@cfa.harvard.edu']
 
 #TODO, following testing, replace alert email with red alert email
@@ -41,6 +40,10 @@ HRC_PROXY_V2 = {'CHANNELS': {'P5': 143,
                              'P6': 64738,
                              'P7': 162505}, 
                 'CONSTANT': 4127}
+
+#Based on HRC Proxy value as specific time
+HRC_THRESHOLD = {'Warning': 6.2e4,
+                'Violation': 1.95e5}
 
 # GOES-16+ Energy bands (keV) and combinations
 DE = {'P1': [1860., 1020.],
@@ -139,12 +142,48 @@ def calc_hrc_proxy():
     if len(hrc_proxy_table) == 0:
         #new table
         now = datetime.datetime.utcnow()
-        cut_struct = now - datetime.timedelta(days = 0, minutes = now.minute % 5, seconds = now.second, microseconds = now.microsecond)
+        cut_struct = now - datetime.timedelta(days = 1, minutes = now.minute % 5, seconds = now.second, microseconds = now.microsecond)
         cutoff = cut_struct.strftime('%Y:%j:%H:%M:%S')
     else:
         cutoff = hrc_proxy_table['Time'][-1]
-
     goes_table = pull_GOES(cutoff = cutoff)
 
     
     return hrc_proxy_table, goes_table
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    parser.add_argument("-e", '--email', nargs = '*', required = False, help = "List of emails to recieve notifications")
+    parser.add_argument("-g", "--goes", help = "Determine GOES data file path")
+    parser.add_argument("-h", "--hrc", help = "Determine HRC PROXY data file path")
+    args = parser.parse_args()
+
+    if args.mode == 'test':
+#
+#--- Redefine Admin for sending notification email in test mode
+#
+        if args.email != None:
+            HRC_ADMIN = args.email
+        else:
+            HRC_ADMIN = [os.popen(f"getent aliases | grep {getpass.getuser()}").read().split(":")[1].strip()]
+
+#
+#--- Redefine pathing for GOES and HRC PROXY data files
+#
+        if args.goes:
+            GOES_DATA_FILE = args.goes
+        if args.hrc:
+            HRC_PROXY_DATA_FILE = args.hrc
+        else:
+            HRC_PROXY_DATA_FILE = f"{os.getcwd()}//hrc_proxy.h5"
+
+        try:
+            calc_hrc_proxy()
+        except:
+            traceback.print_exc()
+    else:
+        try:
+            calc_hrc_proxy()
+        except:
+            traceback.print_exc()
