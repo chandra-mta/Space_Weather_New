@@ -9,7 +9,7 @@ import subprocess
 import datetime
 import numpy as np
 from astropy.io import misc, ascii
-from astropy.table import Table, join
+from astropy.table import Table, vstack, unique
 
 #
 #--- Define Directory Pathing
@@ -100,19 +100,23 @@ def combine_rates(dat, chans):
     return combined / delta_e
 
 
-def pull_GOES(cutoff = '', ifile = GOES_DATA_FILE):
+def pull_GOES(cutoff = ''):
     """
     Pull data from MTA GOES DATA directory
     """
     if cutoff == '':
-        t = ascii.read(ifile)
+        t = ascii.read(GOES_DATA_FILE)
     else:
         #cutoff provides a time stamp to slice the file towards. 
-        linecut = int(subprocess.check_output(f'grep -n "{cutoff}" {GOES_DATA_FILE}', shell=True, executable='/bin/csh').decode().split(":")[0])
+        try:
+            linecut = int(subprocess.check_output(f'grep -n "{cutoff}" {GOES_DATA_FILE}', shell=True, executable='/bin/csh').decode().split(":")[0])
+        except:
+            traceback.print_exc()
+            sys.exit(f"Error: Possible that the latest HRC Proxy time point exceeds latest GOES time point.\nInvestigate at {GOES_DATA_FILE}\nand {HRC_PROXY_DATA_FILE}")
         data = subprocess.check_output(f"tail -n +{linecut+1} {GOES_DATA_FILE}", shell=True, executable='/bin/csh').decode()
         if data == '':
             #No goes data past desired cutoff. Stop process
-            sys.exit(0)
+            sys.exit()
         t = ascii.read(data, delimiter ="\s")
     
     #rename columns to names found at top
@@ -123,12 +127,12 @@ def pull_GOES(cutoff = '', ifile = GOES_DATA_FILE):
     t['P8ABC'] = combine_rates(t,('P8A','P8B', 'P8A'))
     return t
 
-def pull_HRC_proxy(ifile = HRC_PROXY_DATA_FILE):
+def pull_HRC_proxy():
     """
     Pull current data table for HRC proxy in MTA GOES DATA directory
     """
-    if os.path.isfile(ifile):
-        hrc_proxy_table = misc.hdf5.read_table_hdf5(ifile)
+    if os.path.isfile(HRC_PROXY_DATA_FILE):
+        hrc_proxy_table = misc.hdf5.read_table_hdf5(HRC_PROXY_DATA_FILE)
     else:
         hrc_proxy_table = Table(names = ['Time', 'Proxy_V1', 'Proxy_V2'],
                                 dtype = ['<U17', 'int64', 'int64'])
@@ -157,12 +161,12 @@ def find_proxy_values(goes_table, hrc_proxy_table):
     if len(hrc_proxy_table) == 0:
         hrc_proxy_table = append_table
     else:
-        hrc_proxy_table = join(hrc_proxy_table, append_table)
-    return hrc_proxy_table
+        hrc_proxy_table = vstack([hrc_proxy_table, append_table])
+    return unique(hrc_proxy_table)
 
 def calc_hrc_proxy():
     """
-    Pull MTA GOES DATA and calcualte the HRC proxy, alert if in violation, then store calculated proxy
+    Pull MTA GOES DATA and calculate the HRC proxy, alert if in violation, then store calculated proxy
     """
     hrc_proxy_table = pull_HRC_proxy()
     #Determine cut off time for pulling in new data from GOES. If no HRC proxy data, calculate the last 24 hrs
@@ -176,6 +180,8 @@ def calc_hrc_proxy():
     goes_table = pull_GOES(cutoff = cutoff)
 
     hrc_proxy_table = find_proxy_values(goes_table, hrc_proxy_table)
+
+    misc.hdf5.write_table_hdf5(hrc_proxy_table, HRC_PROXY_DATA_FILE, overwrite = True)
     
     return hrc_proxy_table, goes_table
 
@@ -184,7 +190,7 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
     parser.add_argument("-e", '--email', nargs = '*', required = False, help = "List of emails to recieve notifications")
     parser.add_argument("-g", "--goes", help = "Determine GOES data file path")
-    parser.add_argument("-h", "--hrc", help = "Determine HRC PROXY data file path")
+    parser.add_argument("-p", "--hrc_proxy", help = "Determine HRC PROXY data file path")
     args = parser.parse_args()
 
     if args.mode == 'test':
@@ -201,10 +207,12 @@ if __name__ == "__main__":
 #
         if args.goes:
             GOES_DATA_FILE = args.goes
-        if args.hrc:
-            HRC_PROXY_DATA_FILE = args.hrc
+        if args.hrc_proxy:
+            HRC_PROXY_DATA_FILE = args.hrc_proxy
         else:
-            HRC_PROXY_DATA_FILE = f"{os.getcwd()}//hrc_proxy.h5"
+            OUT_DIR = f"{os.getcwd()}/test/outTest"
+            os.makedirs(OUT_DIR, exist_ok = True)
+            HRC_PROXY_DATA_FILE = f"{OUT_DIR}/hrc_proxy.h5"
 
         try:
             calc_hrc_proxy()
