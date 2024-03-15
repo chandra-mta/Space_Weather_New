@@ -88,6 +88,8 @@ COLNAMES = ['Time',
             'P10',
             'HRC_Proxy']
 
+ALERT_HOURS = 6
+
 def combine_rates(dat, chans):
     """
     Return combined rates for multiple channels
@@ -112,7 +114,7 @@ def pull_GOES(cutoff = ''):
             linecut = int(subprocess.check_output(f'grep -n "{cutoff}" {GOES_DATA_FILE}', shell=True, executable='/bin/csh').decode().split(":")[0])
         except:
             traceback.print_exc()
-            sys.exit(f"Error: Possible that the latest HRC Proxy time point exceeds latest GOES time point.\nInvestigate at {GOES_DATA_FILE}\nand {HRC_PROXY_DATA_FILE}")
+            sys.exit(f"Error: Possible that the latest HRC Proxy time point exceeds latest GOES time point.\nInvestigate at {GOES_DATA_FILE}\nand {HRC_PROXY_DATA_FILE}.")
         data = subprocess.check_output(f"tail -n +{linecut+1} {GOES_DATA_FILE}", shell=True, executable='/bin/csh').decode()
         if data == '':
             #No goes data past desired cutoff. Stop process
@@ -157,12 +159,78 @@ def find_proxy_values(goes_table, hrc_proxy_table):
     prox_v2._name = "Proxy_V2"
 
     append_table = Table([goes_table['Time'], prox_v1, prox_v2])
+    hrc_viol(append_table)
 
     if len(hrc_proxy_table) == 0:
         hrc_proxy_table = append_table
     else:
         hrc_proxy_table = vstack([hrc_proxy_table, append_table])
     return unique(hrc_proxy_table)
+
+def hrc_viol(hrc_proxy_table):
+    """
+    determine if hrc proxy is in violation adn then send a warning email
+    """
+    #Once the start of a violation has been found in the data, record a boolean that one has been found6 and the message content of when the violation occured.
+    check_viol = {"warn_V1": [False, ''],
+                  "viol_V1": [False, ''],
+                  "warn_V2": [False, ''],
+                  "viol_V2": [False, '']}
+    
+    string_v1 = ' + '.join([f'({v} * {k})' for k,v in HRC_PROXY_V1['CHANNELS'].items()]) + f" + {HRC_PROXY_V1['CONSTANT']}"
+    string_v2 = ' + '.join([f'({v} * {k})' for k,v in HRC_PROXY_V2['CHANNELS'].items()]) + f" + {HRC_PROXY_V2['CONSTANT']}"
+    now = datetime.datetime.utcnow()
+
+    for row in hrc_proxy_table:
+        #Only evaluate for times in the last ALERT_HOURS of data.
+        if (now - datetime.datetime.strptime(row['Time'], '%Y:%j:%H:%M:%S')).seconds < ALERT_HOURS * 3600:
+            #Proxy 1
+            if row["Proxy_V1"] > HRC_THRESHOLD['Warning'] and not check_viol["warn_V1"][0]:
+                content = f"Warning: Proxy V1 [{string_v1}]\n"
+                content += f"Observed: {row["Proxy_V1"]:.5e} at Time: {row['Time']}\n"
+                content += f"Limit: {HRC_THRESHOLD['Warning']:.3e} counts/sec.\n"
+                content += f"{'-' * 20}\n"
+                check_viol["warn_V1"] = [True, content]
+
+            if row["Proxy_V1"] > HRC_THRESHOLD['Violation'] and not check_viol["viol_V1"][0]:
+                content = f"Violation: Proxy V1 [{string_v1}]\n"
+                content += f"Observed: {row["Proxy_V1"]:.5e} at Time: {row['Time']}\n"
+                content += f"Limit: {HRC_THRESHOLD['Violation']:.3e} counts/sec.\n"
+                content += f"{'-' * 20}\n"
+                check_viol["viol_V1"] = [True, content]
+            
+            #Proxy 2
+            if row["Proxy_V2"] > HRC_THRESHOLD['Warning'] and not check_viol["warn_V2"][0]:
+                content = f"Warning: Proxy V2 [{string_v2}]\n"
+                content += f"Observed: {row["Proxy_V2"]:.5e} at Time: {row['Time']}\n"
+                content += f"Limit: {HRC_THRESHOLD['Warning']:.3e} counts/sec.\n"
+                content += f"{'-' * 20}\n"
+                check_viol["warn_V2"] = [True, content]
+
+            if row["Proxy_V2"] > HRC_THRESHOLD['Violation'] and not check_viol["viol_V2"][0]:
+                content = f"Violation: Proxy V2 [{string_v1}]\n"
+                content += f"Observed: {row["Proxy_V2"]:.5e} at Time: {row['Time']}\n"
+                content += f"Limit: {HRC_THRESHOLD['Violation']:.3e} counts/sec.\n"
+                content += f"{'-' * 20}\n"
+                check_viol["viol_V2"] = [True, content]
+
+    email_content = ''
+    for v in check_viol.values():
+        if v[0]:
+            email_content += v[1]
+    #If there is formatted email contnet, then a violation or warnign ahs been found.
+    if email_content != '':
+        email_content = "A HRC proxy violation has been observered.\n" + email_content
+        send_mail(email_content, "HRC Proxy Violation", HRC_ADMIN)
+
+
+def send_mail(content, subject, admin):
+    """
+    send out a notification email to admin
+    """
+    content += f'This message was send to {" ".join(admin)}'
+    cmd = f'echo "{content}" | mailx -s "{subject}" {" ".join(admin)}'
+    os.system(cmd)
 
 def calc_hrc_proxy():
     """
