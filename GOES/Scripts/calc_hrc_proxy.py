@@ -5,11 +5,11 @@ import sys
 import argparse
 import getpass
 import traceback
-import time
 import subprocess
 import datetime
+import numpy as np
 from astropy.io import misc, ascii
-from astropy.table import Table
+from astropy.table import Table, join
 
 #
 #--- Define Directory Pathing
@@ -115,9 +115,10 @@ def pull_GOES(cutoff = '', ifile = GOES_DATA_FILE):
             sys.exit(0)
         t = ascii.read(data, delimiter ="\s")
     
-    #rename columns since to names found at top
+    #rename columns to names found at top
     for i, col in enumerate(t.colnames):
         t.rename_column(col,COLNAMES[i])
+    #Extra calculation of comined channels for use in V1 proxy
     t['P5P6'] = combine_rates(t,('P5','P6'))
     t['P8ABC'] = combine_rates(t,('P8A','P8B', 'P8A'))
     return t
@@ -127,15 +128,41 @@ def pull_HRC_proxy(ifile = HRC_PROXY_DATA_FILE):
     Pull current data table for HRC proxy in MTA GOES DATA directory
     """
     if os.path.isfile(ifile):
-        pass
+        hrc_proxy_table = misc.hdf5.read_table_hdf5(ifile)
     else:
         hrc_proxy_table = Table(names = ['Time', 'Proxy_V1', 'Proxy_V2'],
                                 dtype = ['<U17', 'int64', 'int64'])
     return hrc_proxy_table
 
+def find_proxy_values(goes_table, hrc_proxy_table):
+    """
+    Use all of the imported goes table to calculate the HRC proxy values
+    """
+    prox_v1 = np.empty(len(goes_table))
+    prox_v1 = HRC_PROXY_V1['CONSTANT']
+    for chan,coef in HRC_PROXY_V1['CHANNELS'].items():
+        prox_v1 += goes_table[chan] * coef
+    prox_v1 = prox_v1.astype(np.int64)
+    prox_v1._name = "Proxy_V1"
+
+    prox_v2 = np.empty(len(goes_table))
+    prox_v2 = HRC_PROXY_V2['CONSTANT']
+    for chan,coef in HRC_PROXY_V2['CHANNELS'].items():
+        prox_v2 += goes_table[chan] * coef
+    prox_v2 = prox_v2.astype(np.int64)
+    prox_v2._name = "Proxy_V2"
+
+    append_table = Table([goes_table['Time'], prox_v1, prox_v2])
+
+    if len(hrc_proxy_table) == 0:
+        hrc_proxy_table = append_table
+    else:
+        hrc_proxy_table = join(hrc_proxy_table, append_table)
+    return hrc_proxy_table
+
 def calc_hrc_proxy():
     """
-    Pull MTA GOES DATA and calcualte the RHC proxy, alert if in violation, then store calculated proxy
+    Pull MTA GOES DATA and calcualte the HRC proxy, alert if in violation, then store calculated proxy
     """
     hrc_proxy_table = pull_HRC_proxy()
     #Determine cut off time for pulling in new data from GOES. If no HRC proxy data, calculate the last 24 hrs
@@ -148,6 +175,7 @@ def calc_hrc_proxy():
         cutoff = hrc_proxy_table['Time'][-1]
     goes_table = pull_GOES(cutoff = cutoff)
 
+    hrc_proxy_table = find_proxy_values(goes_table, hrc_proxy_table)
     
     return hrc_proxy_table, goes_table
 
