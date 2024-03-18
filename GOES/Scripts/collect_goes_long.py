@@ -22,23 +22,16 @@ import json
 import random
 import numpy
 
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
-with open(path, 'r') as f:
-    data = [line.strip() for line in f.readlines()]
 
-for ent in data:
-    atemp = re.split(':', ent)
-    var   = atemp[1].strip()
-    line  = atemp[0].strip()
-    exec("%s = %s" %(var, line))
-#for writing out files in test directory
-if (os.getenv('TEST') == 'TEST'):
-    os.system('mkdir -p TestOut')
-    test_out = os.getcwd() + '/TestOut'
+#
+#--- Define directory pathing
+#
+GOES_DATA_DIR = "/data/mta4/Space_Weather/GOES/Data"
+OUT_DATA_DIR = "/data/mta4/Space_Weather/GOES/Data"
+
 #
 #--- append path to a private folder
 #
-sys.path.append(goes_dir)
 sys.path.append('/data/mta4/Script/Python3.10/MTA/')
 
 #import mta_common_functions     as mcf
@@ -59,10 +52,6 @@ proton_list = ['1020-1860 keV',   '1900-2300 keV',   '2310-3340 keV',    '3400-6
                '83700-98500 keV', '99900-118000 keV','115000-143000 keV','160000-242000 keV',\
                '276000-404000 keV']
 #
-#--- goes data directory
-#
-data_dir  = goes_dir + 'Data/'
-#
 #--- current goes satellite #
 #
 satellite = "Primary"
@@ -82,7 +71,7 @@ def collect_goes_long():
 #
 #--- find the last entry time
 #
-    outfile = goes_dir + 'Data/goes_data_r.txt'
+    outfile = f"{GOES_DATA_DIR}/goes_data_r.txt"
     #data    = mcf.read_data_file(outfile)
     with open(outfile, 'r') as f:
         data = [line.strip() for line in f.readlines()]
@@ -136,10 +125,7 @@ def collect_goes_long():
 #
 #---  print out data file for ACIS Rad use
 #
-    appendout = outfile
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        appendout = test_out + "/" + os.path.basename(appendout)
+    appendout = f"{OUT_DATA_DIR}/{os.path.basename(appendout)}"
     with open(appendout, 'a') as fo:
         fo.write(line)
 
