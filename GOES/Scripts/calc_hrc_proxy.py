@@ -169,9 +169,9 @@ def find_proxy_values(goes_table, hrc_proxy_table):
 
 def hrc_viol(hrc_proxy_table):
     """
-    determine if hrc proxy is in violation adn then send a warning email
+    Determine if hrc proxy is in violation and then send a warning email
     """
-    #Once the start of a violation has been found in the data, record a boolean that one has been found6 and the message content of when the violation occured.
+    #Once the start of a violation has been found in the data, record a boolean that one has been found and the message content of when the violation occured.
     check_viol = {"warn_V1": [False, ''],
                   "viol_V1": [False, ''],
                   "warn_V2": [False, ''],
@@ -187,14 +187,14 @@ def hrc_viol(hrc_proxy_table):
             #Proxy 1
             if row["Proxy_V1"] > HRC_THRESHOLD['Warning'] and not check_viol["warn_V1"][0]:
                 content = f"Warning: Proxy V1 [{string_v1}]\n"
-                content += f"Observed: {row["Proxy_V1"]:.5e} at Time: {row['Time']}\n"
+                content += f"Observed: {row['Proxy_V1']:.5e} at Time: {row['Time']}\n"
                 content += f"Limit: {HRC_THRESHOLD['Warning']:.3e} counts/sec.\n"
                 content += f"{'-' * 20}\n"
                 check_viol["warn_V1"] = [True, content]
 
             if row["Proxy_V1"] > HRC_THRESHOLD['Violation'] and not check_viol["viol_V1"][0]:
                 content = f"Violation: Proxy V1 [{string_v1}]\n"
-                content += f"Observed: {row["Proxy_V1"]:.5e} at Time: {row['Time']}\n"
+                content += f"Observed: {row['Proxy_V1']:.5e} at Time: {row['Time']}\n"
                 content += f"Limit: {HRC_THRESHOLD['Violation']:.3e} counts/sec.\n"
                 content += f"{'-' * 20}\n"
                 check_viol["viol_V1"] = [True, content]
@@ -202,25 +202,24 @@ def hrc_viol(hrc_proxy_table):
             #Proxy 2
             if row["Proxy_V2"] > HRC_THRESHOLD['Warning'] and not check_viol["warn_V2"][0]:
                 content = f"Warning: Proxy V2 [{string_v2}]\n"
-                content += f"Observed: {row["Proxy_V2"]:.5e} at Time: {row['Time']}\n"
+                content += f"Observed: {row['Proxy_V2']:.5e} at Time: {row['Time']}\n"
                 content += f"Limit: {HRC_THRESHOLD['Warning']:.3e} counts/sec.\n"
                 content += f"{'-' * 20}\n"
                 check_viol["warn_V2"] = [True, content]
 
             if row["Proxy_V2"] > HRC_THRESHOLD['Violation'] and not check_viol["viol_V2"][0]:
                 content = f"Violation: Proxy V2 [{string_v1}]\n"
-                content += f"Observed: {row["Proxy_V2"]:.5e} at Time: {row['Time']}\n"
+                content += f"Observed: {row['Proxy_V2']:.5e} at Time: {row['Time']}\n"
                 content += f"Limit: {HRC_THRESHOLD['Violation']:.3e} counts/sec.\n"
                 content += f"{'-' * 20}\n"
                 check_viol["viol_V2"] = [True, content]
-
     email_content = ''
     for v in check_viol.values():
         if v[0]:
             email_content += v[1]
     #If there is formatted email contnet, then a violation or warnign ahs been found.
     if email_content != '':
-        email_content = "A HRC proxy violation has been observered.\n" + email_content
+        email_content = f"A HRC proxy violation has been observered.\n{'-' * 20}\n" + email_content
         send_mail(email_content, "HRC Proxy Violation", HRC_ADMIN)
 
 
