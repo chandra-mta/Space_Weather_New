@@ -12,15 +12,13 @@
 import os
 import sys
 import re
-import string
-import math
 import time
 import datetime
 import Chandra.Time
 import urllib.request
 import json
 import random
-import numpy
+import argparse
 
 
 #
@@ -34,12 +32,6 @@ OUT_DATA_DIR = "/data/mta4/Space_Weather/GOES/Data"
 #
 sys.path.append('/data/mta4/Script/Python3.10/MTA/')
 
-#import mta_common_functions     as mcf
-#
-#--- set a temporary file name
-#
-rtail  = int(time.time()*random.random())
-zspace = '/tmp/zspace' + str(rtail)
 #
 #--- json data locations proton and electron
 #
@@ -72,7 +64,6 @@ def collect_goes_long():
 #--- find the last entry time
 #
     outfile = f"{GOES_DATA_DIR}/goes_data_r.txt"
-    #data    = mcf.read_data_file(outfile)
     with open(outfile, 'r') as f:
         data = [line.strip() for line in f.readlines()]
     m       = -1
@@ -362,6 +353,30 @@ def adjust_format(val):
 #----------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    parser.add_argument("-p", "--path", required = False, help = "Directory path to determine output location of data file.")
+    args = parser.parse_args()
 
-    collect_goes_long()
+    if args.mode == "test":
+        #Change output pathing to int interfere with live running
+        OUT_DATA_DIR = f"{os.getcwd()}/test/outTest"
+        os.makedirs(OUT_DATA_DIR, exist_ok = True)
+        collect_goes_long()
+    else:
+#
+#--- Create a lock file and exit strategy in case of race conditions
+#
+        import getpass
+        name = os.path.basename(__file__).split(".")[0]
+        user = getpass.getuser()
+        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
+            sys.exit(f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog.")
+        else:
+            os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
 
+        collect_goes_long()
+#
+#--- Remove lock file once process is completed
+#
+        os.system(f"rm /tmp/{user}/{name}.lock")
