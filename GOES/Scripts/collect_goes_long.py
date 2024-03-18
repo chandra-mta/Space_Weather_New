@@ -11,15 +11,11 @@
 
 import os
 import sys
-import re
 import time
-import datetime
 import Chandra.Time
 import urllib.request
 import json
-import random
 import argparse
-
 
 #
 #--- Define directory pathing
@@ -35,18 +31,18 @@ sys.path.append('/data/mta4/Script/Python3.10/MTA/')
 #
 #--- json data locations proton and electron
 #
-plink = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-7-day.json'
+PLINK = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-7-day.json'
 #
 #--- protone energy designations and output file names
 #
-proton_list = ['1020-1860 keV',   '1900-2300 keV',   '2310-3340 keV',    '3400-6480 keV',\
+PROTON_LIST = ['1020-1860 keV',   '1900-2300 keV',   '2310-3340 keV',    '3400-6480 keV',\
                '5840-11000 keV',  '11640-23270 keV', '25900-38100 keV',  '40300-73400 keV',\
                '83700-98500 keV', '99900-118000 keV','115000-143000 keV','160000-242000 keV',\
                '276000-404000 keV']
 #
 #--- current goes satellite #
 #
-satellite = "Primary"
+SATELLITE = "Primary"
 
 #----------------------------------------------------------------------------
 #-- collect_goes_long: collect data for the long term use                  --
@@ -78,7 +74,7 @@ def collect_goes_long():
 #
 #--- extract proton data
 #
-    p_data = extract_goes_data(plink, proton_list)
+    p_data = extract_goes_data(PLINK, PROTON_LIST)
 #
 #--- time list
 #
@@ -147,11 +143,6 @@ def extract_goes_data(dlink, energy_list):
         f_list = []
         energy = energy_list[k]
         last_time = time.strptime(data[0]['time_tag'], '%Y-%m-%dT%H:%M:%SZ')
-#
-#--- check the last entry time and select only last 2hrs
-#
-        ltime  = check_last_entry_time(data)
-        ctime  = ltime - 3600.0 * 2
         for ent in data:
 #
 #--- read time and flux of the given energy range
