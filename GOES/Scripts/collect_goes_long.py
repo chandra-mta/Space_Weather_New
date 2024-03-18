@@ -99,7 +99,7 @@ def collect_goes_long():
 
     for k in range(0, d_len):
         stime = Chandra.Time.DateTime(t_list[k]).secs
-        if stime < cut:
+        if stime <= cut:
             continue
         line = line + t_list[k]  + '\t\t'
 
