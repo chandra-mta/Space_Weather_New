@@ -66,18 +66,15 @@ def collect_goes_long():
     outfile = f"{GOES_DATA_DIR}/goes_data_r.txt"
     with open(outfile, 'r') as f:
         data = [line.strip() for line in f.readlines()]
-    m       = -1
+        data = [line for line in data if line != '']
     cut     = 0
     while cut == 0:
-        atemp   = re.split('\s+', data[m])
-        if len(atemp) > 0: 
-            try:
-                cut     = Chandra.Time.DateTime(atemp[0]).secs
-                break
-            except:
-                m -= 1
-        else:
-            m = -1
+        atemp   = re.split('\s+', data[-1])
+        try:
+            cut     = Chandra.Time.DateTime(atemp[0]).secs
+            break
+        except:
+            data.pop(-1)
 #
 #--- extract proton data
 #
@@ -116,7 +113,7 @@ def collect_goes_long():
 #
 #---  print out data file for ACIS Rad use
 #
-    appendout = f"{OUT_DATA_DIR}/{os.path.basename(appendout)}"
+    appendout = f"{OUT_DATA_DIR}/{os.path.basename(outfile)}"
     with open(appendout, 'a') as fo:
         fo.write(line)
 
@@ -362,6 +359,8 @@ if __name__ == "__main__":
         #Change output pathing to int interfere with live running
         OUT_DATA_DIR = f"{os.getcwd()}/test/outTest"
         os.makedirs(OUT_DATA_DIR, exist_ok = True)
+        if os.path.isfile(f"{OUT_DATA_DIR}/goes_data_r.txt"):
+            GOES_DATA_DIR = OUT_DATA_DIR
         collect_goes_long()
     else:
 #
