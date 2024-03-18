@@ -69,7 +69,7 @@ def collect_goes_long():
         data = [line for line in data if line != '']
     cut     = 0
     while cut == 0:
-        atemp   = re.split('\s+', data[-1])
+        atemp = data[-1].split()
         try:
             cut     = Chandra.Time.DateTime(atemp[0]).secs
             break
@@ -100,16 +100,17 @@ def collect_goes_long():
     for k in range(0, d_len):
         stime = Chandra.Time.DateTime(t_list[k]).secs
         if stime <= cut:
+            #If the time is less or equal to this cutoff point, then it's not new data.
             continue
-        line = line + t_list[k]  + '\t\t'
+        line += f"{t_list[k]}\t\t"
 
         for m in range(0, 13):
             try:
-                line = line + adjust_format(p_data[m][1][k])  + "\t"
+                line += f"{p_data[m][1][k]:1.3e}\t"
             except:
-                line = line + "0.0\t"
+                line += "0.0\t"
 
-        line = line + "%5.0f\t\n" % (hrc_val[k])
+        line += f"{hrc_val[k]:5.0f}\t\n"
 #
 #---  print out data file for ACIS Rad use
 #
@@ -322,30 +323,6 @@ def compute_hrc(data):
         hrc.append(val)
 
     return hrc
-
-#----------------------------------------------------------------------------
-#----------------------------------------------------------------------------
-#----------------------------------------------------------------------------
-
-def adjust_format(val):
-
-    val = float(val)
-#    if val < 10:
-#        out = "%1.5f" % (val)
-#    elif val < 100:
-#        out = "%2.4f" % (val)
-#    elif val < 1000:
-#        out = "%3.3f" % (val)
-#    elif val < 10000:
-#        out = "%4.2f" % (val)
-#    elif val < 100000:
-#        out = "%5.1f" % (val)
-#    else:
-#        out = "%5.0f" % (val)
-    
-    out = "%1.3e"  % (val)
-    return out
-
                                                                                            
 #----------------------------------------------------------------------------
 
