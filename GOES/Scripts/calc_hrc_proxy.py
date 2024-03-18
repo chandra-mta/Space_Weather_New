@@ -7,6 +7,7 @@ import getpass
 import traceback
 import subprocess
 import datetime
+import json
 import numpy as np
 from astropy.io import misc, ascii
 from astropy.table import Table, vstack, unique
@@ -17,6 +18,7 @@ from astropy.table import Table, vstack, unique
 GOES_DIR = "/data/mta4/Space_Weather/GOES/Data"
 GOES_DATA_FILE = f"{GOES_DIR}/goes_data_r.txt"
 HRC_PROXY_DATA_FILE = f"{GOES_DIR}/hrc_proxy.h5"
+VIOL_RECORD_FILE = f"{GOES_DIR}/hrc_proxy_viol.json"
 
 
 #Alert Email Addresses
@@ -171,56 +173,66 @@ def hrc_viol(hrc_proxy_table):
     """
     Determine if hrc proxy is in violation and then send a warning email
     """
-    #Once the start of a violation has been found in the data, record a boolean that one has been found and the message content of when the violation occured.
-    check_viol = {"warn_V1": [False, ''],
-                  "viol_V1": [False, ''],
-                  "warn_V2": [False, ''],
-                  "viol_V2": [False, '']}
-    
     string_v1 = ' + '.join([f'({v} * {k})' for k,v in HRC_PROXY_V1['CHANNELS'].items()]) + f" + {HRC_PROXY_V1['CONSTANT']}"
     string_v2 = ' + '.join([f'({v} * {k})' for k,v in HRC_PROXY_V2['CHANNELS'].items()]) + f" + {HRC_PROXY_V2['CONSTANT']}"
     now = datetime.datetime.utcnow()
 
+    #Check current status of HRC proxy violations.
+    #If one has been found very recently, do not email about the violationa again
+    with open(VIOL_RECORD_FILE) as f:
+        check_viol = json.load(f)
+    
+    #If more than 48 hours have passed from a previous violation, reset the ability to list a violation.
+    for proxy, info in check_viol.items():
+        if info['in_viol'] and (now - datetime.datetime.strptime(info['last_viol_time'], '%Y:%j:%H:%M:%S')).days >= 2:
+            info['in_viol'] = False
+        
+    #Once the start of a violation has been found in the data, record the in_viol boolean that one has been found and the message content of when the violation occured.
     for row in hrc_proxy_table:
         #Only evaluate for times in the last ALERT_HOURS of data.
         if (now - datetime.datetime.strptime(row['Time'], '%Y:%j:%H:%M:%S')).seconds < ALERT_HOURS * 3600:
             #Proxy 1
-            if row["Proxy_V1"] > HRC_THRESHOLD['Warning'] and not check_viol["warn_V1"][0]:
-                content = f"Warning: Proxy V1 [{string_v1}]\n"
+            if row["Proxy_V1"] > HRC_THRESHOLD['Warning'] and not check_viol["warn_V1"]['in_viol']:
+                content = f"Warning: HRC Proxy V1 [{string_v1}]\n"
                 content += f"Observed: {row['Proxy_V1']:.5e} at Time: {row['Time']}\n"
                 content += f"Limit: {HRC_THRESHOLD['Warning']:.3e} counts/sec.\n"
                 content += f"{'-' * 20}\n"
-                check_viol["warn_V1"] = [True, content]
+                check_viol["warn_V1"] = {'in_viol': True, 'last_viol_time': row['Time'], 'content': content, 'notified': False}
 
-            if row["Proxy_V1"] > HRC_THRESHOLD['Violation'] and not check_viol["viol_V1"][0]:
-                content = f"Violation: Proxy V1 [{string_v1}]\n"
+            if row["Proxy_V1"] > HRC_THRESHOLD['Violation'] and not check_viol["viol_V1"]['in_viol']:
+                content = f"Violation: HRC Proxy V1 [{string_v1}]\n"
                 content += f"Observed: {row['Proxy_V1']:.5e} at Time: {row['Time']}\n"
                 content += f"Limit: {HRC_THRESHOLD['Violation']:.3e} counts/sec.\n"
                 content += f"{'-' * 20}\n"
-                check_viol["viol_V1"] = [True, content]
+                check_viol["viol_V1"] = {'in_viol': True, 'last_viol_time': row['Time'], 'content': content, 'notified': False}
             
             #Proxy 2
-            if row["Proxy_V2"] > HRC_THRESHOLD['Warning'] and not check_viol["warn_V2"][0]:
-                content = f"Warning: Proxy V2 [{string_v2}]\n"
+            if row["Proxy_V2"] > HRC_THRESHOLD['Warning'] and not check_viol["warn_V2"]['in_viol']:
+                content = f"Warning: HRC Proxy V2 [{string_v2}]\n"
                 content += f"Observed: {row['Proxy_V2']:.5e} at Time: {row['Time']}\n"
                 content += f"Limit: {HRC_THRESHOLD['Warning']:.3e} counts/sec.\n"
                 content += f"{'-' * 20}\n"
-                check_viol["warn_V2"] = [True, content]
+                check_viol["warn_V2"] = {'in_viol': True, 'last_viol_time': row['Time'], 'content': content, 'notified': False}
 
-            if row["Proxy_V2"] > HRC_THRESHOLD['Violation'] and not check_viol["viol_V2"][0]:
-                content = f"Violation: Proxy V2 [{string_v1}]\n"
+            if row["Proxy_V2"] > HRC_THRESHOLD['Violation'] and not check_viol["viol_V2"]['in_viol']:
+                content = f"Violation: HRC Proxy V2 [{string_v1}]\n"
                 content += f"Observed: {row['Proxy_V2']:.5e} at Time: {row['Time']}\n"
                 content += f"Limit: {HRC_THRESHOLD['Violation']:.3e} counts/sec.\n"
                 content += f"{'-' * 20}\n"
-                check_viol["viol_V2"] = [True, content]
+                check_viol["viol_V2"] = {'in_viol': True, 'last_viol_time': row['Time'], 'content': content, 'notified': False}
+
     email_content = ''
-    for v in check_viol.values():
-        if v[0]:
-            email_content += v[1]
-    #If there is formatted email contnet, then a violation or warnign ahs been found.
+    for info in check_viol.values():
+        if info['in_viol'] and not info['notified']:
+            email_content += info['content']
+            info['notified'] = True
+    #If there is formatted email contnet, then a violation or warnign has been found.
     if email_content != '':
         email_content = f"A HRC proxy violation has been observered.\n{'-' * 20}\n" + email_content
         send_mail(email_content, "HRC Proxy Violation", HRC_ADMIN)
+    #Record current violation status in json file
+    with open(VIOL_RECORD_FILE,'w') as f:
+            json.dump(check_viol, f, indent = 4)
 
 
 def send_mail(content, subject, admin):
@@ -258,6 +270,7 @@ if __name__ == "__main__":
     parser.add_argument("-e", '--email', nargs = '*', required = False, help = "List of emails to recieve notifications")
     parser.add_argument("-g", "--goes", help = "Determine GOES data file path")
     parser.add_argument("-p", "--hrc_proxy", help = "Determine HRC PROXY data file path")
+    parser.add_argument("-j", "--json", help = "Pass in custom data record for current state of HRC proxy violations")
     args = parser.parse_args()
 
     if args.mode == 'test':
@@ -279,7 +292,28 @@ if __name__ == "__main__":
         else:
             OUT_DIR = f"{os.getcwd()}/test/outTest"
             os.makedirs(OUT_DIR, exist_ok = True)
-            HRC_PROXY_DATA_FILE = f"{OUT_DIR}/hrc_proxy.h5"
+            HRC_PROXY_DATA_FILE = f"{OUT_DIR}/hrc_proxy.h5"        
+        if args.json:
+            VIOL_RECORD_FILE = args.json
+        else:
+            #while roundabout, writing this empty test violation record to a separate file and reading it again test's 
+            #a typical script run more directly.
+            OUT_DIR = f"{os.getcwd()}/test/outTest"
+            os.makedirs(OUT_DIR, exist_ok = True)
+            temp_dict = {'in_viol': False,
+                         'last_viol_time': '2020:077:17:10:00',
+                         'content': '',
+                         'notified': True}
+            import copy
+            check_viol = {"warn_V1": copy.copy(temp_dict),
+                          "viol_V1": copy.copy(temp_dict),
+                          "warn_V2": copy.copy(temp_dict),
+                          "viol_V2": copy.copy(temp_dict)}
+            
+            VIOL_RECORD_FILE = f"{OUT_DIR}/hrc_proxy_viol.json"
+            #with open(VIOL_RECORD_FILE,'w') as f:
+            #    json.dump(check_viol, f, indent = 4)
+
 
         try:
             calc_hrc_proxy()
