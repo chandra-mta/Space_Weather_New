@@ -164,8 +164,8 @@ def extract_goes_data(dlink, energy_list):
                     for i in range(300,int(diff),300):
                         missing_time = time.localtime(time.mktime(last_time) + i)
                         t_list.append(time.strftime('%Y:%j:%H:%M:%S',missing_time))
-                        #assume missing data is zero
-                        f_list.append(0)
+                        #mark missing data with the invalid data marker (-1e5)
+                        f_list.append(-1e5)
 
                 #record time as string
                 t_list.append(time.strftime('%Y:%j:%H:%M:%S',otime))
