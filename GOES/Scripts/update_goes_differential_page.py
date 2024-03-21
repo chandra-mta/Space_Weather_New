@@ -21,16 +21,7 @@ import urllib.request
 import json
 import random
 import numpy
-
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
-with open(path, 'r') as f:
-    data = [line.strip() for line in f.readlines()]
-
-for ent in data:
-    atemp = re.split(':', ent)
-    var   = atemp[1].strip()
-    line  = atemp[0].strip()
-    exec("%s = %s" %(var, line))
+import argparse
 #
 #--- Define Directory Pathing
 #
@@ -497,6 +488,22 @@ def adjust_format(val):
 #----------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    parser.add_argument("-p", "--path", help = "Determine data output file path")
+    args = parser.parse_args()
 
-    update_goes_differential_page()
+    if args.mode == 'test':
+        OUT_DIR = f"{os.getcwd}/test/outTest"
+        os.makedirs(OUT_DIR, exist_ok = True)
+        GOES_TEMPLATE_DIR = f"{os.getcwd()}/Template"
+        if args.path:
+            GOES_DATA_DIR = args.path
+            HTML_DIR = args.path
+        else:
+            GOES_DATA_DIR = OUT_DIR
+            HTML_DIR = OUT_DIR
+        update_goes_differential_page()
+    else:
+        update_goes_differential_page()
 
