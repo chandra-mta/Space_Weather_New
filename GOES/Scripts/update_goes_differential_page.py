@@ -19,8 +19,7 @@ import datetime
 import Chandra.Time
 import urllib.request
 import json
-import random
-import numpy
+import numpy as np
 import argparse
 #
 #--- Define Directory Pathing
@@ -45,6 +44,28 @@ proton_list = ['1020-1860 keV',   '1900-2300 keV',   '2310-3340 keV',    '3400-6
 #--- current goes satellite #
 #
 satellite = "Primary"
+
+# GOES-16+ Energy bands (keV) and combinations
+DE = {'P1': [1860., 1020.],
+      'P2A': [2300., 1900.],
+      'P2B': [3340., 2310.],
+      'P3': [6480., 3400.],
+      'P4': [11000., 5840.],
+      'P5': [23270., 11640.],
+      'P6': [38100., 25900.],
+      'P7': [73400., 40300.],
+      'P8A': [98500., 83700.],
+      'P8B': [118000., 99900.],
+      'P8C': [143000., 115000.],
+      'P9': [242000., 160000.],
+      'P5P6': [23270., 11640.],
+      'P8ABC': [143000., 83700.],
+      'P8ABCP9': [242000., 83700.]}
+
+# Add delta_e to each list
+for key in DE.keys():
+    de = DE[key]
+    de.append(de[0] - de[1])
 
 #----------------------------------------------------------------------------
 #-- update_goes_differential_page: update goes differential html page      --
@@ -192,38 +213,38 @@ def make_two_hour_table():
 #
     line = line + '\tAVERAGE\t\t\t'
 
-    line = line + adjust_format(numpy.mean(p_data[0][1])) + "\t"
-    line = line + adjust_format(numpy.mean(p_data[1][1])) + "\t"
-    line = line + adjust_format(numpy.mean(p_data[2][1])) + "\t"
-    line = line + adjust_format(numpy.mean(p_data[3][1])) + "\t"
-    line = line + adjust_format(numpy.mean(p_data[4][1])) + "\t"
-    line = line + adjust_format(numpy.mean(p_data[5][1])) + "\t"
-    line = line + adjust_format(numpy.mean(p_data[6][1])) + "\t"
-    line = line + adjust_format(numpy.mean(p_data[7][1])) + "\t"
-    line = line + adjust_format(numpy.mean(p_data[8][1])) + "\t"
-    line = line + adjust_format(numpy.mean(p_data[9][1])) + "\t"
-    line = line + adjust_format(numpy.mean(p_data[10][1])) + "\t"
-    line = line + adjust_format(numpy.mean(p_data[11][1])) + "\t"
-    line = line + adjust_format(numpy.mean(p_data[12][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[0][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[1][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[2][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[3][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[4][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[5][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[6][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[7][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[8][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[9][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[10][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[11][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[12][1])) + "\t"
 
-    line = line + "%5.0f\t\n" % (numpy.mean(hrc_val))
+    line = line + "%5.0f\t\n" % (np.mean(hrc_val))
 #
     line = line + '\tFLUENCE\t\t\t'
-    line = line + adjust_format(numpy.sum(p_data[0][1])) + "\t"
-    line = line + adjust_format(numpy.sum(p_data[1][1])) + "\t"
-    line = line + adjust_format(numpy.sum(p_data[2][1])) + "\t"
-    line = line + adjust_format(numpy.sum(p_data[3][1])) + "\t"
-    line = line + adjust_format(numpy.sum(p_data[4][1])) + "\t"
-    line = line + adjust_format(numpy.sum(p_data[5][1])) + "\t"
-    line = line + adjust_format(numpy.sum(p_data[6][1])) + "\t"
-    line = line + adjust_format(numpy.sum(p_data[7][1])) + "\t"
-    line = line + adjust_format(numpy.sum(p_data[8][1])) + "\t"
-    line = line + adjust_format(numpy.sum(p_data[9][1])) + "\t"
-    line = line + adjust_format(numpy.sum(p_data[10][1])) + "\t"
-    line = line + adjust_format(numpy.sum(p_data[11][1])) + "\t"
-    line = line + adjust_format(numpy.sum(p_data[12][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[0][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[1][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[2][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[3][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[4][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[5][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[6][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[7][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[8][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[9][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[10][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[11][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[12][1])) + "\t"
 
-    line = line + "%5.0f\t\n" % (numpy.sum(hrc_val))
+    line = line + "%5.0f\t\n" % (np.sum(hrc_val))
 
     line = line +'\n'
     line = line + '\tHRC Proxy is defined as:\n'
@@ -462,6 +483,23 @@ def compute_hrc(data):
 
     return hrc
 
+#----------------------------------------------------------------------------
+#-- compute_pre2020_hrc: compute hrc proxy value                           --
+#----------------------------------------------------------------------------
+def compute_pre2020_hrc(data):
+    pass
+
+def combine_rates(data_list, channel_name):
+    """
+    Return combined rates for multiple channels
+    """
+    combined = np.zeros(len(data_list[0]))
+    for i, data in enumerate(data_list):
+        print(f"{combined}, {i}")
+        combined = combined + (np.array(data) * DE[channel_name[i]][2])
+    print(combined)
+    delta_e = DE[channel_name[-1]][0] - DE[channel_name[0]][1]
+    return list(combined / delta_e)
 #----------------------------------------------------------------------------
 #----------------------------------------------------------------------------
 #----------------------------------------------------------------------------
