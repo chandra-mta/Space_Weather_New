@@ -31,22 +31,14 @@ for ent in data:
     var   = atemp[1].strip()
     line  = atemp[0].strip()
     exec("%s = %s" %(var, line))
-#for writing out files in test directory
-if (os.getenv('TEST') == 'TEST'):
-    os.system('mkdir -p TestOut')
-    test_out = os.getcwd() + '/TestOut'
 #
-#--- append path to a private folder
+#--- Define Directory Pathing
 #
-sys.path.append(goes_dir)
-sys.path.append('/data/mta4/Script/Python3.10/MTA/')
+GOES_DIR = '/data/mta4/Space_Weather/GOES'
+GOES_DATA_DIR = f"{GOES_DIR}/Data"
+GOES_TEMPLATE_DIR = f"{GOES_DIR}/Scripts/Template"
+HTML_DIR = '/data/mta4/www/RADIATION_new/'
 
-###`import mta_common_functions     as mcf
-#
-#--- set a temporary file name
-#
-rtail  = int(time.time()*random.random())
-zspace = '/tmp/zspace' + str(rtail)
 #
 #--- json data locations proton and electron
 #
@@ -58,11 +50,6 @@ proton_list = ['1020-1860 keV',   '1900-2300 keV',   '2310-3340 keV',    '3400-6
                '5840-11000 keV',  '11640-23270 keV', '25900-38100 keV',  '40300-73400 keV',\
                '83700-98500 keV', '99900-118000 keV','115000-143000 keV','160000-242000 keV',\
                '276000-404000 keV']
-#
-#--- goes data directory
-#
-data_dir  = goes_dir + 'Data/'
-templ_dir = goes_dir + 'Scripts/Template/'
 #
 #--- current goes satellite #
 #
@@ -82,7 +69,7 @@ def update_goes_differential_page():
 #
 #--- read header template
 #
-    hfile = templ_dir + 'G_header'
+    hfile = f"{GOES_TEMPLATE_DIR}/G_header"
     with open(hfile, 'r') as f:
         line = f.read()
 #
@@ -95,19 +82,19 @@ def update_goes_differential_page():
 #
 #--- add energy range note
 #
-    hfile = templ_dir + 'channel_energy_list'
+    hfile = f"{GOES_TEMPLATE_DIR}/channel_energy_list"
     with open(hfile, 'r') as f:
         line = line + f.read()
 #
 #--- add the image link
 #
-    hfile = templ_dir + 'Gp_image_diff'
+    hfile = f"{GOES_TEMPLATE_DIR}/Gp_image_diff"
     with open(hfile, 'r') as f:
         line = line + f.read()
 #
 #--- add footer
 #
-    hfile = templ_dir + 'G_footer'
+    hfile = f"{GOES_TEMPLATE_DIR}/G_footer"
     with open(hfile, 'r') as f:
         line = line + f.read()
 #
@@ -118,11 +105,7 @@ def update_goes_differential_page():
 #
 #--- update the page
 #
-    ####outfile = html_dir + 'GOES/goes16_pchan_p.html'
-    outfile = html_dir + 'GOES/goes_pchan_p.html'
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        outfile = test_out + "/" + os.path.basename(outfile)
+    outfile = f"{HTML_DIR}/GOES/goes_pchan_p.html"
     with open(outfile, 'w') as fo:
         fo.write(line)
 
@@ -261,10 +244,7 @@ def make_two_hour_table():
 #
 #---  print out data file for CRM use
 #
-    outfile = data_dir + 'Gp_pchan_5m.txt'\
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        outfile = test_out + "/" + os.path.basename(outfile)
+    outfile = f"{GOES_DATA_DIR}/Gp_pchan_5m.txt"
     with open(outfile, 'w') as fo:
         fo.write(aline)
 
