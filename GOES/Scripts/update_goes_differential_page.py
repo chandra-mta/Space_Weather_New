@@ -28,7 +28,7 @@ import argparse
 GOES_DIR = '/data/mta4/Space_Weather/GOES'
 GOES_DATA_DIR = f"{GOES_DIR}/Data"
 GOES_TEMPLATE_DIR = f"{GOES_DIR}/Scripts/Template"
-HTML_DIR = '/data/mta4/www/RADIATION_new/'
+HTML_GOES_DIR = '/data/mta4/www/RADIATION_new/GOES'
 
 #
 #--- json data locations proton and electron
@@ -96,7 +96,7 @@ def update_goes_differential_page():
 #
 #--- update the page
 #
-    outfile = f"{HTML_DIR}/GOES/goes_pchan_p.html"
+    outfile = f"{HTML_GOES_DIR}/goes_pchan_p.html"
     with open(outfile, 'w') as fo:
         fo.write(line)
 
@@ -494,15 +494,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.mode == 'test':
-        OUT_DIR = f"{os.getcwd}/test/outTest"
+        OUT_DIR = f"{os.getcwd()}/test/outTest"
         os.makedirs(OUT_DIR, exist_ok = True)
         GOES_TEMPLATE_DIR = f"{os.getcwd()}/Template"
         if args.path:
             GOES_DATA_DIR = args.path
-            HTML_DIR = args.path
+            HTML_GOES_DIR = args.path
         else:
             GOES_DATA_DIR = OUT_DIR
-            HTML_DIR = OUT_DIR
+            HTML_GOES_DIR = OUT_DIR
         update_goes_differential_page()
     else:
         update_goes_differential_page()
