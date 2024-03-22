@@ -148,6 +148,7 @@ def make_two_hour_table():
 #
 #--- compute hrc proxy
 #
+    pre_hrc_val = compute_pre2020_hrc(p_data)
     hrc_val = compute_hrc(p_data)
 #
 #---- create the main table
@@ -170,7 +171,8 @@ def make_two_hour_table():
     line = line + 'P8C\t'
     line = line + 'P9\t'
     line = line + 'P10\t'
-    line = line + 'HRC Proxy\n'
+    line = line + 'HRC_Proxy\t'
+    line = line + 'HRC_Proxy_Legacy\n'
 #    line = line + '\tTime\t\t\t1.0-3.3MeV\t0.4-11MeV'
 #    line = line + '\t11-38MeV\t40-98MeV'
 #    line = line + '\t99-143MeV\t160-404MeV\tHRC Proxy\n'
@@ -202,9 +204,14 @@ def make_two_hour_table():
             pass
 
         try:
-            line = line + "%5.0f\t\n" % (hrc_val[k])
+            line = line + "%5.0f\t\t" % (hrc_val[k])
         except:
-            line = line + '\t\n'
+            line = line + '\t\t '
+
+        try:
+            line = line + f"{pre_hrc_val[k]:5.0f}\n" 
+        except:
+            line = line + '\n'
 
     line  = line + '\n'
     aline = line
@@ -228,7 +235,8 @@ def make_two_hour_table():
     line = line + adjust_format(np.mean(p_data[11][1])) + "\t"
     line = line + adjust_format(np.mean(p_data[12][1])) + "\t"
 
-    line = line + "%5.0f\t\n" % (np.mean(hrc_val))
+    line = line + "%5.0f\t\t" % (np.mean(hrc_val))
+    line = line + f"{np.mean(pre_hrc_val):5.0f}\n" 
 #
     line = line + '\tFLUENCE\t\t\t'
     line = line + adjust_format(np.sum(p_data[0][1])) + "\t"
@@ -245,15 +253,19 @@ def make_two_hour_table():
     line = line + adjust_format(np.sum(p_data[11][1])) + "\t"
     line = line + adjust_format(np.sum(p_data[12][1])) + "\t"
 
-    line = line + "%5.0f\t\n" % (np.sum(hrc_val))
+    line = line + "%5.0f\t\t" % (np.sum(hrc_val))
+    line = line + f"{np.sum(pre_hrc_val):5.0f}\n" 
 
     line = line +'\n'
-    line = line + '\tHRC Proxy is defined as:\n'
-    line = line + '\n'
+    line = line + '\tHRC Proxy is defined as:\n\n'
 #    line = line + '\tHRC Proxy = 6000 * (11.64-38.1MeV) + 270000 * (40.3-73.4MeV) '
 #    line = line + '100000 * (83.7-242.0MeV)\n'
 #    line = line + '\tHRC Proxy  = 143 * P5 + 64738 * P6 + 162505 * P7 + 16\n'
-    line = line + '\tHRC Proxy  = 143 * P5 + 64738 * P6 + 162505 * P7 + 4127\n'
+    line = line + '\tHRC Proxy  = 143 * P5 + 64738 * P6 + 162505 * P7 + 4127\n\n'
+
+    line = line + '\tHRC Proxy Legacy is defined as:\n\n'
+    line = line + '\tHRC Proxy Legacy = 6000 * P5P6 + 270000 * P7 + 100000 * P8ABC\n\n'
+    line = line + '\twhere P5P6 is a combination of P5 and P56 and P8ABC is a combination of P8A, P8B, and P8C.\n'
 #
 #---  print out data file for CRM use
 #
@@ -318,7 +330,6 @@ def extract_goes_data(dlink, energy_list):
 #--- read time and flux of the given energy range
 #
             if ent['energy'] == energy:
-                #flux  = float(ent['flux']) * 1e-3   #--- keV to MeV
                 flux  = float(ent['flux']) * 1e3   #--- keV to MeV
 #
 #--- convert time into seconds from 1998.1.1
@@ -487,7 +498,7 @@ def compute_hrc(data):
             val = 143.0 * c5[k] + 64738.0 * c6[k] + 162505.0 * c7[k] + 4127
 
         except:
-            continue
+            val = -1e5
 
         hrc.append(val)
 
@@ -497,7 +508,29 @@ def compute_hrc(data):
 #-- compute_pre2020_hrc: compute hrc proxy value                           --
 #----------------------------------------------------------------------------
 def compute_pre2020_hrc(data):
-    pass
+    p5 = data[5][1]
+    p6 = data[6][1]
+    p7 = data[7][1]
+    p8a = data[8][1]
+    p8b = data[9][1]
+    p8c = data[10][1]
+
+    hrc = []
+    if len(p5) < 1:
+        exit(1)
+
+    p5p6 = combine_rates([p5, p6], ('P5', 'P6'))
+    p8abc = combine_rates([p8a, p8b, p8c], ('P8A', 'P8B', 'P8C'))
+
+    for k in range(len(p5p6)):
+        try:
+            val = 6000 * p5p6[k] + 270000 * p7[k] + 100000 * p8abc[k]
+        except:
+            val = -1e5
+        
+        hrc.append(val)
+    return hrc
+
 
 def combine_rates(data_list, channel_name):
     """
@@ -505,9 +538,7 @@ def combine_rates(data_list, channel_name):
     """
     combined = np.zeros(len(data_list[0]))
     for i, data in enumerate(data_list):
-        print(f"{combined}, {i}")
         combined = combined + (np.array(data) * DE[channel_name[i]][2])
-    print(combined)
     delta_e = DE[channel_name[-1]][0] - DE[channel_name[0]][1]
     return list(combined / delta_e)
 #----------------------------------------------------------------------------
