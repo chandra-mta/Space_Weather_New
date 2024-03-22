@@ -21,6 +21,7 @@ import urllib.request
 import json
 import numpy as np
 import argparse
+import traceback
 #
 #--- Define Directory Pathing
 #
@@ -32,7 +33,7 @@ HTML_GOES_DIR = '/data/mta4/www/RADIATION_new/GOES'
 #
 #--- json data locations proton and electron
 #
-plink = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-1-day.json'
+PLINK = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-1-day.json'
 #
 #--- protone energy designations and output file names
 #
@@ -134,7 +135,7 @@ def make_two_hour_table():
 #
 #--- extract proton data
 #
-    p_data = extract_goes_data(plink, proton_list)
+    p_data = extract_goes_data(PLINK, proton_list)
 #
 #--- time list
 #
@@ -269,18 +270,27 @@ def make_two_hour_table():
 def extract_goes_data(dlink, energy_list):
     """
     extract GOES satellite flux data
-    input: dlink        --- json web address
+    input: dlink        --- json web address or file
             energy_list --- a list of energy designation 
     output: <data_dir>/<out file>
     """
 #
-#--- read json file from the web
+#--- read json file from a file or the web
 #
-    try:
-        with urllib.request.urlopen(dlink) as url:
-            data = json.loads(url.read().decode())
-    except:
-        data = []
+    if os.path.isfile(dlink):
+        try:
+            with open(dlink) as f:
+                data = json.load(f)
+        except:
+            traceback.print_exc()
+            data = []
+    else:
+        try:
+            with urllib.request.urlopen(dlink) as url:
+                data = json.loads(url.read().decode())
+        except:
+            traceback.print_exc()
+            data = []
 
     if len(data) < 1:
         exit(1)
@@ -529,6 +539,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
     parser.add_argument("-p", "--path", help = "Determine data output file path")
+    parser.add_argument("-j", "--json", help = "Determine json data file source")
     args = parser.parse_args()
 
     if args.mode == 'test':
@@ -541,6 +552,9 @@ if __name__ == "__main__":
         else:
             GOES_DATA_DIR = OUT_DIR
             HTML_GOES_DIR = OUT_DIR
+
+        if args.json:
+            PLINK = args.json
         update_goes_differential_page()
     else:
         update_goes_differential_page()
