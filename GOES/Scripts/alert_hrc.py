@@ -29,9 +29,10 @@ HRC_ADMIN = ['sot_ace_alert@cfa.harvard.edu']
 def alert_hrc():
     dat = ascii.read(GOES_DATA_FILE, data_start=5, delimiter='\t', guess=False, names=NAMES)
     time, hrc_proxy, hrc_proxy_legacy = dat[-1]['time','hrc_proxy', 'hrc_proxy_legacy']
-    recent_data = {'time': time,
-                   'hrc_proxy': hrc_proxy,
-                   'hrc_proxy_legacy': hrc_proxy_legacy}
+    #Cast astropy table data into json serializable types
+    recent_data = {'time': str(time),
+                   'hrc_proxy': int(hrc_proxy),
+                   'hrc_proxy_legacy': int(hrc_proxy_legacy)}
 
     #Check current status of HRC proxy violations.
     #If one has been found very recently, do not email about the violation again
@@ -51,8 +52,10 @@ def alert_hrc():
                     content += f"{'-' * 20}\n"
                     curr_viol[f"{kind}_{proxy}"] = recent_data
     
-    if content != '':
+    if content != '' and HRC_ADMIN != []:
         send_mail(content, "HRC Proxy Violation", HRC_ADMIN)
+    with open(VIOL_RECORD_FILE, 'w') as f:
+        json.dump(curr_viol, f, indent = 4)
 
 def send_mail(content, subject, admin):
     """
@@ -64,13 +67,13 @@ def send_mail(content, subject, admin):
 
 def viol_time_check(curr_viol, kind, proxy):
     """
-    Prevents spamming violaiton emails if the data is in violation, 
+    Prevents spamming violation emails if the data is in violation, 
     opting to send out a email if the specific violation was last warned more than 24 hours ago.
     """
     time_string = curr_viol[f"{kind}_{proxy}"]['time']
     last = datetime.datetime.strptime(time_string, '%Y:%j:%H:%M')
     now = datetime.datetime.utcnow()
-    return (now - last).seconds > 24 * 60 * 60
+    return (now - last).days > 1
 
 
 if __name__ == "__main__":
