@@ -6,6 +6,7 @@ import getpass
 import traceback
 import datetime
 import json
+import subprocess
 from astropy.io import ascii
 
 #
@@ -26,6 +27,7 @@ HRC_THRESHOLD = {'Warning': 6.2e4,
 
 #Alert Email Addresses
 HRC_ADMIN = ['sot_ace_alert@cfa.harvard.edu']
+ADMIN = ['mtadude@cfa.harvard.edu']
 
 
 def alert_hrc():
@@ -77,13 +79,22 @@ def viol_time_check(curr_viol, kind, proxy):
     time_string = curr_viol[f"{kind}_{proxy}"]['time']
     last = datetime.datetime.strptime(time_string, '%Y:%j:%H:%M')
     now = datetime.datetime.utcnow()
-    return (now - last).days > 1
+    return (now - last).days > 1    
 
 def add_to_archive(recent_data, outfile):
     #data_line = f"{recent_data['time']:<13}\t{recent_data['hrc_proxy']:<9}\t{recent_data['hrc_proxy_legacy']:<16}\n"
     data_line = f"{recent_data['time']}\t{recent_data['hrc_proxy']}\t{recent_data['hrc_proxy_legacy']}\n"
     if os.path.isfile(outfile):
         mode = 'a'
+        #Secondary check in appending to the archive in case there is a time discrepancy.
+        append_time = datetime.datetime.strptime(recent_data['time'], '%Y:%j:%H:%M')
+        out = subprocess.check_output(f"tail -n 1 {outfile}", shell=True, executable='/bin/csh').decode()
+        last_time = datetime.datetime.strptime(out.split()[0], '%Y:%j:%H:%M')
+        #Send alert if the archive has not been recording for 15 minutes
+        if (append_time - last_time).total_seconds() > 900:
+            content = f"Time discrepancy in {HRC_PROXY_DATA_FILE}\n{'-' * 40}\nTail: {out}New Data: {data_line}Investigate {__file__}\n"
+            send_mail(content, "Time Discrepancy in HRC Proxy Archive", ADMIN)
+
     else:
         #data_line = f"{'time':<13}\t{'hrc_proxy':<9}\t{'hrc_proxy_legacy':<16}\n{'-' * 48}\n{data_line}"
         data_line = f"{'time'}\t{'hrc_proxy'}\t{'hrc_proxy_legacy'}\n{'-' * 40}\n{data_line}"
@@ -107,8 +118,10 @@ if __name__ == "__main__":
 #
         if args.email != None:
             HRC_ADMIN = args.email
+            ADMIN = args.email
         else:
             HRC_ADMIN = [os.popen(f"getent aliases | grep {getpass.getuser()}").read().split(":")[1].strip()]
+            ADMIN = HRC_ADMIN
 
 #
 #--- Redefine pathing for GOES and HRC PROXY data files
@@ -154,7 +167,7 @@ if __name__ == "__main__":
         user = getpass.getuser()
         if os.path.isfile(f"/tmp/{user}/{name}.lock"):
             notification = f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog."
-            send_mail(notification,f"Stalled Script: {name}", ['mtadude@cfa.harvard.edu'])
+            send_mail(notification,f"Stalled Script: {name}", ADMIN)
             sys.exit(notification)
         else:
             os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
