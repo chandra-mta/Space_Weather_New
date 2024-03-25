@@ -92,7 +92,7 @@ def add_to_archive(recent_data, outfile):
         last_time = datetime.datetime.strptime(out.split()[0], '%Y:%j:%H:%M')
         #Send alert if the archive has not been recording for 15 minutes
         if (append_time - last_time).total_seconds() > 900:
-            content = f"Time discrepancy in {HRC_PROXY_DATA_FILE}\n{'-' * 40}\nTail: {out}New Data: {data_line}Investigate {__file__}\n"
+            content = f"Time discrepancy in {HRC_PROXY_DATA_FILE}\n{'-' * 40}\nTail: {out}New Data: {data_line}Investigate {__file__}\n"    
             send_mail(content, "Time Discrepancy in HRC Proxy Archive", ADMIN)
 
     else:
