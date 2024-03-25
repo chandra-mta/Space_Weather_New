@@ -12,6 +12,7 @@ from astropy.io import ascii
 #
 GOES_DIR = "/data/mta4/Space_Weather/GOES/Data"
 GOES_DATA_FILE = f"{GOES_DIR}/Gp_pchan_5m.txt"
+HRC_PROXY_DATA_FILE = f"{GOES_DIR}/hrc_proxy.txt"
 VIOL_RECORD_FILE = f"{GOES_DIR}/hrc_proxy_viol.json"
 
 NAMES = ('time', 'p1', 'p2a', 'p2b', 'p3', 'p4', 'p5',
@@ -56,6 +57,8 @@ def alert_hrc():
         send_mail(content, "HRC Proxy Violation", HRC_ADMIN)
     with open(VIOL_RECORD_FILE, 'w') as f:
         json.dump(curr_viol, f, indent = 4)
+    
+    add_to_archive(recent_data, HRC_PROXY_DATA_FILE)
 
 def send_mail(content, subject, admin):
     """
@@ -75,12 +78,25 @@ def viol_time_check(curr_viol, kind, proxy):
     now = datetime.datetime.utcnow()
     return (now - last).days > 1
 
+def add_to_archive(recent_data, outfile):
+    #data_line = f"{recent_data['time']:<13}\t{recent_data['hrc_proxy']:<9}\t{recent_data['hrc_proxy_legacy']:<16}\n"
+    data_line = f"{recent_data['time']}\t{recent_data['hrc_proxy']}\t{recent_data['hrc_proxy_legacy']}\n"
+    if os.path.isfile(outfile):
+        mode = 'a'
+    else:
+        #data_line = f"{'time':<13}\t{'hrc_proxy':<9}\t{'hrc_proxy_legacy':<16}\n{'-' * 48}\n{data_line}"
+        data_line = f"{'time'}\t{'hrc_proxy'}\t{'hrc_proxy_legacy'}\n{'-' * 40}\n{data_line}"
+        mode = 'w'
+    with open(outfile, mode) as f:
+        f.write(data_line)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
     parser.add_argument("-e", '--email', nargs = '*', required = False, help = "List of emails to recieve notifications")
-    parser.add_argument("-g", "--goes", help = "Determine GOES + HRC data file path")
+    parser.add_argument("-g", "--goes", help = "Determine GOES data file path")
+    parser.add_argument("-a", "--archive_hrc", help="Determine lonterm record file path for HRC proxy")
     parser.add_argument("-j", "--json", help = "Pass in record for current state of HRC proxy violations.")
     args = parser.parse_args()
 
@@ -96,6 +112,8 @@ if __name__ == "__main__":
 #
 #--- Redefine pathing for GOES and HRC PROXY data files
 #
+        OUT_DIR = f"{os.getcwd()}/test/outTest"
+        os.makedirs(OUT_DIR, exist_ok = True)
         if args.goes:
             GOES_DATA_FILE = args.goes
 
@@ -104,8 +122,6 @@ if __name__ == "__main__":
         else:
             #while roundabout, writing this empty test violation record to a separate file and reading it again test's 
             #a typical script run more directly.
-            OUT_DIR = f"{os.getcwd()}/test/outTest"
-            os.makedirs(OUT_DIR, exist_ok = True)
             temp_dict = {"time": '2020:077:17:10',
                          "hrc_proxy": 0,
                          "hrc_proxy_legacy": 0}
@@ -118,6 +134,12 @@ if __name__ == "__main__":
             VIOL_RECORD_FILE = f"{OUT_DIR}/hrc_proxy_viol.json"
             with open(VIOL_RECORD_FILE,'w') as f:
                 json.dump(check_viol, f, indent = 4)
+
+        if args.archive_hrc:
+            HRC_PROXY_DATA_FILE = args.archive_hrc
+        else:
+            HRC_PROXY_DATA_FILE = f"{OUT_DIR}//hrc_proxy.txt"
+
         try:
             alert_hrc()
         except:
