@@ -30,6 +30,8 @@ GOES_DATA_DIR = f"{GOES_DIR}/Data"
 GOES_TEMPLATE_DIR = f"{GOES_DIR}/Scripts/Template"
 HTML_GOES_DIR = '/data/mta4/www/RADIATION_new/GOES'
 
+ADMIN = ['mtadude@cfa.harvard.edu']
+
 #
 #--- json data locations proton and electron
 #
@@ -563,6 +565,13 @@ def adjust_format(val):
     
     return out
 
+def send_mail(content, subject, admin):
+    """
+    send out a notification email to admin
+    """
+    content += f'This message was send to {" ".join(admin)}'
+    cmd = f'echo "{content}" | mailx -s "{subject}" {" ".join(admin)}'
+    os.system(cmd)
                                                                                            
 #----------------------------------------------------------------------------
 
@@ -571,9 +580,20 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
     parser.add_argument("-p", "--path", help = "Determine data output file path")
     parser.add_argument("-j", "--json", help = "Determine json data file source")
+    parser.add_argument("-e", '--email', nargs = '*', required = False, help = "List of emails to recieve notifications")
     args = parser.parse_args()
 
     if args.mode == 'test':
+#
+#--- Redefine Admin for sending notification email in test mode
+#
+        if args.email != None:
+            ADMIN = args.email
+        else:
+            ADMIN = [os.popen(f"getent aliases | grep {getpass.getuser()}").read().split(":")[1].strip()]
+#
+#---Define pathing for test output
+#
         OUT_DIR = f"{os.getcwd()}/test/outTest"
         os.makedirs(OUT_DIR, exist_ok = True)
         GOES_TEMPLATE_DIR = f"{os.getcwd()}/Template"
@@ -587,6 +607,23 @@ if __name__ == "__main__":
         if args.json:
             PLINK = args.json
         update_goes_differential_page()
-    else:
-        update_goes_differential_page()
+    elif args.mode == "flight":
+#
+#--- Create a lock file and exit strategy in case of race conditions
+#
+        import getpass
+        name = os.path.basename(__file__).split(".")[0]
+        user = getpass.getuser()
+        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
+            notification = f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog."
+            #Email alert if the scirpt stalls out, since HRC alerting depends on output
+            send_mail(notification,f"Stalled Script: {name}", ADMIN)
+            sys.exit(notification)
+        else:
+            os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
 
+        update_goes_differential_page()
+#
+#--- Remove lock file once process is completed
+#
+        os.system(f"rm /tmp/{user}/{name}.lock")
