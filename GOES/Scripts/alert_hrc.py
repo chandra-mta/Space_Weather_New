@@ -6,20 +6,23 @@ import getpass
 import traceback
 import datetime
 import json
-import subprocess
+import csv
 from astropy.io import ascii
+import getpass
 
 #
 #--- Define Directory Pathing
 #
 GOES_DIR = "/data/mta4/Space_Weather/GOES/Data"
 GOES_DATA_FILE = f"{GOES_DIR}/Gp_pchan_5m.txt"
-HRC_PROXY_DATA_FILE = f"{GOES_DIR}/hrc_proxy.txt"
+HRC_PROXY_DATA_FILE = f"{GOES_DIR}/hrc_proxy.csv"
 VIOL_RECORD_FILE = f"{GOES_DIR}/hrc_proxy_viol.json"
 
 NAMES = ('time', 'p1', 'p2a', 'p2b', 'p3', 'p4', 'p5',
          'p6', 'p7', 'p8a', 'p8b', 'p8c', 'p9', 'p10',
          'hrc_proxy', 'hrc_proxy_legacy')
+
+CSV_HEADER = ['time', 'hrc_proxy', 'hrc_proxy_legacy']
 
 #Based on HRC Proxy differential values
 HRC_THRESHOLD = {'Warning': 6.2e4,
@@ -82,25 +85,9 @@ def viol_time_check(curr_viol, kind, proxy):
     return (now - last).days > 1    
 
 def add_to_archive(recent_data, outfile):
-    #data_line = f"{recent_data['time']:<13}\t{recent_data['hrc_proxy']:<9}\t{recent_data['hrc_proxy_legacy']:<16}\n"
-    data_line = f"{recent_data['time']}\t{recent_data['hrc_proxy']}\t{recent_data['hrc_proxy_legacy']}\n"
-    if os.path.isfile(outfile):
-        mode = 'a'
-        #Secondary check in appending to the archive in case there is a time discrepancy.
-        append_time = datetime.datetime.strptime(recent_data['time'], '%Y:%j:%H:%M')
-        out = subprocess.check_output(f"tail -n 1 {outfile}", shell=True, executable='/bin/csh').decode()
-        last_time = datetime.datetime.strptime(out.split()[0], '%Y:%j:%H:%M')
-        #Send alert if the archive has not been recording for 15 minutes
-        if (append_time - last_time).total_seconds() > 900:
-            content = f"Time discrepancy in {HRC_PROXY_DATA_FILE}\n{'-' * 40}\nTail: {out}New Data: {data_line}Investigate {__file__}\n"    
-            send_mail(content, "Time Discrepancy in HRC Proxy Archive", ADMIN)
-
-    else:
-        #data_line = f"{'time':<13}\t{'hrc_proxy':<9}\t{'hrc_proxy_legacy':<16}\n{'-' * 48}\n{data_line}"
-        data_line = f"{'time'}\t{'hrc_proxy'}\t{'hrc_proxy_legacy'}\n{'-' * 40}\n{data_line}"
-        mode = 'w'
-    with open(outfile, mode) as f:
-        f.write(data_line)
+    with open(outfile, 'a') as f:
+        writer = csv.DictWriter(f, dialect='unix', fieldnames = CSV_HEADER, quoting=csv.QUOTE_NONE)
+        writer.writerow(recent_data)
 
 
 if __name__ == "__main__":
@@ -152,7 +139,10 @@ if __name__ == "__main__":
         if args.archive_hrc:
             HRC_PROXY_DATA_FILE = args.archive_hrc
         else:
-            HRC_PROXY_DATA_FILE = f"{OUT_DIR}//hrc_proxy.txt"
+            HRC_PROXY_DATA_FILE = f"{OUT_DIR}/hrc_proxy.csv"
+            with open(HRC_PROXY_DATA_FILE,'w',  newline='', encoding='utf-8') as f:
+                writer = csv.DictWriter(f, dialect='unix', fieldnames = CSV_HEADER, quoting=csv.QUOTE_NONE)
+                writer.writeheader()
 
         try:
             alert_hrc()
@@ -162,7 +152,6 @@ if __name__ == "__main__":
 #
 #--- Create a lock file and exit strategy in case of race conditions
 #
-        import getpass
         name = os.path.basename(__file__).split(".")[0]
         user = getpass.getuser()
         if os.path.isfile(f"/tmp/{user}/{name}.lock"):
