@@ -267,7 +267,7 @@ def make_two_hour_table():
 
     line = line + '\tHRC Proxy Legacy is defined as:\n\n'
     line = line + '\tHRC Proxy Legacy = 6000 * P5P6 + 270000 * P7 + 100000 * P8ABC\n\n'
-    line = line + '\twhere P5P6 is a combination of P5 and P56 and P8ABC is a combination of P8A, P8B, and P8C.\n'
+    line = line + '\twhere P5P6 is a combination of P5 and P6 and P8ABC is a combination of P8A, P8B, and P8C.\n'
 #
 #---  print out data file for CRM use
 #
@@ -481,8 +481,6 @@ def compute_hrc(data):
     c11 = data[11][1]
 
     hrc = []
-    if len(c5) < 1:
-        exit(1)
 
     for k in range(0, len(c5)):
         try:
@@ -518,8 +516,6 @@ def compute_pre2020_hrc(data):
     p8c = data[10][1]
 
     hrc = []
-    if len(p5) < 1:
-        exit(1)
 
     p5p6 = combine_rates([p5, p6], ('P5', 'P6'))
     p8abc = combine_rates([p8a, p8b, p8c], ('P8A', 'P8B', 'P8C'))
@@ -567,7 +563,9 @@ def adjust_format(val):
 
 def send_mail(content, subject, admin):
     """
-    send out a notification email to admin
+    send out a notification email to admin in case the
+    script is found to be stalling, which would impact data file
+    used in hrc proxy alerting
     """
     content += f'This message was send to {" ".join(admin)}'
     cmd = f'echo "{content}" | mailx -s "{subject}" {" ".join(admin)}'
