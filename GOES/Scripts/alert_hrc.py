@@ -25,8 +25,7 @@ NAMES = ('time', 'p1', 'p2a', 'p2b', 'p3', 'p4', 'p5',
 CSV_HEADER = ['time', 'hrc_proxy', 'hrc_proxy_legacy']
 
 #Based on HRC Proxy differential values
-HRC_THRESHOLD = {'Warning': 6.2e4,
-                'Violation': 1.95e5}
+HRC_THRESHOLD = {'Warning': 3.2e4}
 
 #Alert Email Addresses
 HRC_ADMIN = ['sot_ace_alert@cfa.harvard.edu']
@@ -59,7 +58,7 @@ def alert_hrc():
                     content += f"{'-' * 20}\n"
                     curr_viol[f"{kind}_{proxy}"] = recent_data
     
-    if content != '' and HRC_ADMIN != []:
+    if content != '' and len(HRC_ADMIN) > 0 :
         send_mail(content, "HRC Proxy Violation", HRC_ADMIN)
     with open(VIOL_RECORD_FILE, 'w') as f:
         json.dump(curr_viol, f, indent = 4)
@@ -128,9 +127,7 @@ if __name__ == "__main__":
                          "hrc_proxy_legacy": 0}
             import copy
             check_viol = {"Warning_hrc_proxy": copy.copy(temp_dict),
-                          "Violation_hrc_proxy": copy.copy(temp_dict),
-                          "Warning_hrc_proxy_legacy": copy.copy(temp_dict),
-                          "Violation_hrc_proxy_legacy": copy.copy(temp_dict)}
+                          "Warning_hrc_proxy_legacy": copy.copy(temp_dict)}
             
             VIOL_RECORD_FILE = f"{OUT_DIR}/hrc_proxy_viol.json"
             with open(VIOL_RECORD_FILE,'w') as f:
