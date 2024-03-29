@@ -22,6 +22,7 @@ import json
 import numpy as np
 import argparse
 import traceback
+import getpass
 #
 #--- Define Directory Pathing
 #
@@ -609,7 +610,6 @@ if __name__ == "__main__":
 #
 #--- Create a lock file and exit strategy in case of race conditions
 #
-        import getpass
         name = os.path.basename(__file__).split(".")[0]
         user = getpass.getuser()
         if os.path.isfile(f"/tmp/{user}/{name}.lock"):

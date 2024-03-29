@@ -25,7 +25,7 @@ def check_cadence():
     out = subprocess.check_output(f"tail -n 1 {ARCHIVE_FILE}", shell=True, executable='/bin/csh').decode()
     last_time = datetime.datetime.strptime(out.split(",")[0], '%Y:%j:%H:%M')
     if (now - last_time).total_seconds() > TIME_DIFF:
-        content = f"Time discrepancy in {ARCHIVE_FILE}\n{'-' * 40}\nTail: {out}Current Time: {now.strftime('%Y:%j:%H:%M')}\n"    
+        content = f"Time discrepancy in {ARCHIVE_FILE}\n{'-' * 40}\nTail of file: {out}Current Time: {now.strftime('%Y:%j:%H:%M')}\n"    
         send_mail(content, "Time Discrepancy in HRC Proxy Archive", ADMIN)
 
 if __name__ == "__main__":
