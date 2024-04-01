@@ -11,61 +11,33 @@
 
 import os
 import sys
-import re
-import string
-import math
 import time
-import datetime
 import Chandra.Time
 import urllib.request
 import json
-import random
-import numpy
+import argparse
 
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
-with open(path, 'r') as f:
-    data = [line.strip() for line in f.readlines()]
+#
+#--- Define directory pathing
+#
+GOES_DATA_DIR = "/data/mta4/Space_Weather/GOES/Data"
+OUT_DATA_DIR = "/data/mta4/Space_Weather/GOES/Data"
 
-for ent in data:
-    atemp = re.split(':', ent)
-    var   = atemp[1].strip()
-    line  = atemp[0].strip()
-    exec("%s = %s" %(var, line))
-#for writing out files in test directory
-if (os.getenv('TEST') == 'TEST'):
-    os.system('mkdir -p TestOut')
-    test_out = os.getcwd() + '/TestOut'
-#
-#--- append path to a private folder
-#
-sys.path.append(goes_dir)
-sys.path.append('/data/mta4/Script/Python3.10/MTA/')
-
-#import mta_common_functions     as mcf
-#
-#--- set a temporary file name
-#
-rtail  = int(time.time()*random.random())
-zspace = '/tmp/zspace' + str(rtail)
 #
 #--- json data locations proton and electron
 #
-plink = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-7-day.json'
+PLINK = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-7-day.json'
 #
 #--- protone energy designations and output file names
 #
-proton_list = ['1020-1860 keV',   '1900-2300 keV',   '2310-3340 keV',    '3400-6480 keV',\
+PROTON_LIST = ['1020-1860 keV',   '1900-2300 keV',   '2310-3340 keV',    '3400-6480 keV',\
                '5840-11000 keV',  '11640-23270 keV', '25900-38100 keV',  '40300-73400 keV',\
                '83700-98500 keV', '99900-118000 keV','115000-143000 keV','160000-242000 keV',\
                '276000-404000 keV']
 #
-#--- goes data directory
-#
-data_dir  = goes_dir + 'Data/'
-#
 #--- current goes satellite #
 #
-satellite = "Primary"
+SATELLITE = "Primary"
 
 #----------------------------------------------------------------------------
 #-- collect_goes_long: collect data for the long term use                  --
@@ -82,26 +54,22 @@ def collect_goes_long():
 #
 #--- find the last entry time
 #
-    outfile = goes_dir + 'Data/goes_data_r.txt'
-    #data    = mcf.read_data_file(outfile)
+    outfile = f"{GOES_DATA_DIR}/goes_data_r.txt"
     with open(outfile, 'r') as f:
         data = [line.strip() for line in f.readlines()]
-    m       = -1
+        data = [line for line in data if line != '']
     cut     = 0
     while cut == 0:
-        atemp   = re.split('\s+', data[m])
-        if len(atemp) > 0: 
-            try:
-                cut     = Chandra.Time.DateTime(atemp[0]).secs
-                break
-            except:
-                m -= 1
-        else:
-            m = -1
+        atemp = data[-1].split()
+        try:
+            cut     = Chandra.Time.DateTime(atemp[0]).secs
+            break
+        except:
+            data.pop(-1)
 #
 #--- extract proton data
 #
-    p_data = extract_goes_data(plink, proton_list)
+    p_data = extract_goes_data(PLINK, PROTON_LIST)
 #
 #--- time list
 #
@@ -122,24 +90,22 @@ def collect_goes_long():
 
     for k in range(0, d_len):
         stime = Chandra.Time.DateTime(t_list[k]).secs
-        if stime < cut:
+        if stime <= cut:
+            #If the time is less or equal to this cutoff point, then it's not new data.
             continue
-        line = line + t_list[k]  + '\t\t'
+        line += f"{t_list[k]}\t\t"
 
         for m in range(0, 13):
             try:
-                line = line + adjust_format(p_data[m][1][k])  + "\t"
+                line += f"{p_data[m][1][k]:1.3e}\t"
             except:
-                line = line + "0.0\t"
+                line += "0.0\t"
 
-        line = line + "%5.0f\t\n" % (hrc_val[k])
+        line += f"{hrc_val[k]:5.0f}\t\n"
 #
 #---  print out data file for ACIS Rad use
 #
-    appendout = outfile
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        appendout = test_out + "/" + os.path.basename(appendout)
+    appendout = f"{OUT_DATA_DIR}/{os.path.basename(outfile)}"
     with open(appendout, 'a') as fo:
         fo.write(line)
 
@@ -172,11 +138,6 @@ def extract_goes_data(dlink, energy_list):
         f_list = []
         energy = energy_list[k]
         last_time = time.strptime(data[0]['time_tag'], '%Y-%m-%dT%H:%M:%SZ')
-#
-#--- check the last entry time and select only last 2hrs
-#
-        ltime  = check_last_entry_time(data)
-        ctime  = ltime - 3600.0 * 2
         for ent in data:
 #
 #--- read time and flux of the given energy range
@@ -198,8 +159,8 @@ def extract_goes_data(dlink, energy_list):
                     for i in range(300,int(diff),300):
                         missing_time = time.localtime(time.mktime(last_time) + i)
                         t_list.append(time.strftime('%Y:%j:%H:%M:%S',missing_time))
-                        #assume missing data is zero
-                        f_list.append(0)
+                        #mark missing data with the invalid data marker (-1e5)
+                        f_list.append(-1e5)
 
                 #record time as string
                 t_list.append(time.strftime('%Y:%j:%H:%M:%S',otime))
@@ -348,34 +309,36 @@ def compute_hrc(data):
         hrc.append(val)
 
     return hrc
-
-#----------------------------------------------------------------------------
-#----------------------------------------------------------------------------
-#----------------------------------------------------------------------------
-
-def adjust_format(val):
-
-    val = float(val)
-#    if val < 10:
-#        out = "%1.5f" % (val)
-#    elif val < 100:
-#        out = "%2.4f" % (val)
-#    elif val < 1000:
-#        out = "%3.3f" % (val)
-#    elif val < 10000:
-#        out = "%4.2f" % (val)
-#    elif val < 100000:
-#        out = "%5.1f" % (val)
-#    else:
-#        out = "%5.0f" % (val)
-    
-    out = "%1.3e"  % (val)
-    return out
-
                                                                                            
 #----------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    parser.add_argument("-p", "--path", required = False, help = "Directory path to determine output location of data file.")
+    args = parser.parse_args()
 
-    collect_goes_long()
+    if args.mode == "test":
+        #Change output pathing to int interfere with live running
+        OUT_DATA_DIR = f"{os.getcwd()}/test/outTest"
+        os.makedirs(OUT_DATA_DIR, exist_ok = True)
+        if os.path.isfile(f"{OUT_DATA_DIR}/goes_data_r.txt"):
+            GOES_DATA_DIR = OUT_DATA_DIR
+        collect_goes_long()
+    else:
+#
+#--- Create a lock file and exit strategy in case of race conditions
+#
+        import getpass
+        name = os.path.basename(__file__).split(".")[0]
+        user = getpass.getuser()
+        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
+            sys.exit(f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog.")
+        else:
+            os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
 
+        collect_goes_long()
+#
+#--- Remove lock file once process is completed
+#
+        os.system(f"rm /tmp/{user}/{name}.lock")
