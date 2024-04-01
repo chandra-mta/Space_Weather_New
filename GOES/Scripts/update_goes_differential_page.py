@@ -19,38 +19,24 @@ import datetime
 import Chandra.Time
 import urllib.request
 import json
-import random
-import numpy
+import numpy as np
+import argparse
+import traceback
+import getpass
+#
+#--- Define Directory Pathing
+#
+GOES_DIR = '/data/mta4/Space_Weather/GOES'
+GOES_DATA_DIR = f"{GOES_DIR}/Data"
+GOES_TEMPLATE_DIR = f"{GOES_DIR}/Scripts/Template"
+HTML_GOES_DIR = '/data/mta4/www/RADIATION_new/GOES'
 
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
-with open(path, 'r') as f:
-    data = [line.strip() for line in f.readlines()]
+ADMIN = ['mtadude@cfa.harvard.edu']
 
-for ent in data:
-    atemp = re.split(':', ent)
-    var   = atemp[1].strip()
-    line  = atemp[0].strip()
-    exec("%s = %s" %(var, line))
-#for writing out files in test directory
-if (os.getenv('TEST') == 'TEST'):
-    os.system('mkdir -p TestOut')
-    test_out = os.getcwd() + '/TestOut'
-#
-#--- append path to a private folder
-#
-sys.path.append(goes_dir)
-sys.path.append('/data/mta4/Script/Python3.10/MTA/')
-
-###`import mta_common_functions     as mcf
-#
-#--- set a temporary file name
-#
-rtail  = int(time.time()*random.random())
-zspace = '/tmp/zspace' + str(rtail)
 #
 #--- json data locations proton and electron
 #
-plink = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-1-day.json'
+PLINK = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-1-day.json'
 #
 #--- protone energy designations and output file names
 #
@@ -59,14 +45,31 @@ proton_list = ['1020-1860 keV',   '1900-2300 keV',   '2310-3340 keV',    '3400-6
                '83700-98500 keV', '99900-118000 keV','115000-143000 keV','160000-242000 keV',\
                '276000-404000 keV']
 #
-#--- goes data directory
-#
-data_dir  = goes_dir + 'Data/'
-templ_dir = goes_dir + 'Scripts/Template/'
-#
 #--- current goes satellite #
 #
 satellite = "Primary"
+
+# GOES-16+ Energy bands (keV) and combinations
+DE = {'P1': [1860., 1020.],
+      'P2A': [2300., 1900.],
+      'P2B': [3340., 2310.],
+      'P3': [6480., 3400.],
+      'P4': [11000., 5840.],
+      'P5': [23270., 11640.],
+      'P6': [38100., 25900.],
+      'P7': [73400., 40300.],
+      'P8A': [98500., 83700.],
+      'P8B': [118000., 99900.],
+      'P8C': [143000., 115000.],
+      'P9': [242000., 160000.],
+      'P5P6': [23270., 11640.],
+      'P8ABC': [143000., 83700.],
+      'P8ABCP9': [242000., 83700.]}
+
+# Add delta_e to each list
+for key in DE.keys():
+    de = DE[key]
+    de.append(de[0] - de[1])
 
 #----------------------------------------------------------------------------
 #-- update_goes_differential_page: update goes differential html page      --
@@ -82,7 +85,7 @@ def update_goes_differential_page():
 #
 #--- read header template
 #
-    hfile = templ_dir + 'G_header'
+    hfile = f"{GOES_TEMPLATE_DIR}/G_header"
     with open(hfile, 'r') as f:
         line = f.read()
 #
@@ -95,19 +98,19 @@ def update_goes_differential_page():
 #
 #--- add energy range note
 #
-    hfile = templ_dir + 'channel_energy_list'
+    hfile = f"{GOES_TEMPLATE_DIR}/channel_energy_list"
     with open(hfile, 'r') as f:
         line = line + f.read()
 #
 #--- add the image link
 #
-    hfile = templ_dir + 'Gp_image_diff'
+    hfile = f"{GOES_TEMPLATE_DIR}/Gp_image_diff"
     with open(hfile, 'r') as f:
         line = line + f.read()
 #
 #--- add footer
 #
-    hfile = templ_dir + 'G_footer'
+    hfile = f"{GOES_TEMPLATE_DIR}/G_footer"
     with open(hfile, 'r') as f:
         line = line + f.read()
 #
@@ -118,11 +121,7 @@ def update_goes_differential_page():
 #
 #--- update the page
 #
-    ####outfile = html_dir + 'GOES/goes16_pchan_p.html'
-    outfile = html_dir + 'GOES/goes_pchan_p.html'
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        outfile = test_out + "/" + os.path.basename(outfile)
+    outfile = f"{HTML_GOES_DIR}/goes_pchan_p.html"
     with open(outfile, 'w') as fo:
         fo.write(line)
 
@@ -139,7 +138,7 @@ def make_two_hour_table():
 #
 #--- extract proton data
 #
-    p_data = extract_goes_data(plink, proton_list)
+    p_data = extract_goes_data(PLINK, proton_list)
 #
 #--- time list
 #
@@ -152,6 +151,7 @@ def make_two_hour_table():
 #
 #--- compute hrc proxy
 #
+    pre_hrc_val = compute_pre2020_hrc(p_data)
     hrc_val = compute_hrc(p_data)
 #
 #---- create the main table
@@ -174,7 +174,8 @@ def make_two_hour_table():
     line = line + 'P8C\t'
     line = line + 'P9\t'
     line = line + 'P10\t'
-    line = line + 'HRC Proxy\n'
+    line = line + 'HRC_Proxy\t'
+    line = line + 'HRC_Proxy_Legacy\n'
 #    line = line + '\tTime\t\t\t1.0-3.3MeV\t0.4-11MeV'
 #    line = line + '\t11-38MeV\t40-98MeV'
 #    line = line + '\t99-143MeV\t160-404MeV\tHRC Proxy\n'
@@ -206,9 +207,14 @@ def make_two_hour_table():
             pass
 
         try:
-            line = line + "%5.0f\t\n" % (hrc_val[k])
+            line = line + "%5.0f\t\t" % (hrc_val[k])
         except:
-            line = line + '\t\n'
+            line = line + '\t\t '
+
+        try:
+            line = line + f"{pre_hrc_val[k]:5.0f}\n" 
+        except:
+            line = line + '\n'
 
     line  = line + '\n'
     aline = line
@@ -218,53 +224,55 @@ def make_two_hour_table():
 #
     line = line + '\tAVERAGE\t\t\t'
 
-    line = line + adjust_format(numpy.mean(p_data[0][1])) + "\t"
-    line = line + adjust_format(numpy.mean(p_data[1][1])) + "\t"
-    line = line + adjust_format(numpy.mean(p_data[2][1])) + "\t"
-    line = line + adjust_format(numpy.mean(p_data[3][1])) + "\t"
-    line = line + adjust_format(numpy.mean(p_data[4][1])) + "\t"
-    line = line + adjust_format(numpy.mean(p_data[5][1])) + "\t"
-    line = line + adjust_format(numpy.mean(p_data[6][1])) + "\t"
-    line = line + adjust_format(numpy.mean(p_data[7][1])) + "\t"
-    line = line + adjust_format(numpy.mean(p_data[8][1])) + "\t"
-    line = line + adjust_format(numpy.mean(p_data[9][1])) + "\t"
-    line = line + adjust_format(numpy.mean(p_data[10][1])) + "\t"
-    line = line + adjust_format(numpy.mean(p_data[11][1])) + "\t"
-    line = line + adjust_format(numpy.mean(p_data[12][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[0][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[1][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[2][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[3][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[4][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[5][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[6][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[7][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[8][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[9][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[10][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[11][1])) + "\t"
+    line = line + adjust_format(np.mean(p_data[12][1])) + "\t"
 
-    line = line + "%5.0f\t\n" % (numpy.mean(hrc_val))
+    line = line + "%5.0f\t\t" % (np.mean(hrc_val))
+    line = line + f"{np.mean(pre_hrc_val):5.0f}\n" 
 #
     line = line + '\tFLUENCE\t\t\t'
-    line = line + adjust_format(numpy.sum(p_data[0][1])) + "\t"
-    line = line + adjust_format(numpy.sum(p_data[1][1])) + "\t"
-    line = line + adjust_format(numpy.sum(p_data[2][1])) + "\t"
-    line = line + adjust_format(numpy.sum(p_data[3][1])) + "\t"
-    line = line + adjust_format(numpy.sum(p_data[4][1])) + "\t"
-    line = line + adjust_format(numpy.sum(p_data[5][1])) + "\t"
-    line = line + adjust_format(numpy.sum(p_data[6][1])) + "\t"
-    line = line + adjust_format(numpy.sum(p_data[7][1])) + "\t"
-    line = line + adjust_format(numpy.sum(p_data[8][1])) + "\t"
-    line = line + adjust_format(numpy.sum(p_data[9][1])) + "\t"
-    line = line + adjust_format(numpy.sum(p_data[10][1])) + "\t"
-    line = line + adjust_format(numpy.sum(p_data[11][1])) + "\t"
-    line = line + adjust_format(numpy.sum(p_data[12][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[0][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[1][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[2][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[3][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[4][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[5][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[6][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[7][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[8][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[9][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[10][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[11][1])) + "\t"
+    line = line + adjust_format(np.sum(p_data[12][1])) + "\t"
 
-    line = line + "%5.0f\t\n" % (numpy.sum(hrc_val))
+    line = line + "%5.0f\t\t" % (np.sum(hrc_val))
+    line = line + f"{np.sum(pre_hrc_val):5.0f}\n" 
 
     line = line +'\n'
-    line = line + '\tHRC Proxy is defined as:\n'
-    line = line + '\n'
+    line = line + '\tHRC Proxy is defined as:\n\n'
 #    line = line + '\tHRC Proxy = 6000 * (11.64-38.1MeV) + 270000 * (40.3-73.4MeV) '
 #    line = line + '100000 * (83.7-242.0MeV)\n'
 #    line = line + '\tHRC Proxy  = 143 * P5 + 64738 * P6 + 162505 * P7 + 16\n'
-    line = line + '\tHRC Proxy  = 143 * P5 + 64738 * P6 + 162505 * P7 + 4127\n'
+    line = line + '\tHRC Proxy  = 143 * P5 + 64738 * P6 + 162505 * P7 + 4127\n\n'
+
+    line = line + '\tHRC Proxy Legacy is defined as:\n\n'
+    line = line + '\tHRC Proxy Legacy = 6000 * P5P6 + 270000 * P7 + 100000 * P8ABC\n\n'
+    line = line + '\twhere P5P6 is a combination of P5 and P6 and P8ABC is a combination of P8A, P8B, and P8C.\n'
 #
 #---  print out data file for CRM use
 #
-    outfile = data_dir + 'Gp_pchan_5m.txt'\
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        outfile = test_out + "/" + os.path.basename(outfile)
+    outfile = f"{GOES_DATA_DIR}/Gp_pchan_5m.txt"
     with open(outfile, 'w') as fo:
         fo.write(aline)
 
@@ -277,18 +285,27 @@ def make_two_hour_table():
 def extract_goes_data(dlink, energy_list):
     """
     extract GOES satellite flux data
-    input: dlink        --- json web address
+    input: dlink        --- json web address or file
             energy_list --- a list of energy designation 
     output: <data_dir>/<out file>
     """
 #
-#--- read json file from the web
+#--- read json file from a file or the web
 #
-    try:
-        with urllib.request.urlopen(dlink) as url:
-            data = json.loads(url.read().decode())
-    except:
-        data = []
+    if os.path.isfile(dlink):
+        try:
+            with open(dlink) as f:
+                data = json.load(f)
+        except:
+            traceback.print_exc()
+            data = []
+    else:
+        try:
+            with urllib.request.urlopen(dlink) as url:
+                data = json.loads(url.read().decode())
+        except:
+            traceback.print_exc()
+            data = []
 
     if len(data) < 1:
         exit(1)
@@ -316,7 +333,6 @@ def extract_goes_data(dlink, energy_list):
 #--- read time and flux of the given energy range
 #
             if ent['energy'] == energy:
-                #flux  = float(ent['flux']) * 1e-3   #--- keV to MeV
                 flux  = float(ent['flux']) * 1e3   #--- keV to MeV
 #
 #--- convert time into seconds from 1998.1.1
@@ -466,8 +482,6 @@ def compute_hrc(data):
     c11 = data[11][1]
 
     hrc = []
-    if len(c5) < 1:
-        exit(1)
 
     for k in range(0, len(c5)):
         try:
@@ -485,12 +499,47 @@ def compute_hrc(data):
             val = 143.0 * c5[k] + 64738.0 * c6[k] + 162505.0 * c7[k] + 4127
 
         except:
-            continue
+            val = -1e5
 
         hrc.append(val)
 
     return hrc
 
+#----------------------------------------------------------------------------
+#-- compute_pre2020_hrc: compute hrc proxy value                           --
+#----------------------------------------------------------------------------
+def compute_pre2020_hrc(data):
+    p5 = data[5][1]
+    p6 = data[6][1]
+    p7 = data[7][1]
+    p8a = data[8][1]
+    p8b = data[9][1]
+    p8c = data[10][1]
+
+    hrc = []
+
+    p5p6 = combine_rates([p5, p6], ('P5', 'P6'))
+    p8abc = combine_rates([p8a, p8b, p8c], ('P8A', 'P8B', 'P8C'))
+
+    for k in range(len(p5p6)):
+        try:
+            val = 6000 * p5p6[k] + 270000 * p7[k] + 100000 * p8abc[k]
+        except:
+            val = -1e5
+        
+        hrc.append(val)
+    return hrc
+
+
+def combine_rates(data_list, channel_name):
+    """
+    Return combined rates for multiple channels
+    """
+    combined = np.zeros(len(data_list[0]))
+    for i, data in enumerate(data_list):
+        combined = combined + (np.array(data) * DE[channel_name[i]][2])
+    delta_e = DE[channel_name[-1]][0] - DE[channel_name[0]][1]
+    return list(combined / delta_e)
 #----------------------------------------------------------------------------
 #----------------------------------------------------------------------------
 #----------------------------------------------------------------------------
@@ -513,10 +562,66 @@ def adjust_format(val):
     
     return out
 
+def send_mail(content, subject, admin):
+    """
+    send out a notification email to admin in case the
+    script is found to be stalling, which would impact data file
+    used in hrc proxy alerting
+    """
+    content += f'This message was send to {" ".join(admin)}'
+    cmd = f'echo "{content}" | mailx -s "{subject}" {" ".join(admin)}'
+    os.system(cmd)
                                                                                            
 #----------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    parser.add_argument("-p", "--path", help = "Determine data output file path")
+    parser.add_argument("-j", "--json", help = "Determine json data file source")
+    parser.add_argument("-e", '--email', nargs = '*', required = False, help = "List of emails to recieve notifications")
+    args = parser.parse_args()
 
-    update_goes_differential_page()
+    if args.mode == 'test':
+#
+#--- Redefine Admin for sending notification email in test mode
+#
+        if args.email != None:
+            ADMIN = args.email
+        else:
+            ADMIN = [os.popen(f"getent aliases | grep {getpass.getuser()}").read().split(":")[1].strip()]
+#
+#---Define pathing for test output
+#
+        OUT_DIR = f"{os.getcwd()}/test/outTest"
+        os.makedirs(OUT_DIR, exist_ok = True)
+        GOES_TEMPLATE_DIR = f"{os.getcwd()}/Template"
+        if args.path:
+            GOES_DATA_DIR = args.path
+            HTML_GOES_DIR = args.path
+        else:
+            GOES_DATA_DIR = OUT_DIR
+            HTML_GOES_DIR = OUT_DIR
 
+        if args.json:
+            PLINK = args.json
+        update_goes_differential_page()
+    elif args.mode == "flight":
+#
+#--- Create a lock file and exit strategy in case of race conditions
+#
+        name = os.path.basename(__file__).split(".")[0]
+        user = getpass.getuser()
+        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
+            notification = f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog."
+            #Email alert if the scirpt stalls out, since HRC alerting depends on output
+            send_mail(notification,f"Stalled Script: {name}", ADMIN)
+            sys.exit(notification)
+        else:
+            os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
+
+        update_goes_differential_page()
+#
+#--- Remove lock file once process is completed
+#
+        os.system(f"rm /tmp/{user}/{name}.lock")
