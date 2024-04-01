@@ -1,4 +1,4 @@
 
 cd /data/mta4/Space_Weather/GOES/Scripts
 
-/data/mta4/Space_Weather/GOES/Scripts/collect_goes_long.py
+/data/mta4/Space_Weather/GOES/Scripts/collect_goes_long.py -m flight

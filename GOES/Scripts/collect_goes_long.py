@@ -24,11 +24,6 @@ GOES_DATA_DIR = "/data/mta4/Space_Weather/GOES/Data"
 OUT_DATA_DIR = "/data/mta4/Space_Weather/GOES/Data"
 
 #
-#--- append path to a private folder
-#
-sys.path.append('/data/mta4/Script/Python3.10/MTA/')
-
-#
 #--- json data locations proton and electron
 #
 PLINK = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-7-day.json'
