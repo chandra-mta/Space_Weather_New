@@ -10,12 +10,8 @@
 #################################################################################
 
 import os
-import sys
-import re
-import string
-import math
+import signal
 import time
-import datetime
 import Chandra.Time
 import urllib.request
 import json
@@ -613,12 +609,15 @@ if __name__ == "__main__":
         name = os.path.basename(__file__).split(".")[0]
         user = getpass.getuser()
         if os.path.isfile(f"/tmp/{user}/{name}.lock"):
-            notification = f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog."
-            #Email alert if the scirpt stalls out, since HRC alerting depends on output
+            notification = f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. " 
+            notification += "Check calling scripts/cronjob/cronlog. Killing old process."
+            #Email alert if the script stalls out, since HRC alerting depends on output
             send_mail(notification,f"Stalled Script: {name}", ADMIN)
-            sys.exit(notification)
+            with open(f"/tmp/{user}/{name}.lock") as f:
+                pid = int(f.readlines()[-1].strip())
+            os.kill(pid,signal.SIGTERM)
         else:
-            os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
+            os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
 
         update_goes_differential_page()
 #
