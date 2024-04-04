@@ -26,9 +26,18 @@ CSV_HEADER = ['time', 'hrc_proxy', 'hrc_proxy_legacy']
 
 #Based on HRC Proxy differential values
 HRC_THRESHOLD = {'Warning': 3.2e4}
+PROXIES = ['hrc_proxy', 'hrc_proxy_legacy']
 
 #Alert Email Addresses
-HRC_ADMIN = ['sot_ace_alert@cfa.harvard.edu']
+HRC_ADMIN = ['rkraft@cfa.harvard.edu',
+             '6172756031@vtext.com',
+             'dpatnaude@cfa.harvard.edu',
+             '6173726105@vtext.com',
+             'gtremblay@cfa.harvard.edu',
+             '2075044862@vtext.com',
+             'gerrit.schellenberg@cfa.harvard.edu',
+             '6178750424@vtext.com',
+             'mtadude@cfa.harvard.edu']
 ADMIN = ['mtadude@cfa.harvard.edu']
 
 
@@ -48,14 +57,16 @@ def alert_hrc():
     #Iterate over kinds of threshold and versions each proxy
     content = ''
     for kind in HRC_THRESHOLD.keys():
-        for proxy in ['hrc_proxy', 'hrc_proxy_legacy']:
+        for proxy in PROXIES:
             if recent_data[proxy] > HRC_THRESHOLD[kind]:
                 #check if there was a similar kind of violation withing the last 24 hours
                 if viol_time_check(curr_viol, kind, proxy):
                     content += f"{kind}: {proxy}\n"
-                    content += f"Observed: {recent_data[proxy]:.5e} at Time: {time}\n"
                     content += f"Limit: {HRC_THRESHOLD[kind]:.3e} counts/sec.\n"
+                    content += f"Time: {time}\n"
                     content += f"{'-' * 20}\n"
+                    for p in PROXIES:
+                        content += f"{p}: {recent_data[p]:.5e}\n"
                     curr_viol[f"{kind}_{proxy}"] = recent_data
     
     if content != '' and len(HRC_ADMIN) > 0 :
@@ -69,7 +80,6 @@ def send_mail(content, subject, admin):
     """
     send out a notification email to admin
     """
-    content += f'This message was send to {" ".join(admin)}'
     cmd = f'echo "{content}" | mailx -s "{subject}" {" ".join(admin)}'
     os.system(cmd)
 
