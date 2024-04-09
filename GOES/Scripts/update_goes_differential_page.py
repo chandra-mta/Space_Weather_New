@@ -615,8 +615,13 @@ if __name__ == "__main__":
             send_mail(notification,f"Stalled Script: {name}", ADMIN)
             with open(f"/tmp/{user}/{name}.lock") as f:
                 pid = int(f.readlines()[-1].strip())
+            #Kill old stalling process and remove corresponding lock file.
+            os.remove(f"/tmp/{user}/{name}.lock")
             os.kill(pid,signal.SIGTERM)
+            #Generate lock file for the current corresponding process
+            os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
         else:
+            #Previous script run must have completed successfully. Prepare lock file for this script run.
             os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
 
         update_goes_differential_page()
