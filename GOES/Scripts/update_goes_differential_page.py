@@ -545,7 +545,10 @@ def combine_rates(data_list, channel_name):
 def adjust_format(val):
 
     val = float(val)
-    if val < 10:
+    if val < 0: #Missing entry
+        print(val)
+        out = f"{val:5.0f}"
+    elif val < 10:
         out = "%1.5f" % (val)
     elif val < 100:
         out = "%2.4f" % (val)
