@@ -221,40 +221,40 @@ def make_two_hour_table():
 #
     line = line + '\tAVERAGE\t\t\t'
 
-    line = line + adjust_format(np.mean(p_data[0][1])) + "\t"
-    line = line + adjust_format(np.mean(p_data[1][1])) + "\t"
-    line = line + adjust_format(np.mean(p_data[2][1])) + "\t"
-    line = line + adjust_format(np.mean(p_data[3][1])) + "\t"
-    line = line + adjust_format(np.mean(p_data[4][1])) + "\t"
-    line = line + adjust_format(np.mean(p_data[5][1])) + "\t"
-    line = line + adjust_format(np.mean(p_data[6][1])) + "\t"
-    line = line + adjust_format(np.mean(p_data[7][1])) + "\t"
-    line = line + adjust_format(np.mean(p_data[8][1])) + "\t"
-    line = line + adjust_format(np.mean(p_data[9][1])) + "\t"
-    line = line + adjust_format(np.mean(p_data[10][1])) + "\t"
-    line = line + adjust_format(np.mean(p_data[11][1])) + "\t"
-    line = line + adjust_format(np.mean(p_data[12][1])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[0][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[1][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[2][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[3][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[4][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[5][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[6][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[7][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[8][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[9][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[10][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[11][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[12][1] if i >=0])) + "\t"
 
-    line = line + "%5.0f\t\t" % (np.mean(hrc_val))
-    line = line + f"{np.mean(pre_hrc_val):5.0f}\n" 
+    line = line + "%5.0f\t\t" % (np.mean([i for i in hrc_val if i >= 0]))
+    line = line + f"{np.mean([i for i in pre_hrc_val if i >= 0]):5.0f}\n" 
 #
     line = line + '\tFLUENCE\t\t\t'
-    line = line + adjust_format(np.sum(p_data[0][1])) + "\t"
-    line = line + adjust_format(np.sum(p_data[1][1])) + "\t"
-    line = line + adjust_format(np.sum(p_data[2][1])) + "\t"
-    line = line + adjust_format(np.sum(p_data[3][1])) + "\t"
-    line = line + adjust_format(np.sum(p_data[4][1])) + "\t"
-    line = line + adjust_format(np.sum(p_data[5][1])) + "\t"
-    line = line + adjust_format(np.sum(p_data[6][1])) + "\t"
-    line = line + adjust_format(np.sum(p_data[7][1])) + "\t"
-    line = line + adjust_format(np.sum(p_data[8][1])) + "\t"
-    line = line + adjust_format(np.sum(p_data[9][1])) + "\t"
-    line = line + adjust_format(np.sum(p_data[10][1])) + "\t"
-    line = line + adjust_format(np.sum(p_data[11][1])) + "\t"
-    line = line + adjust_format(np.sum(p_data[12][1])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[0][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[1][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[2][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[3][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[4][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[5][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[6][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[7][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[8][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[9][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[10][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[11][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[12][1] if i >=0])) + "\t"
 
-    line = line + "%5.0f\t\t" % (np.sum(hrc_val))
-    line = line + f"{np.sum(pre_hrc_val):5.0f}\n" 
+    line = line + "%5.0f\t\t" % (np.sum([i for i in hrc_val if i >= 0]))
+    line = line + f"{np.sum([i for i in pre_hrc_val if i >= 0]):5.0f}\n" 
 
     line = line +'\n'
     line = line + '\tHRC Proxy is defined as:\n\n'
