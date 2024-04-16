@@ -312,7 +312,6 @@ def extract_goes_data(dlink, energy_list):
     elen   = len(energy_list)
     d_save = []
     ctime = datetime.datetime.strptime(data[-1]['time_tag'], '%Y-%m-%dT%H:%M:%SZ') - datetime.timedelta(hours=2)
-    print(f"ctime: {ctime}")
     for k in range(0, elen):
         t_list = []
         f_list = []
@@ -336,9 +335,8 @@ def extract_goes_data(dlink, energy_list):
                     for i in range(300,int(diff),300):
                         missing_time = last_time + datetime.timedelta(seconds=i)
                         if missing_time > ctime:
-                            print(f"MISSING_TIME: {missing_time}, energy: {energy}")
                             t_list.append(missing_time.strftime('%Y:%j:%H:%M'))
-                            #mark missing data with the invalid data marker (-1e5)
+                            #Mark missing data with the invalid data marker (-1e5)
                             f_list.append(-1e5)
 
                 if otime > ctime:
@@ -347,25 +345,28 @@ def extract_goes_data(dlink, energy_list):
                     last_time = otime
 
         d_save.append([t_list, f_list])
+#
+#--- Check if there is a missing energy at the beginning or ending of a band.
+#
+    for i in range(len(d_save)):
+        #Find a channel with all 24 needed data points and use those time values
+        if len(d_save[i][0]) == 24:
+            start = d_save[i][0][0]
+            stop = d_save[i][0][-1]
+            break
 
+    for i in range(len(d_save)):
+        if len(d_save[i][0]) < 24:
+            #if there is still not 24 data points, then we are missing the start or end of this channel
+            if d_save[i][0][0] != start:
+                d_save[i][0].insert(0,start)
+                d_save[i][1].insert(0,-1e5)
+                
+            if d_save[i][0][-1] != stop:
+                d_save[i][0].append(stop)
+                d_save[i][1].append(-1e5)
     return d_save
 
-#----------------------------------------------------------------------------
-#-- check_last_entry_time: check the last data entry time of the given data file 
-#----------------------------------------------------------------------------
-
-def check_last_entry_time(data):
-    """
-    check the last data entry time of the given data file
-    input:  data    --- data
-    output: ltime   --- the last entry time in seconds from 1998.1.1
-    """
-    ent = data[-1]
-    otime = ent['time_tag']
-    otime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(otime, '%Y-%m-%dT%H:%M:%SZ'))
-    stime = int(Chandra.Time.DateTime(otime).secs)
-
-    return stime
 
 #----------------------------------------------------------------------------
 #-- compute_p_vals: create combined flux data for table displays           --
@@ -546,7 +547,6 @@ def adjust_format(val):
 
     val = float(val)
     if val < 0: #Missing entry
-        print(val)
         out = f"{val:5.0f}"
     elif val < 10:
         out = "%1.5f" % (val)
