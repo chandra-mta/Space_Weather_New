@@ -12,6 +12,7 @@
 import os
 import signal
 import time
+import datetime
 import Chandra.Time
 import urllib.request
 import json
@@ -310,39 +311,40 @@ def extract_goes_data(dlink, energy_list):
 #
     elen   = len(energy_list)
     d_save = []
+    ctime = datetime.datetime.strptime(data[-1]['time_tag'], '%Y-%m-%dT%H:%M:%SZ') - datetime.timedelta(hours=2)
+    print(f"ctime: {ctime}")
     for k in range(0, elen):
         t_list = []
         f_list = []
         energy = energy_list[k]
+        last_time = datetime.datetime.strptime(data[0]['time_tag'], '%Y-%m-%dT%H:%M:%SZ')
 #
 #--- check the last entry time and select only last 2hrs
 #
-        ltime  = check_last_entry_time(data)
-        ctime  = ltime - 3600.0 * 2
         for ent in data:
-#
-#--- get the data from a specified satellite
-#
-#            if ent['satellite'] != satellite:
-#                continue
 #
 #--- read time and flux of the given energy range
 #
             if ent['energy'] == energy:
                 flux  = float(ent['flux']) * 1e3   #--- keV to MeV
-#
-#--- convert time into seconds from 1998.1.1
-#
-                otime = ent['time_tag']
-                dtime = time.strftime('%Y:%j:%H:%M',    time.strptime(otime, '%Y-%m-%dT%H:%M:%SZ'))
-                otime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(otime, '%Y-%m-%dT%H:%M:%SZ'))
-                stime = int(Chandra.Time.DateTime(otime).secs)
+                otime =  datetime.datetime.strptime(ent['time_tag'], '%Y-%m-%dT%H:%M:%SZ')
+                #If the otime is more than five minutes after the last_time
+                #then that means the data set is missing an entry for this energy band and zero values should be appened.
+                diff = (otime - last_time).seconds
+                if diff > 300:
+                    #All times should be in divisions of 5 minutes/300 seconds.
+                    for i in range(300,int(diff),300):
+                        missing_time = last_time + datetime.timedelta(seconds=i)
+                        if missing_time > ctime:
+                            print(f"MISSING_TIME: {missing_time}, energy: {energy}")
+                            t_list.append(missing_time.strftime('%Y:%j:%H:%M'))
+                            #mark missing data with the invalid data marker (-1e5)
+                            f_list.append(-1e5)
 
-                if stime <= ctime:
-                    continue
-
-                t_list.append(dtime)
-                f_list.append(flux)
+                if otime > ctime:
+                    t_list.append(otime.strftime('%Y:%j:%H:%M'))
+                    f_list.append(flux)
+                    last_time = otime
 
         d_save.append([t_list, f_list])
 
