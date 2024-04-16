@@ -496,6 +496,9 @@ def compute_hrc(data):
 #--- after 2021:125:06:05:00 
 #
             val = 143.0 * c5[k] + 64738.0 * c6[k] + 162505.0 * c7[k] + 4127
+            if c5[k] < 0 or c6[k] < 0 or c7[k] < 0:
+                #Missing a channel value
+                val = -1e5
 
         except:
             val = -1e5
@@ -523,6 +526,9 @@ def compute_pre2020_hrc(data):
     for k in range(len(p5p6)):
         try:
             val = 6000 * p5p6[k] + 270000 * p7[k] + 100000 * p8abc[k]
+            if p5p6[k] < 0 or p7[k] < 0 or p8abc[k] < 0:
+                #Missing a channel value
+                val = -1e5
         except:
             val = -1e5
         
@@ -538,7 +544,11 @@ def combine_rates(data_list, channel_name):
     for i, data in enumerate(data_list):
         combined = combined + (np.array(data) * DE[channel_name[i]][2])
     delta_e = DE[channel_name[-1]][0] - DE[channel_name[0]][1]
-    return list(combined / delta_e)
+    final = list(combined / delta_e)
+    for i in range(len(final)):
+        if final[i] < 0: #Computes with missing data value
+            final[i] = -1e5
+    return final
 #----------------------------------------------------------------------------
 #----------------------------------------------------------------------------
 #----------------------------------------------------------------------------
