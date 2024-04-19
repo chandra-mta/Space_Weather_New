@@ -12,6 +12,7 @@
 import os
 import signal
 import time
+import datetime
 import Chandra.Time
 import urllib.request
 import json
@@ -220,40 +221,40 @@ def make_two_hour_table():
 #
     line = line + '\tAVERAGE\t\t\t'
 
-    line = line + adjust_format(np.mean(p_data[0][1])) + "\t"
-    line = line + adjust_format(np.mean(p_data[1][1])) + "\t"
-    line = line + adjust_format(np.mean(p_data[2][1])) + "\t"
-    line = line + adjust_format(np.mean(p_data[3][1])) + "\t"
-    line = line + adjust_format(np.mean(p_data[4][1])) + "\t"
-    line = line + adjust_format(np.mean(p_data[5][1])) + "\t"
-    line = line + adjust_format(np.mean(p_data[6][1])) + "\t"
-    line = line + adjust_format(np.mean(p_data[7][1])) + "\t"
-    line = line + adjust_format(np.mean(p_data[8][1])) + "\t"
-    line = line + adjust_format(np.mean(p_data[9][1])) + "\t"
-    line = line + adjust_format(np.mean(p_data[10][1])) + "\t"
-    line = line + adjust_format(np.mean(p_data[11][1])) + "\t"
-    line = line + adjust_format(np.mean(p_data[12][1])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[0][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[1][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[2][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[3][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[4][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[5][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[6][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[7][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[8][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[9][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[10][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[11][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.mean([i for i in p_data[12][1] if i >=0])) + "\t"
 
-    line = line + "%5.0f\t\t" % (np.mean(hrc_val))
-    line = line + f"{np.mean(pre_hrc_val):5.0f}\n" 
+    line = line + "%5.0f\t\t" % (np.mean([i for i in hrc_val if i >= 0]))
+    line = line + f"{np.mean([i for i in pre_hrc_val if i >= 0]):5.0f}\n" 
 #
     line = line + '\tFLUENCE\t\t\t'
-    line = line + adjust_format(np.sum(p_data[0][1])) + "\t"
-    line = line + adjust_format(np.sum(p_data[1][1])) + "\t"
-    line = line + adjust_format(np.sum(p_data[2][1])) + "\t"
-    line = line + adjust_format(np.sum(p_data[3][1])) + "\t"
-    line = line + adjust_format(np.sum(p_data[4][1])) + "\t"
-    line = line + adjust_format(np.sum(p_data[5][1])) + "\t"
-    line = line + adjust_format(np.sum(p_data[6][1])) + "\t"
-    line = line + adjust_format(np.sum(p_data[7][1])) + "\t"
-    line = line + adjust_format(np.sum(p_data[8][1])) + "\t"
-    line = line + adjust_format(np.sum(p_data[9][1])) + "\t"
-    line = line + adjust_format(np.sum(p_data[10][1])) + "\t"
-    line = line + adjust_format(np.sum(p_data[11][1])) + "\t"
-    line = line + adjust_format(np.sum(p_data[12][1])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[0][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[1][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[2][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[3][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[4][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[5][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[6][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[7][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[8][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[9][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[10][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[11][1] if i >=0])) + "\t"
+    line = line + adjust_format(np.sum([i for i in p_data[12][1] if i >=0])) + "\t"
 
-    line = line + "%5.0f\t\t" % (np.sum(hrc_val))
-    line = line + f"{np.sum(pre_hrc_val):5.0f}\n" 
+    line = line + "%5.0f\t\t" % (np.sum([i for i in hrc_val if i >= 0]))
+    line = line + f"{np.sum([i for i in pre_hrc_val if i >= 0]):5.0f}\n" 
 
     line = line +'\n'
     line = line + '\tHRC Proxy is defined as:\n\n'
@@ -310,60 +311,62 @@ def extract_goes_data(dlink, energy_list):
 #
     elen   = len(energy_list)
     d_save = []
+    ctime = datetime.datetime.strptime(data[-1]['time_tag'], '%Y-%m-%dT%H:%M:%SZ') - datetime.timedelta(hours=2)
     for k in range(0, elen):
         t_list = []
         f_list = []
         energy = energy_list[k]
+        last_time = datetime.datetime.strptime(data[0]['time_tag'], '%Y-%m-%dT%H:%M:%SZ')
 #
 #--- check the last entry time and select only last 2hrs
 #
-        ltime  = check_last_entry_time(data)
-        ctime  = ltime - 3600.0 * 2
         for ent in data:
-#
-#--- get the data from a specified satellite
-#
-#            if ent['satellite'] != satellite:
-#                continue
 #
 #--- read time and flux of the given energy range
 #
             if ent['energy'] == energy:
                 flux  = float(ent['flux']) * 1e3   #--- keV to MeV
-#
-#--- convert time into seconds from 1998.1.1
-#
-                otime = ent['time_tag']
-                dtime = time.strftime('%Y:%j:%H:%M',    time.strptime(otime, '%Y-%m-%dT%H:%M:%SZ'))
-                otime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(otime, '%Y-%m-%dT%H:%M:%SZ'))
-                stime = int(Chandra.Time.DateTime(otime).secs)
+                otime =  datetime.datetime.strptime(ent['time_tag'], '%Y-%m-%dT%H:%M:%SZ')
+                #If the otime is more than five minutes after the last_time
+                #then that means the data set is missing an entry for this energy band and zero values should be appened.
+                diff = (otime - last_time).seconds
+                if diff > 300:
+                    #All times should be in divisions of 5 minutes/300 seconds.
+                    for i in range(300,int(diff),300):
+                        missing_time = last_time + datetime.timedelta(seconds=i)
+                        if missing_time > ctime:
+                            t_list.append(missing_time.strftime('%Y:%j:%H:%M'))
+                            #Mark missing data with the invalid data marker (-1e5)
+                            f_list.append(-1e5)
 
-                if stime <= ctime:
-                    continue
-
-                t_list.append(dtime)
-                f_list.append(flux)
+                if otime > ctime:
+                    t_list.append(otime.strftime('%Y:%j:%H:%M'))
+                    f_list.append(flux)
+                    last_time = otime
 
         d_save.append([t_list, f_list])
+#
+#--- Check if there is a missing energy at the beginning or ending of a band.
+#
+    for i in range(len(d_save)):
+        #Find a channel with all 24 needed data points and use those time values
+        if len(d_save[i][0]) == 24:
+            start = d_save[i][0][0]
+            stop = d_save[i][0][-1]
+            break
 
+    for i in range(len(d_save)):
+        if len(d_save[i][0]) < 24:
+            #if there is still not 24 data points, then we are missing the start or end of this channel
+            if d_save[i][0][0] != start:
+                d_save[i][0].insert(0,start)
+                d_save[i][1].insert(0,-1e5)
+                
+            if d_save[i][0][-1] != stop:
+                d_save[i][0].append(stop)
+                d_save[i][1].append(-1e5)
     return d_save
 
-#----------------------------------------------------------------------------
-#-- check_last_entry_time: check the last data entry time of the given data file 
-#----------------------------------------------------------------------------
-
-def check_last_entry_time(data):
-    """
-    check the last data entry time of the given data file
-    input:  data    --- data
-    output: ltime   --- the last entry time in seconds from 1998.1.1
-    """
-    ent = data[-1]
-    otime = ent['time_tag']
-    otime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(otime, '%Y-%m-%dT%H:%M:%SZ'))
-    stime = int(Chandra.Time.DateTime(otime).secs)
-
-    return stime
 
 #----------------------------------------------------------------------------
 #-- compute_p_vals: create combined flux data for table displays           --
@@ -493,6 +496,9 @@ def compute_hrc(data):
 #--- after 2021:125:06:05:00 
 #
             val = 143.0 * c5[k] + 64738.0 * c6[k] + 162505.0 * c7[k] + 4127
+            if c5[k] < 0 or c6[k] < 0 or c7[k] < 0:
+                #Missing a channel value
+                val = -1e5
 
         except:
             val = -1e5
@@ -520,6 +526,9 @@ def compute_pre2020_hrc(data):
     for k in range(len(p5p6)):
         try:
             val = 6000 * p5p6[k] + 270000 * p7[k] + 100000 * p8abc[k]
+            if p5p6[k] < 0 or p7[k] < 0 or p8abc[k] < 0:
+                #Missing a channel value
+                val = -1e5
         except:
             val = -1e5
         
@@ -535,7 +544,11 @@ def combine_rates(data_list, channel_name):
     for i, data in enumerate(data_list):
         combined = combined + (np.array(data) * DE[channel_name[i]][2])
     delta_e = DE[channel_name[-1]][0] - DE[channel_name[0]][1]
-    return list(combined / delta_e)
+    final = list(combined / delta_e)
+    for i in range(len(final)):
+        if final[i] < 0: #Computes with missing data value
+            final[i] = -1e5
+    return final
 #----------------------------------------------------------------------------
 #----------------------------------------------------------------------------
 #----------------------------------------------------------------------------
@@ -543,7 +556,9 @@ def combine_rates(data_list, channel_name):
 def adjust_format(val):
 
     val = float(val)
-    if val < 10:
+    if val < 0: #Missing entry
+        out = f"{val:5.0f}"
+    elif val < 10:
         out = "%1.5f" % (val)
     elif val < 100:
         out = "%2.4f" % (val)
