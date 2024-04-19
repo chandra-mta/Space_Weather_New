@@ -639,7 +639,10 @@ if __name__ == "__main__":
             #Previous script run must have completed successfully. Prepare lock file for this script run.
             os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
 
-        update_goes_differential_page()
+        try:
+            update_goes_differential_page()
+        except:
+            traceback.print_exc()
 #
 #--- Remove lock file once process is completed
 #
