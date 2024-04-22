@@ -37,7 +37,7 @@ import matplotlib.lines        as lines
 #--- Define Directory Pathing
 #
 XMM_DATA_DIR = "/data/mta4/Space_Weather/XMM/Data"
-TLE_DIR = "/data/mta4/Space_Weather/TLE"
+TLE_DATA_DIR = "/data/mta4/Space_Weather/TLE/Data"
 XMM_PLOT_DIR = '/data/mta4/www/RADIATION_new/XMM/Plots'
 
 #
@@ -67,7 +67,7 @@ def plot_gsm_orbits_xz_plane():
 #
 #--- read xmm orbit
 #
-    ifile = f"{TLE_DIR}/Data/xmm.spctrk"
+    ifile = f"{TLE_DATA_DIR}/xmm.spctrk"
     with open(ifile) as f:
         data = [line.strip() for line in f.readlines()]
     [xtime, x_eci,y_eci,z_eci,vx,vy,vz] = convert_to_col_data(data)
@@ -75,7 +75,7 @@ def plot_gsm_orbits_xz_plane():
 #
 #--- read cxo orbit
 #
-    ifile = f"{TLE_DIR}/Data/cxo.spctrk"
+    ifile = f"{TLE_DATA_DIR}/cxo.spctrk"
     with open(ifile) as f:
         data = [line.strip() for line in f.readlines()]
     [ctime,cxo_x_eci,cxo_y_eci,cxo_z_eci,cxo_vx,cxo_vy,cxo_vz] = convert_to_col_data(data)
@@ -553,7 +553,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
     parser.add_argument("-p", "--path", help = "Determine data output file path")
-    parser.add_argument("-d", "--data", help = "Determine data input file path")
+    parser.add_argument("-x", "--xmmdata", help = "Determine data input file path for XMM data")
+    parser.add_argument("-y", "--tledata", help = "Determine data input file path for TLE data")
     args = parser.parse_args()
 
 
@@ -567,11 +568,10 @@ if __name__ == '__main__':
             HTML_DIR = f"{os.getcwd()}/test/outTest"
             os.makedirs(HTML_DIR, exist_ok = True)
 
-        if args.data:
-            XMM_DATA_DIR = args.path
-        else:
-            XMM_DATA_DIR = f"{os.getcwd()}/test/outTest"
-            os.makedirs(XMM_DATA_DIR, exist_ok = True)
+        if args.xmmdata:
+            XMM_DATA_DIR = args.xmmdata
+        if args.tledata:
+            TLE_DATA_DIR = args.tledata
 
         plot_gsm_orbits_xz_plane()
 
