@@ -12,7 +12,6 @@
 
 import sys
 import os
-import string
 import re
 import time
 import math
@@ -22,9 +21,6 @@ from datetime import datetime
 import numpy
 import matplotlib as mpl
 
-sys.path.append('/data/mta4/Script/Python3.10/lib/python3.10/site-packages')
-from geopack import geopack
-
 if __name__ == '__main__':
     mpl.use('Agg')
 
@@ -32,42 +28,29 @@ from pylab import *
 import matplotlib.pyplot       as plt
 import matplotlib.font_manager as font_manager
 import matplotlib.lines        as lines
-#
-#--- reading directory list
-#
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
 
-f    = open(path, 'r')
-data = [line.strip() for line in f.readlines()]
-f.close()
+#
+#--- Define Directory Pathing
+#
+XMM_DIR = "/data/mta4/Space_Weather/XMM"
+TLE_DIR = "/data/mta4/Space_Weather/TLE"
+HTML_DIR = '/data/mta4/www/RADIATION_new'
 
-for ent in data:
-    atemp = re.split(':', ent)
-    var  = atemp[1].strip()
-    line = atemp[0].strip()
-    exec("%s = %s" %(var, line))
-    #for writing out files in test directory
-if (os.getenv('TEST') == 'TEST'):
-    os.system('mkdir -p TestOut')
-    test_out = os.getcwd() + '/TestOut'
 #
 #--- append  pathes to private folders to a python directory
 #
-sys.path.append('/data/mta4/Script/Python3.10/MTA/')
+sys.path.append('/data/mta4/Script/Python3.11/MTA/')
+sys.path.append('/data/mta4/Script/Python3.11/lib/python3.11/site-packages')
 #
 #--- import several functions
 #
 import mta_common_functions as mcf
-#
-#--- temp writing file name
-#
-import random
-rtail  = int(time.time() * random.random()) 
-zspace = '/tmp/zspace' + str(rtail)
+from geopack import geopack
+
 #
 #--- Earth radius
 #
-earth    =  6378.0
+EARTH    =  6378.0
 
 #--------------------------------------------------------------------------
 #-- plot_gsm_orbits_xz_plane: plot xmm and cxo orbits in gsm coordinates in xz plane
@@ -82,14 +65,14 @@ def plot_gsm_orbits_xz_plane():
 #
 #--- read xmm orbit
 #
-    ifile = tle_dir + 'Data/xmm.spctrk'
+    ifile = f"{TLE_DIR}/Data/xmm.spctrk"
     data  = mcf.read_data_file(ifile)
     [xtime, x_eci,y_eci,z_eci,vx,vy,vz] = convert_to_col_data(data)
     [x_gsm, y_gsm, z_gsm] = compute_gsm(xtime, x_eci,y_eci,z_eci)
 #
 #--- read cxo orbit
 #
-    ifile = tle_dir + 'Data/cxo.spctrk'
+    ifile = f"{TLE_DIR}/Data/cxo.spctrk"
     data  = mcf.read_data_file(ifile)
     [ctime,cxo_x_eci,cxo_y_eci,cxo_z_eci,cxo_vx,cxo_vy,cxo_vz] = convert_to_col_data(data)
     [cxo_x_gsm, cxo_y_gsm, cxo_z_gsm] = compute_gsm(ctime, cxo_x_eci,cxo_y_eci,cxo_z_eci)
@@ -112,10 +95,10 @@ def plot_gsm_orbits_xz_plane():
 #
 #--- get crm region (color list)
 #
-    ifile     = xmm_dir + 'Data/crmreg_xmm.dat'
+    ifile = f"{XMM_DIR}/Data/crmreg_xmm.dat"
     xmm_color = crm_region(ifile, xtime)
 
-    ifile     = xmm_dir + 'Data/crmreg_cxo.dat'
+    ifile = f"{XMM_DIR}/Data/crmreg_cxo.dat"
     cxo_color = crm_region(ifile, ctime)
 #
 #--- van allen
@@ -296,17 +279,13 @@ def plot_gsm_orbits_xz_plane():
 #
 #---set plot surface
 #
-    fig = matplotlib.pyplot.gcf()
+    fig = plt.gcf()
     fig.set_size_inches(5.0, 5.0)
 #
 #--- save the plot
 #
-    outname = html_dir + 'XMM/Plots/mta_xmm_plot_gsm_xz.png'
-    #outname = 'test2.png'
+    outname = f"{HTML_DIR}/XMM/Plots/mta_xmm_plot_gsm_xz.png"
     plt.tight_layout()
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        outname = test_out + "/" + os.path.basename(outname)
     plt.savefig(outname, format='png', dpi=300)
     plt.close('all')
 
@@ -413,9 +392,9 @@ def compute_gsm(t, x, y, z):
         psi = geopack.recalc(t[k])
         xgeo, ygeo, zgeo = geopack.geigeo(x[k], y[k], z[k], 1)
         xgsm, ygsm, zgsm = geopack.geogsm(xgeo, ygeo, zgeo, 1)
-        xgm = xgsm / earth
-        ygm = ygsm / earth
-        zgm = zgsm / earth
+        xgm = xgsm / EARTH
+        ygm = ygsm / EARTH
+        zgm = zgsm / EARTH
         gx.append(xgm)
         gy.append(ygm)
         gz.append(zgm)
