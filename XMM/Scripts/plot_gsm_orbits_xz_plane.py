@@ -39,12 +39,10 @@ HTML_DIR = '/data/mta4/www/RADIATION_new'
 #
 #--- append  pathes to private folders to a python directory
 #
-sys.path.append('/data/mta4/Script/Python3.11/MTA/')
 sys.path.append('/data/mta4/Script/Python3.11/lib/python3.11/site-packages')
 #
 #--- import several functions
 #
-import mta_common_functions as mcf
 from geopack import geopack
 
 #
@@ -66,14 +64,16 @@ def plot_gsm_orbits_xz_plane():
 #--- read xmm orbit
 #
     ifile = f"{TLE_DIR}/Data/xmm.spctrk"
-    data  = mcf.read_data_file(ifile)
+    with open(ifile) as f:
+        data = [line.strip() for line in f.readlines()]
     [xtime, x_eci,y_eci,z_eci,vx,vy,vz] = convert_to_col_data(data)
     [x_gsm, y_gsm, z_gsm] = compute_gsm(xtime, x_eci,y_eci,z_eci)
 #
 #--- read cxo orbit
 #
     ifile = f"{TLE_DIR}/Data/cxo.spctrk"
-    data  = mcf.read_data_file(ifile)
+    with open(ifile) as f:
+        data = [line.strip() for line in f.readlines()]
     [ctime,cxo_x_eci,cxo_y_eci,cxo_z_eci,cxo_vx,cxo_vy,cxo_vz] = convert_to_col_data(data)
     [cxo_x_gsm, cxo_y_gsm, cxo_z_gsm] = compute_gsm(ctime, cxo_x_eci,cxo_y_eci,cxo_z_eci)
 #
@@ -450,7 +450,8 @@ def crm_region(ifile, xtime):
 #
 #--- crm region data
 #
-    data  = mcf.read_data_file(ifile)
+    with open(ifile) as f:
+        data = [line.strip() for line in f.readlines()]
     ctime = []
     area  = []
 #
