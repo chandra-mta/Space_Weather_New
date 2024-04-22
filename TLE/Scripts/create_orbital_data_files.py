@@ -21,37 +21,24 @@ import numpy
 import Chandra.Time
 from datetime import datetime
 
-sys.path.append('/data/mta4/Script/Python3.10/lib/python3.10/site-packages')
-from geopack  import geopack
-from sgp4.api import Satrec
-from sgp4.api import jday
-from astLib import astCoords
 #
-#--- reading directory list
+#--- Define Directory Pathing
 #
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
+TLE_DATA_DIR = "/data/mta4/Space_Weather/TLE/Data"
 
-f    = open(path, 'r')
-data = [line.strip() for line in f.readlines()]
-f.close()
-
-for ent in data:
-    atemp = re.split(':', ent)
-    var  = atemp[1].strip()
-    line = atemp[0].strip()
-    exec("%s = %s" %(var, line))
-#for writing out files in test directory
-if (os.getenv('TEST') == 'TEST'):
-    os.system('mkdir -p TestOut')
-    test_out = os.getcwd() + '/TestOut'
 #
 #--- append  pathes to private folders to a python directory
 #
-sys.path.append('/data/mta4/Script/Python3.10/MTA/')
+sys.path.append('/data/mta4/Script/Python3.11/MTA/')
+sys.path.append('/data/mta4/Script/Python3.11/lib/python3.11/site-packages')
 #
 #--- import several functions
 #
 import mta_common_functions as mcf
+from geopack  import geopack
+from sgp4.api import Satrec
+from sgp4.api import jday
+from astLib import astCoords
 #
 #--- temp writing file name
 #
@@ -83,10 +70,6 @@ tle_url = "http://www.celestrak.com/NORAD/elements/science.txt"
 #--- coordinate system
 #
 coord_sys = '2000'          #---- J2000
-#
-#--- tle data dir
-#
-tel_data_dir = tle_dir + 'Data/'
 
 #--------------------------------------------------------------------------
 #-- create_orbital_data_files: using the orbital elements data, create several orbital data files
@@ -245,10 +228,7 @@ def create_spctrk_file(sat, tle, day_before, day_after, interval):
 #
 #--- print out the result
 #
-    ofile = tel_data_dir + sat +'.spctrk'
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        ofile = test_out + "/" + os.path.basename(ofile)
+    ofile = f"{TLE_DATA_DIR}/{sat}.spctrk"
     with open(ofile, 'w') as fo:
         fo.write(line)
 
@@ -265,18 +245,12 @@ def print_out_element(satellite, idata):
             <tel_dir>/Data/<satellite>.tle2
     """
     line  = idata[0] + '\n' + idata[1] + '\n'
-    ofile = tle_dir + '/Data/' + satellite + '.tle'
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        ofile = test_out + "/" + os.path.basename(ofile)
+    ofile = f"{TLE_DATA_DIR}/{satellite}.tle"
     with open(ofile, 'w') as fo:
         fo.write(line)
 
     line  = line + '0 0 0 0\n'
-    ofile = tle_dir + '/Data/' + satellite + '.tle2'
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        ofile = test_out + "/" + os.path.basename(ofile)
+    ofile = f"{TLE_DATA_DIR}/{satellite}.tle2"
     with open(ofile, 'w') as fo:
         fo.write(line)
 
@@ -419,9 +393,8 @@ def convert_tle(sat):
     input:  sat --- 'cxo' or 'xmm' (data: <tle_dir>/Data/<sat>.spctrk)
     ouput:  <tle_dir>/Data/<sat>.j2000
     """
-    ifile = tel_data_dir + sat + '.spctrk'
-    ofile = tel_data_dir + sat + '.j2000'
-    
+    ifile = f"{TLE_DATA_DIR}/{sat}.spctrk"
+    ofile = f"{TLE_DATA_DIR}/{sat}.j2000"
     data  = mcf.read_data_file(ifile)
 #
 #--- find ephoch line in the header part and convert the time foramt in fractional year
@@ -498,9 +471,6 @@ def convert_tle(sat):
 #
 #--- print out the results
 #
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        ofile = test_out + "/" + os.path.basename(ofile)
     with open(ofile, 'w') as fo:
         fo.write(line)
 
@@ -588,7 +558,7 @@ def convert_to_gsm(sat):
 #
 #--- read input data
 #
-    ifile = tel_data_dir + sat + '.j2000'
+    ifile = f"{TLE_DATA_DIR}/{sat}.j2000"
     data  = mcf.read_data_file(ifile)
 #
 #--- there are two files to create
@@ -660,12 +630,8 @@ def convert_to_gsm(sat):
 #
 #--- print out the results
 #
-    ofile1 = tel_data_dir + sat + '.gsme'
-    ofile2 = tel_data_dir + sat + '.gsme_in_Re'
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        ofile1 = test_out + "/" + os.path.basename(ofile1)
-        ofile2 = test_out + "/" + os.path.basename(ofile2)
+    ofile1 = f"{TLE_DATA_DIR}/{sat}/.gsme"
+    ofile2 = f"{TLE_DATA_DIR}/{sat}.gsme_in_Re"
     with open(ofile1, 'w') as fo:
         fo.write(line1)
 
