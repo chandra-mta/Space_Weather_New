@@ -36,9 +36,9 @@ import matplotlib.lines        as lines
 #
 #--- Define Directory Pathing
 #
-XMM_DIR = "/data/mta4/Space_Weather/XMM"
+XMM_DATA_DIR = "/data/mta4/Space_Weather/XMM/Data"
 TLE_DIR = "/data/mta4/Space_Weather/TLE"
-HTML_DIR = '/data/mta4/www/RADIATION_new'
+XMM_PLOT_DIR = '/data/mta4/www/RADIATION_new/XMM/Plots'
 
 #
 #--- append  pathes to private folders to a python directory
@@ -99,10 +99,10 @@ def plot_gsm_orbits_xz_plane():
 #
 #--- get crm region (color list)
 #
-    ifile = f"{XMM_DIR}/Data/crmreg_xmm.dat"
+    ifile = f"{XMM_DATA_DIR}/crmreg_xmm.dat"
     xmm_color = crm_region(ifile, xtime)
 
-    ifile = f"{XMM_DIR}/Data/crmreg_cxo.dat"
+    ifile = f"{XMM_DATA_DIR}/crmreg_cxo.dat"
     cxo_color = crm_region(ifile, ctime)
 #
 #--- van allen
@@ -288,7 +288,8 @@ def plot_gsm_orbits_xz_plane():
 #
 #--- save the plot
 #
-    outname = f"{HTML_DIR}/XMM/Plots/mta_xmm_plot_gsm_xz.png"
+    outname = f"{XMM_PLOT_DIR}/mta_xmm_plot_gsm_xz.png"
+    os.makedirs()
     plt.tight_layout()
     plt.savefig(outname, format='png', dpi=300)
     plt.close('all')
@@ -552,18 +553,25 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
     parser.add_argument("-p", "--path", help = "Determine data output file path")
+    parser.add_argument("-d", "--data", help = "Determine data input file path")
     args = parser.parse_args()
 
 
     if args.mode == 'test':
-        if args.path:
-            HTML_DIR = args.path
-        else:
 #
 #---Define pathing for test output
 #
+        if args.path:
+            HTML_DIR = args.path
+        else:
             HTML_DIR = f"{os.getcwd()}/test/outTest"
             os.makedirs(HTML_DIR, exist_ok = True)
+
+        if args.data:
+            XMM_DATA_DIR = args.path
+        else:
+            XMM_DATA_DIR = f"{os.getcwd()}/test/outTest"
+            os.makedirs(XMM_DATA_DIR, exist_ok = True)
 
         plot_gsm_orbits_xz_plane()
 
