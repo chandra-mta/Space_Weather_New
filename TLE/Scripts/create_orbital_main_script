@@ -1,4 +1,4 @@
 
 cd /data/mta4/Space_Weather/TLE/Scripts/
 
-/data/mta4/Space_Weather/TLE/Scripts/create_orbital_data_files.py
+/data/mta4/Space_Weather/TLE/Scripts/create_orbital_data_files.py -m flight

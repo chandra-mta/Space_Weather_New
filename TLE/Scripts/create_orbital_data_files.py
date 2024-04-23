@@ -7,86 +7,65 @@
 #                                                                                               #
 #           author: t. isobe (tisobe@cfa.harvard.edu)                                           #
 #                                                                                               #
-#           last update: mar 16, 2021                                                           #
+#           last update: Apr 23 2024                                                            #
 #                                                                                               #
 #################################################################################################
 
 import sys
 import os
-import string
 import re
 import time
 import math
 import numpy
 import Chandra.Time
 from datetime import datetime
-
-sys.path.append('/data/mta4/Script/Python3.10/lib/python3.10/site-packages')
-from geopack  import geopack
-from sgp4.api import Satrec
-from sgp4.api import jday
-from astLib import astCoords
+import calendar
+import argparse
+import getpass
+import signal
+import traceback
+import urllib.request
 #
-#--- reading directory list
+#--- Define Directory Pathing
 #
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
+TLE_DATA_DIR = "/data/mta4/Space_Weather/TLE/Data"
 
-f    = open(path, 'r')
-data = [line.strip() for line in f.readlines()]
-f.close()
-
-for ent in data:
-    atemp = re.split(':', ent)
-    var  = atemp[1].strip()
-    line = atemp[0].strip()
-    exec("%s = %s" %(var, line))
-#for writing out files in test directory
-if (os.getenv('TEST') == 'TEST'):
-    os.system('mkdir -p TestOut')
-    test_out = os.getcwd() + '/TestOut'
 #
 #--- append  pathes to private folders to a python directory
 #
-sys.path.append('/data/mta4/Script/Python3.10/MTA/')
+sys.path.append('/data/mta4/Script/Python3.11/lib/python3.11/site-packages')
 #
 #--- import several functions
 #
-import mta_common_functions as mcf
-#
-#--- temp writing file name
-#
-import random
-rtail  = int(time.time() * random.random()) 
-zspace = '/tmp/zspace' + str(rtail)
+from geopack  import geopack
+from sgp4.api import Satrec, jday
+from astLib import astCoords
+
 #
 #--- a list of satellite names
 #
-sats   = ['cxo', 'xmm']
+STATS   = ['cxo', 'xmm']
 #
 #--- earth
 #
-earth = 6371.0
+EARTH = 6371.0
 #
 #--- radian to degree conversion factor
 #
-r2d    = 180.0 / math.pi
+R2D    = 180.0 / math.pi
 #
 #--- current time
 #
-current_time_date    = time.strftime('%Y:%j:%H:%M:%S', time.gmtime())
-current_chandra_time = Chandra.Time.DateTime(current_time_date).secs
+CURRENT_TIME_DATE    = time.strftime('%Y:%j:%H:%M:%S', time.gmtime())
+CURRENT_CHANDRA_TIME = Chandra.Time.DateTime(CURRENT_TIME_DATE).secs
 #
 #--- a list of satellite orbital data on web
 #
-tle_url = "http://www.celestrak.com/NORAD/elements/science.txt"
+TLE_URL = "http://www.celestrak.com/NORAD/elements/science.txt"
 #
 #--- coordinate system
 #
-coord_sys = '2000'          #---- J2000
-#
-#--- tle data dir
-#
-tel_data_dir = tle_dir + 'Data/'
+COORD_SYS = '2000'          #---- J2000
 
 #--------------------------------------------------------------------------
 #-- create_orbital_data_files: using the orbital elements data, create several orbital data files
@@ -195,7 +174,7 @@ def create_spctrk_file(sat, tle, day_before, day_after, interval):
 #--- convert seconds from 1970.1.1
 #
     ep_uts = ut_in_secs(eyear, emon, eday, ehh, emm, ess)
-    lmon   = mcf.change_month_format(emon)
+    lmon = calendar.month_abbr[emon]
     ep_date = lmon + '%3d%5d%4d%3d%3d 0' % (eday, eyear, yday, ehh, emm)
 #
 #--- set the satellite orbit
@@ -245,10 +224,7 @@ def create_spctrk_file(sat, tle, day_before, day_after, interval):
 #
 #--- print out the result
 #
-    ofile = tel_data_dir + sat +'.spctrk'
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        ofile = test_out + "/" + os.path.basename(ofile)
+    ofile = f"{TLE_DATA_DIR}/{sat}.spctrk"
     with open(ofile, 'w') as fo:
         fo.write(line)
 
@@ -265,18 +241,12 @@ def print_out_element(satellite, idata):
             <tel_dir>/Data/<satellite>.tle2
     """
     line  = idata[0] + '\n' + idata[1] + '\n'
-    ofile = tle_dir + '/Data/' + satellite + '.tle'
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        ofile = test_out + "/" + os.path.basename(ofile)
+    ofile = f"{TLE_DATA_DIR}/{satellite}.tle"
     with open(ofile, 'w') as fo:
         fo.write(line)
 
     line  = line + '0 0 0 0\n'
-    ofile = tle_dir + '/Data/' + satellite + '.tle2'
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        ofile = test_out + "/" + os.path.basename(ofile)
+    ofile = f"{TLE_DATA_DIR}/{satellite}.tle2"
     with open(ofile, 'w') as fo:
         fo.write(line)
 
@@ -298,8 +268,8 @@ def create_time_list(day_before, day_after, interval):
 #
 #--- set starting and stopping time in seconds from 1998.1.1
 #
-    start     = current_chandra_time - day_before * 86400.0
-    stop      = current_chandra_time + day_after  * 86400.0
+    start     = CURRENT_CHANDRA_TIME - day_before * 86400.0
+    stop      = CURRENT_CHANDRA_TIME + day_after  * 86400.0
     steps     = int((stop - start) / interval) + 1
 
     jd_list   = []
@@ -358,8 +328,7 @@ def convert_igtime(gtime):
     fr   = 60 * (fr - mm)
     ss   = int(fr)
 
-    etime = str(year) + ':' + mcf.add_leading_zero(yday, 3) + ':' + mcf.add_leading_zero(hh)
-    etime = etime     + ':' + mcf.add_leading_zero(mm)      + ':' + mcf.add_leading_zero(ss)
+    etime = f"{year}:{yday:03}:{hh:02}:{mm:02}:{ss:02}"
 
     return etime
 
@@ -380,9 +349,8 @@ def get_orbit_elements():
 #
 #--- download the data and read it
 #
-    cmd = 'wget -O ' + zspace + ' -q ' + tle_url
-    os.system(cmd)
-    data = mcf.read_data_file(zspace, remove=1)
+    with urllib.request.urlopen(TLE_URL) as f:
+        data = [line.strip().decode() for line in f.readlines()]
 #
 #--- find the data of cxo and xmm
 #
@@ -419,10 +387,10 @@ def convert_tle(sat):
     input:  sat --- 'cxo' or 'xmm' (data: <tle_dir>/Data/<sat>.spctrk)
     ouput:  <tle_dir>/Data/<sat>.j2000
     """
-    ifile = tel_data_dir + sat + '.spctrk'
-    ofile = tel_data_dir + sat + '.j2000'
-    
-    data  = mcf.read_data_file(ifile)
+    ifile = f"{TLE_DATA_DIR}/{sat}.spctrk"
+    ofile = f"{TLE_DATA_DIR}/{sat}.j2000"
+    with open(ifile) as f:
+        data = [line.strip() for line in f.readlines()]
 #
 #--- find ephoch line in the header part and convert the time foramt in fractional year
 #
@@ -431,7 +399,7 @@ def convert_tle(sat):
         if mc is not None:
             atemp = re.split('\s+', ent)
             year  = float(atemp[-5])
-            mon   = mcf.change_month_format(atemp[-7])
+            mon = list(calendar.month_abbr).index(atemp[-7])
             day   = float(atemp[-6])
             hh    = float(atemp[-4])
             mm    = float(atemp[-3])
@@ -458,10 +426,10 @@ def convert_tle(sat):
 #
         r   = math.sqrt(x * x + y * y )
         r3  = math.sqrt(x * x + y * y + z * z)
-        ra  = math.atan2(y, x) * r2d
+        ra  = math.atan2(y, x) * R2D
         if ra < 0:
             ra += 360.0
-        dec = 90.0 - math.atan2(r, z) * r2d
+        dec = 90.0 - math.atan2(r, z) * R2D
 #
 #--- converting coordinates from  B1950 system to J200 system
 #--- since there is no proper motion correction, "epoch" of convertCoords is set to 0.0
@@ -473,9 +441,9 @@ def convert_tle(sat):
 #
 #--- convert back to x, y, z
 #
-        x = r3 * math.cos(dec / r2d) * math.cos(ra / r2d)
-        y = r3 * math.cos(dec / r2d) * math.sin(ra / r2d)
-        z = r3 * math.sin(dec / r2d)
+        x = r3 * math.cos(dec / R2D) * math.cos(ra / R2D)
+        y = r3 * math.cos(dec / R2D) * math.sin(ra / R2D)
+        z = r3 * math.sin(dec / R2D)
         
         [mon, day] = convert_yday_to_mon_day(atemp[1], atemp[2])
         fyear      = convert_to_fyear(atemp[1], atemp[2], atemp[3], atemp[4], atemp[5])
@@ -488,7 +456,7 @@ def convert_tle(sat):
         line = line + '%12.4f ' % z
         line = line + '%10.6f'  % ra
         line = line + '%11.6f'  % dec   
-        line = line + ' ' + coord_sys
+        line = line + ' ' + COORD_SYS
         line = line + '%13.6f'  % fyear
         line = line + '%3d'     % mon
         line = line + '%3d'     % day
@@ -498,9 +466,6 @@ def convert_tle(sat):
 #
 #--- print out the results
 #
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        ofile = test_out + "/" + os.path.basename(ofile)
     with open(ofile, 'w') as fo:
         fo.write(line)
 
@@ -535,8 +500,7 @@ def convert_yday_to_mon_day(year, yday):
 #
 #--- convert day of year to month and day of month
 #
-    ltime = str(int(float(year)))  + ':' + mcf.add_leading_zero(yday, 3) 
-    out   = time.strftime('%m:%d', time.strptime(ltime, '%Y:%j'))
+    out   = time.strftime('%m:%d', time.strptime(f"{int(float(year))}:{yday:03}", '%Y:%j'))
     [mon, day] = re.split(':', out)
     mon = int(float(mon))
     day = int(float(day))
@@ -563,12 +527,7 @@ def convert_to_fyear(year, yday, hh, mm, ss):
     mm   = float(mm)
     ss   = float(ss)
 
-    if mcf.is_leapyear(year):
-        base = 366
-    else:
-        base = 365
-
-    fyear = year + (yday + hh / 24.0 + mm / 1440.0 + ss / 86400.) / base
+    fyear = year + (yday + hh / 24.0 + mm / 1440.0 + ss / 86400.) / (365 + calendar.isleap(year))
 
     return fyear
 
@@ -588,8 +547,9 @@ def convert_to_gsm(sat):
 #
 #--- read input data
 #
-    ifile = tel_data_dir + sat + '.j2000'
-    data  = mcf.read_data_file(ifile)
+    ifile = f"{TLE_DATA_DIR}/{sat}.j2000"
+    with open(ifile) as f:
+        data = [line.strip() for line in f.readlines()]
 #
 #--- there are two files to create
 #
@@ -632,25 +592,25 @@ def convert_to_gsm(sat):
 #--- convert to spherical coordinates
 #
         r, tgsm, pgsm    = geopack.sphcar(xgsm, ygsm, zgsm, -1)
-        tgsm  *= r2d
-        pgsm  *= r2d
+        tgsm  *= R2D
+        pgsm  *= R2D
         if pgsm > 180.0:
             pgsm -= 360.0
 
         r, tgse, pgse    = geopack.sphcar(xgse, ygse, zgse, -1)
-        tgse  *= r2d
-        pgse  *= r2d
+        tgse  *= R2D
+        pgse  *= R2D
         if pgse > 180.0:
             pgse -= 360.0
 #
 #--- convert them in the Earth radius unit
 #
-        xgsm /= earth
-        ygsm /= earth
-        zgsm /= earth
-        xgse /= earth
-        ygse /= earth
-        zgse /= earth
+        xgsm /= EARTH
+        ygsm /= EARTH
+        zgsm /= EARTH
+        xgse /= EARTH
+        ygse /= EARTH
+        zgse /= EARTH
 
         line1 = line1 + '%12.1f%10.2f%8.2f%8.2f%8.2f%8.2f%12.6f%3d%3d%3d%3d%3d\n' \
                         % (gtime, r, tgsm, pgsm, tgse, pgse, year, mon, day, hh, mm, ss)
@@ -660,12 +620,8 @@ def convert_to_gsm(sat):
 #
 #--- print out the results
 #
-    ofile1 = tel_data_dir + sat + '.gsme'
-    ofile2 = tel_data_dir + sat + '.gsme_in_Re'
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        ofile1 = test_out + "/" + os.path.basename(ofile1)
-        ofile2 = test_out + "/" + os.path.basename(ofile2)
+    ofile1 = f"{TLE_DATA_DIR}/{sat}.gsme"
+    ofile2 = f"{TLE_DATA_DIR}/{sat}.gsme_in_Re"
     with open(ofile1, 'w') as fo:
         fo.write(line1)
 
@@ -673,12 +629,12 @@ def convert_to_gsm(sat):
         fo.write(line2)
     
 #---------------------------------------------------------------------------------------
-#-- ut_in_secs: onvert calendar date into univarsal time in sec                       --
+#-- ut_in_secs: convert calendar date into universal time in sec                      --
 #---------------------------------------------------------------------------------------
 
 def ut_in_secs(year, mon, day, hh, mm, ss):
     """
-    convert calendar date into univarsal time in sec (seconds from 1970.1.1)
+    convert calendar date into universal time in sec (seconds from 1970.1.1)
     input:  year--- year
     mon --- month
     day --- day
@@ -703,5 +659,47 @@ def ut_in_secs(year, mon, day, hh, mm, ss):
 #--------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    parser.add_argument("-p", "--path", help = "Determine data output file path")
+    args = parser.parse_args()
 
-    create_orbital_data_files()
+    if args.mode == 'test':
+        if args.path:
+            TLE_DATA_DIR = args.path
+            os.makedirs(TLE_DATA_DIR, exist_ok=True)
+        else:
+            TLE_DATA_DIR = f"{os.getcwd()}/test/outTest"
+            os.makedirs(TLE_DATA_DIR, exist_ok=True)
+        
+        create_orbital_data_files()
+    
+    elif args.mode == "flight":
+#
+#--- Create a lock file and exit strategy in case of race conditions
+#
+        name = os.path.basename(__file__).split(".")[0]
+        user = getpass.getuser()
+        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
+            notification = f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. " 
+            notification += "Check calling scripts/cronjob/cronlog. Killing old process."
+            print(notification)
+            with open(f"/tmp/{user}/{name}.lock") as f:
+                pid = int(f.readlines()[-1].strip())
+            #Kill old stalling process and remove corresponding lock file.
+            os.remove(f"/tmp/{user}/{name}.lock")
+            os.kill(pid,signal.SIGTERM)
+            #Generate lock file for the current corresponding process
+            os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
+        else:
+            #Previous script run must have completed successfully. Prepare lock file for this script run.
+            os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
+        
+        try:
+            create_orbital_data_files()
+        except:
+            traceback.print_exc()
+#
+#--- Remove lock file once process is completed
+#
+        os.system(f"rm /tmp/{user}/{name}.lock")
