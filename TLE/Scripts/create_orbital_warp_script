@@ -1,1 +1,0 @@
-TERM=dummy; export TERM;/proj/sot/ska3/flight/bin/skare /bin/tcsh  < /data/mta4/Space_Weather/TLE/Scripts/create_orbital_main_script
