@@ -20,6 +20,7 @@ import math
 import numpy
 import Chandra.Time
 from datetime import datetime
+import calendar
 
 #
 #--- Define Directory Pathing
@@ -29,12 +30,10 @@ TLE_DATA_DIR = "/data/mta4/Space_Weather/TLE/Data"
 #
 #--- append  pathes to private folders to a python directory
 #
-sys.path.append('/data/mta4/Script/Python3.11/MTA/')
 sys.path.append('/data/mta4/Script/Python3.11/lib/python3.11/site-packages')
 #
 #--- import several functions
 #
-import mta_common_functions as mcf
 from geopack  import geopack
 from sgp4.api import Satrec
 from sgp4.api import jday
@@ -178,7 +177,7 @@ def create_spctrk_file(sat, tle, day_before, day_after, interval):
 #--- convert seconds from 1970.1.1
 #
     ep_uts = ut_in_secs(eyear, emon, eday, ehh, emm, ess)
-    lmon   = mcf.change_month_format(emon)
+    lmon = calendar.month_abbr[emon]
     ep_date = lmon + '%3d%5d%4d%3d%3d 0' % (eday, eyear, yday, ehh, emm)
 #
 #--- set the satellite orbit
@@ -332,8 +331,7 @@ def convert_igtime(gtime):
     fr   = 60 * (fr - mm)
     ss   = int(fr)
 
-    etime = str(year) + ':' + mcf.add_leading_zero(yday, 3) + ':' + mcf.add_leading_zero(hh)
-    etime = etime     + ':' + mcf.add_leading_zero(mm)      + ':' + mcf.add_leading_zero(ss)
+    etime = f"{year}:{yday:03}:{hh:02}:{mm:02}:{ss:02}"
 
     return etime
 
@@ -356,7 +354,9 @@ def get_orbit_elements():
 #
     cmd = 'wget -O ' + zspace + ' -q ' + tle_url
     os.system(cmd)
-    data = mcf.read_data_file(zspace, remove=1)
+    with open(zspace,'r') as f:
+        data = [line.strip() for line in f.readlines()]
+    os.remove(zspace)
 #
 #--- find the data of cxo and xmm
 #
@@ -395,7 +395,8 @@ def convert_tle(sat):
     """
     ifile = f"{TLE_DATA_DIR}/{sat}.spctrk"
     ofile = f"{TLE_DATA_DIR}/{sat}.j2000"
-    data  = mcf.read_data_file(ifile)
+    with open(ifile) as f:
+        data = [line.strip() for line in f.readlines()]
 #
 #--- find ephoch line in the header part and convert the time foramt in fractional year
 #
@@ -404,7 +405,7 @@ def convert_tle(sat):
         if mc is not None:
             atemp = re.split('\s+', ent)
             year  = float(atemp[-5])
-            mon   = mcf.change_month_format(atemp[-7])
+            mon = list(calendar.month_abbr).index(atemp[-7])
             day   = float(atemp[-6])
             hh    = float(atemp[-4])
             mm    = float(atemp[-3])
@@ -505,8 +506,7 @@ def convert_yday_to_mon_day(year, yday):
 #
 #--- convert day of year to month and day of month
 #
-    ltime = str(int(float(year)))  + ':' + mcf.add_leading_zero(yday, 3) 
-    out   = time.strftime('%m:%d', time.strptime(ltime, '%Y:%j'))
+    out   = time.strftime('%m:%d', time.strptime(f"{int(float(year))}:{yday:03}", '%Y:%j'))
     [mon, day] = re.split(':', out)
     mon = int(float(mon))
     day = int(float(day))
@@ -533,12 +533,7 @@ def convert_to_fyear(year, yday, hh, mm, ss):
     mm   = float(mm)
     ss   = float(ss)
 
-    if mcf.is_leapyear(year):
-        base = 366
-    else:
-        base = 365
-
-    fyear = year + (yday + hh / 24.0 + mm / 1440.0 + ss / 86400.) / base
+    fyear = year + (yday + hh / 24.0 + mm / 1440.0 + ss / 86400.) / (365 + calendar.isleap(year))
 
     return fyear
 
@@ -559,7 +554,8 @@ def convert_to_gsm(sat):
 #--- read input data
 #
     ifile = f"{TLE_DATA_DIR}/{sat}.j2000"
-    data  = mcf.read_data_file(ifile)
+    with open(ifile) as f:
+        data = [line.strip() for line in f.readlines()]
 #
 #--- there are two files to create
 #
