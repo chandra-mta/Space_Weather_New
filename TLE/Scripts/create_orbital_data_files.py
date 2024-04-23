@@ -24,7 +24,7 @@ import argparse
 import getpass
 import signal
 import traceback
-
+import urllib.request
 #
 #--- Define Directory Pathing
 #
@@ -38,15 +38,9 @@ sys.path.append('/data/mta4/Script/Python3.11/lib/python3.11/site-packages')
 #--- import several functions
 #
 from geopack  import geopack
-from sgp4.api import Satrec
-from sgp4.api import jday
+from sgp4.api import Satrec, jday
 from astLib import astCoords
-#
-#--- temp writing file name
-#
-import random
-rtail  = int(time.time() * random.random()) 
-zspace = '/tmp/zspace' + str(rtail)
+
 #
 #--- a list of satellite names
 #
@@ -355,11 +349,8 @@ def get_orbit_elements():
 #
 #--- download the data and read it
 #
-    cmd = 'wget -O ' + zspace + ' -q ' + TLE_URL
-    os.system(cmd)
-    with open(zspace,'r') as f:
-        data = [line.strip() for line in f.readlines()]
-    os.remove(zspace)
+    with urllib.request.urlopen(TLE_URL) as f:
+        data = [line.strip().decode() for line in f.readlines()]
 #
 #--- find the data of cxo and xmm
 #
