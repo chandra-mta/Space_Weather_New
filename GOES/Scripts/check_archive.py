@@ -12,7 +12,7 @@ DATA_DIR = "/data/mta4/Space_Weather/GOES/Data"
 ARCHIVE_FILE = f"{DATA_DIR}/hrc_proxy.csv"
 ADMIN = ['mtadude@cfa.harvard.edu']
 #Due to the latest data from SWPC being 15 minutes behind, this data will always have at minimum a 15 minute delay.
-TIME_DIFF = 1800 #30 minutes in seconds
+TIME_DIFF = 2700 #45 minutes in seconds
 
 def send_mail(content, subject, admin):
     """
@@ -35,6 +35,7 @@ def check_cadence():
     #If we have no record of a time violation, but then find one, write the viol file and send email
     elif (now - last_time).total_seconds() > TIME_DIFF:
         content = f"Time discrepancy in {ARCHIVE_FILE}\n{'-' * 40}\nTail of file: {out}Current Time: {now.strftime('%Y:%j:%H:%M')}\n"
+        content += f"Discrepancy likely due to interrupted service from SWPC NOAA.\n"
         with open(f"{DATA_DIR}/check_archive.viol",'w') as f:
             f.write(content)
         send_mail(content, "Time Discrepancy in HRC Proxy Archive", ADMIN)
