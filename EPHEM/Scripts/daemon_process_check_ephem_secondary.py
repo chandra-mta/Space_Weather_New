@@ -50,7 +50,7 @@ def  daemon_process_check():
     os.system(cmd)
 
     with open(zspace, 'r') as f:
-        out = f.read();
+        out = f.read()
 
     cmd = 'rm -rf ' + zspace
     os.system(cmd)
@@ -64,6 +64,7 @@ def  daemon_process_check():
 #
     if mc1 is None:
         send_email()
+        os.system("/data/mta/Script/Space_Weather/EPHEM/Scripts/interpolate_daemonize")
 
 #----------------------------------------------------------------------------
 #-- send_email: send out email to admin                                    --
@@ -76,7 +77,7 @@ def send_email():
     output: email sent to admin
     """
 
-    text = 'daemon process of /data/mta4/Script/Space_Weather/EPHEM/Scripts/ page is not running.\n'
+    text = 'daemon process of /data/mta/Script/Space_Weather/EPHEM/Scripts/ page is not running.\n'
     text = text + 'Please check mta/r2d2-v daemon process.\n'
 
     with open(zspace, 'w') as fo:

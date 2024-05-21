@@ -50,7 +50,7 @@ def  daemon_process_check():
     os.system(cmd)
 
     with open(zspace, 'r') as f:
-        out = f.read();
+        out = f.read()
 
     cmd = 'rm -rf ' + zspace
     os.system(cmd)
@@ -64,6 +64,7 @@ def  daemon_process_check():
 #
     if mc1 is None:
         send_email()
+        os.system("/data/mta4/Space_Weather/EPHEM/Scripts/interpolate_daemonize")
 
 #----------------------------------------------------------------------------
 #-- send_email: send out email to admin                                    --
