@@ -10,14 +10,14 @@
 #################################################################################
 
 import os
-import sys
-import re
 import time
 import Chandra.Time
+import datetime
 import urllib.request
 import json
-import random
 import numpy
+import traceback
+import argparse
 
 #
 #--- Define Directory Pathing
@@ -34,22 +34,22 @@ if (os.getenv('TEST') == 'TEST'):
 #
 #--- json data locations proton and electron
 #
-plink = 'https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json'
-elink = 'https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-1-day.json'
+PLINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json'
+ELINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-1-day.json'
 #
 #--- protone energy designations and output file names
 #
-proton_list = ['>=1 MeV', '>=5 MeV', '>=10 MeV', '>=30 MeV', '>=50 MeV',\
+PROTON_LIST = ['>=1 MeV', '>=5 MeV', '>=10 MeV', '>=30 MeV', '>=50 MeV',\
                '>=60 MeV', '>=100 MeV', '>=500 MeV']
 #
 #--- electron energy designation and output file name
 #
-elec_list   = ['>=2 MeV',]
+ELEC_LIST   = ['>=2 MeV',]
 
 #
 #--- current goes satellite #
 #
-satellite = "Primary"
+SATELLITE = "Primary"
 #----------------------------------------------------------------------------
 #-- update_goes_integrate_page: update the GOES integrated page            --
 #----------------------------------------------------------------------------
@@ -87,7 +87,7 @@ def update_goes_integrate_page():
 #
 #--- substitute a couple of lines
 #
-    line = line.replace('#GNUM#', str(satellite))
+    line = line.replace('#GNUM#', SATELLITE)
     line = line.replace('#SELECT#', 'Integrated')
 #
 #--- update the page
@@ -111,11 +111,11 @@ def make_two_hour_table():
 #
 #--- proton data: [[<time list>, <data1 list>], [<time list>,<data2 list>], ...]
 #
-    p_save = extract_goes_data(plink, proton_list)
+    p_save = extract_goes_data(PLINK, PROTON_LIST)
 #
 #--- electron data
 #
-    e_save = extract_goes_data(elink, elec_list)
+    e_save = extract_goes_data(ELINK, ELEC_LIST)
 #
 #--- combine the data
 #
@@ -219,13 +219,22 @@ def extract_goes_data(dlink, energy_list):
     output: <data_dir>/<out file>
     """
 #
-#--- read json file from the web
+#--- read json file from a file or the web
 #
-    try:
-        with urllib.request.urlopen(dlink) as url:
-            data = json.loads(url.read().decode())
-    except:
-        data = []
+    if os.path.isfile(dlink):
+        try:
+            with open(dlink) as f:
+                data = json.load(f)
+        except:
+            traceback.print_exc()
+            data = []
+    else:
+        try:
+            with urllib.request.urlopen(dlink) as url:
+                data = json.loads(url.read().decode())
+        except:
+            traceback.print_exc()
+            data = []
 
     if len(data) < 1:
         exit(1)
@@ -234,75 +243,71 @@ def extract_goes_data(dlink, energy_list):
 #
     elen   = len(energy_list)
     d_save = []
+    ctime = datetime.datetime.strptime(data[-1]['time_tag'], '%Y-%m-%dT%H:%M:%SZ') - datetime.timedelta(hours=2)
     for k in range(0, elen):
         t_list = []
         f_list = []
         energy = energy_list[k]
+        last_time = datetime.datetime.strptime(data[0]['time_tag'], '%Y-%m-%dT%H:%M:%SZ')
 #
-#--- check the last entry time  and select only last 2 hrs
+#--- check the last entry time and select only last 2 hrs
 #
-        try:
-            ltime  = check_last_entry_time(data)
-        except:
-            exit(1)
-        ctime  = ltime - 3600.0 * 2
         for ent in data:
-#
-#--- get the data from a specified satellite
-#
-#            if ent['satellite'] != satellite:
-#                continue
 #
 #--- read time and flux of the given energy range
 #
             if ent['energy'] == energy:
                 flux  = float(ent['flux'])
-                if flux < 0.0:
-                    flux = 0.0
-#
-#--- convert time into seconds from 1998.1.1
-#
-                otime = ent['time_tag']
-                dtime = time.strftime('%Y:%j:%H:%M',    time.strptime(otime, '%Y-%m-%dT%H:%M:%SZ'))
-                otime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(otime, '%Y-%m-%dT%H:%M:%SZ'))
-                stime = int(Chandra.Time.DateTime(otime).secs)
-
-                if stime <= ctime:
-                    continue
-
-                t_list.append(dtime)
-                f_list.append(flux)
+                otime =  datetime.datetime.strptime(ent['time_tag'], '%Y-%m-%dT%H:%M:%SZ')
+                #If the otime is more than five minutes after the last_time
+                #then that means the data set is missing an entry for this energy band and zero values should be appened.
+                diff = (otime - last_time).seconds
+                if diff > 300:
+                    #All times should be in divisions of 5 minutes/300 seconds.
+                    for i in range(300,int(diff),300):
+                        missing_time = last_time + datetime.timedelta(seconds=i)
+                        if missing_time > ctime:
+                            t_list.append(missing_time.strftime('%Y:%j:%H:%M'))
+                            #Mark missing data with the invalid data marker (-1e5)
+                            f_list.append(-1e5)
+                if otime > ctime:
+                    t_list.append(otime.strftime('%Y:%j:%H:%M'))
+                    f_list.append(flux)
+                    last_time = otime
 
         d_save.append([t_list, f_list])
+#
+#--- Check if there is a missing energy at the beginning or ending of a band.
+#
+    for i in range(len(d_save)):
+        #Find a channel with all 24 needed data points and use those time values
+        if len(d_save[i][0]) == 24:
+            start = d_save[i][0][0]
+            stop = d_save[i][0][-1]
+            break
 
+    for i in range(len(d_save)):
+        if len(d_save[i][0]) < 24:
+            #if there is still not 24 data points, then we are missing the start or end of this channel
+            if d_save[i][0][0] != start:
+                d_save[i][0].insert(0,start)
+                d_save[i][1].insert(0,-1e5)
+                
+            if d_save[i][0][-1] != stop:
+                d_save[i][0].append(stop)
+                d_save[i][1].append(-1e5)
     return d_save
-
-#----------------------------------------------------------------------------
-#-- check_last_entry_time: check the last data entry time of the given data file 
-#----------------------------------------------------------------------------
-
-def check_last_entry_time(data):
-    """
-    check the last data entry time of the given data file
-    input:  data    --- data
-    output: ltime   --- the last entry time in seconds from 1998.1.1
-    """
-
-    ent = data[-1]
-    otime = ent['time_tag']
-    otime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(otime, '%Y-%m-%dT%H:%M:%SZ'))
-    stime = int(Chandra.Time.DateTime(otime).secs)
-
-    return stime
 
 #----------------------------------------------------------------------------
 #----------------------------------------------------------------------------
 #----------------------------------------------------------------------------
 
 def adjust_format(val):
-    
+
     val = float(val)
-    if val < 10:
+    if val < 0: #Missing entry
+        out = f"{val:5.0f}"
+    elif val < 10:
         out = "%1.5f" % (val)
     elif val < 100:
         out = "%2.4f" % (val)
@@ -314,7 +319,7 @@ def adjust_format(val):
         out = "%5.1f" % (val)
     else:
         out = "%5.0f" % (val)
-
+    
     return out
                                                                                            
 #----------------------------------------------------------------------------
