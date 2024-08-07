@@ -5,48 +5,32 @@
 #       update_goes_integrate_page.py: create goes integrated html page         #
 #                                                                               #
 #           author: t. isobe (tisobe@cfa.harvard.edu)                           #
-#           last update: mar 16, 2021                                           #
+#           last update: Aug 07, 2024                                           #
 #                                                                               #
 #################################################################################
 
 import os
 import sys
 import re
-import string
-import math
 import time
-import datetime
 import Chandra.Time
 import urllib.request
 import json
 import random
 import numpy
 
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
-with open(path, 'r') as f:
-    data = [line.strip() for line in f.readlines()]
+#
+#--- Define Directory Pathing
+#
+GOES_DIR = '/data/mta4/Space_Weather/GOES'
+GOES_DATA_DIR = f"{GOES_DIR}/Data"
+GOES_TEMPLATE_DIR = f"{GOES_DIR}/Scripts/Template"
+HTML_GOES_DIR = '/data/mta4/www/RADIATION_new/GOES'
 
-for ent in data:
-    atemp = re.split(':', ent)
-    var   = atemp[1].strip()
-    line  = atemp[0].strip()
-    exec("%s = %s" %(var, line))
 #for writing out files in test directory
 if (os.getenv('TEST') == 'TEST'):
     os.system('mkdir -p TestOut')
     test_out = os.getcwd() + '/TestOut'
-#
-#--- append path to a private folder
-#
-sys.path.append(goes_dir)
-sys.path.append('/data/mta4/Script/Python3.10/MTA/')
-
-#import mta_common_functions     as mcf
-#
-#--- set a temporary file name
-#
-rtail  = int(time.time()*random.random())
-zspace = '/tmp/zspace' + str(rtail)
 #
 #--- json data locations proton and electron
 #
@@ -61,11 +45,7 @@ proton_list = ['>=1 MeV', '>=5 MeV', '>=10 MeV', '>=30 MeV', '>=50 MeV',\
 #--- electron energy designation and output file name
 #
 elec_list   = ['>=2 MeV',]
-#
-#--- goes data directory
-#
-data_dir  = goes_dir + 'Data/'
-templ_dir = goes_dir + 'Scripts/Template/'
+
 #
 #--- current goes satellite #
 #
@@ -85,8 +65,7 @@ def update_goes_integrate_page():
 #
 #--- read the header template
 #
-    hfile = templ_dir + 'G_header'
-    with open(hfile, 'r') as f:
+    with open(f"{GOES_TEMPLATE_DIR}/G_header", 'r') as f:
         line = f.read()
 #
 #--- add the table
@@ -98,14 +77,12 @@ def update_goes_integrate_page():
 #
 #--- add the image link
 #
-    hfile = templ_dir + 'Gp_image_int'
-    with open(hfile, 'r') as f:
+    with open(f"{GOES_TEMPLATE_DIR}/Gp_image_int", 'r') as f:
         line = line + f.read()
 #
 #---- add footer
 #
-    hfile = templ_dir + 'G_footer'
-    with open(hfile, 'r') as f:
+    with open(f"{GOES_TEMPLATE_DIR}/G_footer", 'r') as f:
         line = line + f.read()
 #
 #--- substitute a couple of lines
@@ -115,12 +92,10 @@ def update_goes_integrate_page():
 #
 #--- update the page
 #
-    ####outfile = html_dir + 'GOES/goes16_part_p.html'
-    outfile = html_dir + 'GOES/goes_part_p.html'
     #for writing out files in test directory
     if (os.getenv('TEST') == 'TEST'):
         outfile = test_out + "/" + os.path.basename(outfile)
-    with open(outfile, 'w') as fo:
+    with open(f"{HTML_GOES_DIR}/goes_part_p.html", 'w') as fo:
         fo.write(line)
 
 #----------------------------------------------------------------------------
@@ -225,11 +200,9 @@ def make_two_hour_table():
     bline = bline + '\t' + '-'*150 +'\n'
     bline = bline + aline
 
-    outfile = data_dir + 'Gp_part_5m.txt'
-    #for writing out files in test directory
     if (os.getenv('TEST') == 'TEST'):
         outfile = test_out + "/" + os.path.basename(outfile)
-    with open(outfile, 'w') as fo:
+    with open(f"{GOES_DATA_DIR}/Gp_part_5min.txt", 'w') as fo:
         fo.write(bline)
 
     return line
