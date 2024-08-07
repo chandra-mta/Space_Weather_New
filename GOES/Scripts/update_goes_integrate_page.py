@@ -25,11 +25,6 @@ GOES_DIR = '/data/mta4/Space_Weather/GOES'
 GOES_DATA_DIR = f"{GOES_DIR}/Data"
 GOES_TEMPLATE_DIR = f"{GOES_DIR}/Scripts/Template"
 HTML_GOES_DIR = '/data/mta4/www/RADIATION_new/GOES'
-
-#for writing out files in test directory
-if (os.getenv('TEST') == 'TEST'):
-    os.system('mkdir -p TestOut')
-    test_out = os.getcwd() + '/TestOut'
 #
 #--- json data locations proton and electron
 #
@@ -91,9 +86,6 @@ def update_goes_integrate_page():
 #
 #--- update the page
 #
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        outfile = test_out + "/" + os.path.basename(outfile)
     with open(f"{HTML_GOES_DIR}/goes_part_p.html", 'w') as fo:
         fo.write(line)
 
@@ -146,7 +138,7 @@ def make_two_hour_table():
 #
 #--- data file has a different time format
 #
-        aline = aline + datetime.datetime.strftime('%Y %m %d %H%M', datetime.datetime.strptime(tout, '%Y:%j:%H:%M'))
+        aline = aline + datetime.datetime.strptime(tout, '%Y:%j:%H:%M').strftime('%Y %m %d %H%M')
         aline = aline + ' 99999 99999\t'    #--- adding dummy julian time
 #
 #--- print flax data
@@ -161,7 +153,7 @@ def make_two_hour_table():
             aline = aline + "%2.3e\t\t" % (p_save[m][1][k])
         line = line + '\n'
 #
-#--- electron does not have distinction fo 0.8 2.8 or 4.0; so fake with all E>2.0
+#--- electron does not have distinction for 0.8 2.8 or 4.0; so fake with all E>2.0
 #
         try:
             aline = aline  + "%2.3e\t%2.3e\n" % (p_save[m][1][k], p_save[m][1][k])
@@ -177,7 +169,6 @@ def make_two_hour_table():
 #
     line = line + '\tAVERAGE\t\t\t'
     for m in range(0, len(p_save)):
-        #line = line + "%1.5f\t\t" % (numpy.mean(p_save[m][1]))
         out = adjust_format(numpy.mean(p_save[m][1]))
         line  = line + out + '\t\t'
 
@@ -185,7 +176,6 @@ def make_two_hour_table():
 
     line = line + '\tFLUENCE\t\t\t'
     for m in range(0, len(p_save)):
-        #line = line + "%5.0f\t\t" % (numpy.sum(p_save[m][1]) * 7200.0)
         out = adjust_format(numpy.sum(p_save[m][1]) * 7200.0)
         line = line + out + '\t\t'
 #
@@ -199,8 +189,6 @@ def make_two_hour_table():
     bline = bline + '\t' + '-'*150 +'\n'
     bline = bline + aline
 
-    if (os.getenv('TEST') == 'TEST'):
-        outfile = test_out + "/" + os.path.basename(outfile)
     with open(f"{GOES_DATA_DIR}/Gp_part_5min.txt", 'w') as fo:
         fo.write(bline)
 
