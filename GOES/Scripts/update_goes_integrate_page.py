@@ -10,8 +10,7 @@
 #################################################################################
 
 import os
-import time
-import Chandra.Time
+import sys
 import datetime
 import urllib.request
 import json
@@ -147,7 +146,7 @@ def make_two_hour_table():
 #
 #--- data file has a different time format
 #
-        aline = aline + time.strftime('%Y %m %d %H%M', time.strptime(tout, '%Y:%j:%H:%M'))
+        aline = aline + datetime.datetime.strftime('%Y %m %d %H%M', datetime.datetime.strptime(tout, '%Y:%j:%H:%M'))
         aline = aline + ' 99999 99999\t'    #--- adding dummy julian time
 #
 #--- print flax data
@@ -325,5 +324,45 @@ def adjust_format(val):
 #----------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    parser.add_argument("-p", "--path", help = "Determine data output file path")
+    parser.add_argument("-j", "--json", help = "Determine json data file source")
+    args = parser.parse_args()
 
-    update_goes_integrate_page()
+    if args.mode == 'test':
+#
+#---Define pathing for test output
+#
+        OUT_DIR = f"{os.getcwd()}/test/outTest"
+        os.makedirs(OUT_DIR, exist_ok = True)
+        GOES_TEMPLATE_DIR = f"{os.getcwd()}/Template"
+        if args.path:
+            GOES_DATA_DIR = args.path
+            HTML_GOES_DIR = args.path
+        else:
+            GOES_DATA_DIR = OUT_DIR
+            HTML_GOES_DIR = OUT_DIR
+
+        if args.json:
+            PLINK = args.json
+        update_goes_integrate_page()
+    elif args.mode == "flight":
+        import getpass
+#
+#--- Create a lock file and exit strategy in case of race conditions
+#
+        name = os.path.basename(__file__).split(".")[0]
+        user = getpass.getuser()
+        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
+            sys.exit(f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog.")
+        else:
+            os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
+        try:
+            update_goes_integrate_page()
+        except:
+            traceback.print_exc()
+#
+#--- Remove lock file once process is completed
+#
+        os.system(f"rm /tmp/{user}/{name}.lock")
