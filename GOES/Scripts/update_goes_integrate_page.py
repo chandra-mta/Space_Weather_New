@@ -5,71 +5,45 @@
 #       update_goes_integrate_page.py: create goes integrated html page         #
 #                                                                               #
 #           author: t. isobe (tisobe@cfa.harvard.edu)                           #
-#           last update: mar 16, 2021                                           #
+#           last update: Aug 07, 2024                                           #
 #                                                                               #
 #################################################################################
 
 import os
 import sys
-import re
-import string
-import math
-import time
 import datetime
-import Chandra.Time
 import urllib.request
 import json
-import random
 import numpy
+import traceback
+import argparse
 
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
-with open(path, 'r') as f:
-    data = [line.strip() for line in f.readlines()]
-
-for ent in data:
-    atemp = re.split(':', ent)
-    var   = atemp[1].strip()
-    line  = atemp[0].strip()
-    exec("%s = %s" %(var, line))
-#for writing out files in test directory
-if (os.getenv('TEST') == 'TEST'):
-    os.system('mkdir -p TestOut')
-    test_out = os.getcwd() + '/TestOut'
 #
-#--- append path to a private folder
+#--- Define Directory Pathing
 #
-sys.path.append(goes_dir)
-sys.path.append('/data/mta4/Script/Python3.10/MTA/')
-
-#import mta_common_functions     as mcf
-#
-#--- set a temporary file name
-#
-rtail  = int(time.time()*random.random())
-zspace = '/tmp/zspace' + str(rtail)
+GOES_DIR = '/data/mta4/Space_Weather/GOES'
+GOES_DATA_DIR = f"{GOES_DIR}/Data"
+GOES_TEMPLATE_DIR = f"{GOES_DIR}/Scripts/Template"
+HTML_GOES_DIR = '/data/mta4/www/RADIATION_new/GOES'
 #
 #--- json data locations proton and electron
 #
-plink = 'https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json'
-elink = 'https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-1-day.json'
+PLINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json'
+ELINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-1-day.json'
 #
 #--- protone energy designations and output file names
 #
-proton_list = ['>=1 MeV', '>=5 MeV', '>=10 MeV', '>=30 MeV', '>=50 MeV',\
+PROTON_LIST = ['>=1 MeV', '>=5 MeV', '>=10 MeV', '>=30 MeV', '>=50 MeV',\
                '>=60 MeV', '>=100 MeV', '>=500 MeV']
 #
 #--- electron energy designation and output file name
 #
-elec_list   = ['>=2 MeV',]
-#
-#--- goes data directory
-#
-data_dir  = goes_dir + 'Data/'
-templ_dir = goes_dir + 'Scripts/Template/'
+ELEC_LIST   = ['>=2 MeV',]
+
 #
 #--- current goes satellite #
 #
-satellite = "Primary"
+SATELLITE = "Primary"
 #----------------------------------------------------------------------------
 #-- update_goes_integrate_page: update the GOES integrated page            --
 #----------------------------------------------------------------------------
@@ -85,8 +59,7 @@ def update_goes_integrate_page():
 #
 #--- read the header template
 #
-    hfile = templ_dir + 'G_header'
-    with open(hfile, 'r') as f:
+    with open(f"{GOES_TEMPLATE_DIR}/G_header", 'r') as f:
         line = f.read()
 #
 #--- add the table
@@ -98,29 +71,22 @@ def update_goes_integrate_page():
 #
 #--- add the image link
 #
-    hfile = templ_dir + 'Gp_image_int'
-    with open(hfile, 'r') as f:
+    with open(f"{GOES_TEMPLATE_DIR}/Gp_image_int", 'r') as f:
         line = line + f.read()
 #
 #---- add footer
 #
-    hfile = templ_dir + 'G_footer'
-    with open(hfile, 'r') as f:
+    with open(f"{GOES_TEMPLATE_DIR}/G_footer", 'r') as f:
         line = line + f.read()
 #
 #--- substitute a couple of lines
 #
-    line = line.replace('#GNUM#', str(satellite))
+    line = line.replace('#GNUM#', SATELLITE)
     line = line.replace('#SELECT#', 'Integrated')
 #
 #--- update the page
 #
-    ####outfile = html_dir + 'GOES/goes16_part_p.html'
-    outfile = html_dir + 'GOES/goes_part_p.html'
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        outfile = test_out + "/" + os.path.basename(outfile)
-    with open(outfile, 'w') as fo:
+    with open(f"{HTML_GOES_DIR}/goes_part_p.html", 'w') as fo:
         fo.write(line)
 
 #----------------------------------------------------------------------------
@@ -136,11 +102,11 @@ def make_two_hour_table():
 #
 #--- proton data: [[<time list>, <data1 list>], [<time list>,<data2 list>], ...]
 #
-    p_save = extract_goes_data(plink, proton_list)
+    p_save = extract_goes_data(PLINK, PROTON_LIST)
 #
 #--- electron data
 #
-    e_save = extract_goes_data(elink, elec_list)
+    e_save = extract_goes_data(ELINK, ELEC_LIST)
 #
 #--- combine the data
 #
@@ -172,7 +138,7 @@ def make_two_hour_table():
 #
 #--- data file has a different time format
 #
-        aline = aline + time.strftime('%Y %m %d %H%M', time.strptime(tout, '%Y:%j:%H:%M'))
+        aline = aline + datetime.datetime.strptime(tout, '%Y:%j:%H:%M').strftime('%Y %m %d %H%M')
         aline = aline + ' 99999 99999\t'    #--- adding dummy julian time
 #
 #--- print flax data
@@ -187,7 +153,7 @@ def make_two_hour_table():
             aline = aline + "%2.3e\t\t" % (p_save[m][1][k])
         line = line + '\n'
 #
-#--- electron does not have distinction fo 0.8 2.8 or 4.0; so fake with all E>2.0
+#--- electron does not have distinction for 0.8 2.8 or 4.0; so fake with all E>2.0
 #
         try:
             aline = aline  + "%2.3e\t%2.3e\n" % (p_save[m][1][k], p_save[m][1][k])
@@ -203,7 +169,6 @@ def make_two_hour_table():
 #
     line = line + '\tAVERAGE\t\t\t'
     for m in range(0, len(p_save)):
-        #line = line + "%1.5f\t\t" % (numpy.mean(p_save[m][1]))
         out = adjust_format(numpy.mean(p_save[m][1]))
         line  = line + out + '\t\t'
 
@@ -211,7 +176,6 @@ def make_two_hour_table():
 
     line = line + '\tFLUENCE\t\t\t'
     for m in range(0, len(p_save)):
-        #line = line + "%5.0f\t\t" % (numpy.sum(p_save[m][1]) * 7200.0)
         out = adjust_format(numpy.sum(p_save[m][1]) * 7200.0)
         line = line + out + '\t\t'
 #
@@ -225,11 +189,7 @@ def make_two_hour_table():
     bline = bline + '\t' + '-'*150 +'\n'
     bline = bline + aline
 
-    outfile = data_dir + 'Gp_part_5m.txt'
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        outfile = test_out + "/" + os.path.basename(outfile)
-    with open(outfile, 'w') as fo:
+    with open(f"{GOES_DATA_DIR}/Gp_part_5min.txt", 'w') as fo:
         fo.write(bline)
 
     return line
@@ -246,13 +206,22 @@ def extract_goes_data(dlink, energy_list):
     output: <data_dir>/<out file>
     """
 #
-#--- read json file from the web
+#--- read json file from a file or the web
 #
-    try:
-        with urllib.request.urlopen(dlink) as url:
-            data = json.loads(url.read().decode())
-    except:
-        data = []
+    if os.path.isfile(dlink):
+        try:
+            with open(dlink) as f:
+                data = json.load(f)
+        except:
+            traceback.print_exc()
+            data = []
+    else:
+        try:
+            with urllib.request.urlopen(dlink) as url:
+                data = json.loads(url.read().decode())
+        except:
+            traceback.print_exc()
+            data = []
 
     if len(data) < 1:
         exit(1)
@@ -261,75 +230,71 @@ def extract_goes_data(dlink, energy_list):
 #
     elen   = len(energy_list)
     d_save = []
+    ctime = datetime.datetime.strptime(data[-1]['time_tag'], '%Y-%m-%dT%H:%M:%SZ') - datetime.timedelta(hours=2)
     for k in range(0, elen):
         t_list = []
         f_list = []
         energy = energy_list[k]
+        last_time = datetime.datetime.strptime(data[0]['time_tag'], '%Y-%m-%dT%H:%M:%SZ')
 #
-#--- check the last entry time  and select only last 2 hrs
+#--- check the last entry time and select only last 2 hrs
 #
-        try:
-            ltime  = check_last_entry_time(data)
-        except:
-            exit(1)
-        ctime  = ltime - 3600.0 * 2
         for ent in data:
-#
-#--- get the data from a specified satellite
-#
-#            if ent['satellite'] != satellite:
-#                continue
 #
 #--- read time and flux of the given energy range
 #
             if ent['energy'] == energy:
                 flux  = float(ent['flux'])
-                if flux < 0.0:
-                    flux = 0.0
-#
-#--- convert time into seconds from 1998.1.1
-#
-                otime = ent['time_tag']
-                dtime = time.strftime('%Y:%j:%H:%M',    time.strptime(otime, '%Y-%m-%dT%H:%M:%SZ'))
-                otime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(otime, '%Y-%m-%dT%H:%M:%SZ'))
-                stime = int(Chandra.Time.DateTime(otime).secs)
-
-                if stime <= ctime:
-                    continue
-
-                t_list.append(dtime)
-                f_list.append(flux)
+                otime =  datetime.datetime.strptime(ent['time_tag'], '%Y-%m-%dT%H:%M:%SZ')
+                #If the otime is more than five minutes after the last_time
+                #then that means the data set is missing an entry for this energy band and zero values should be appened.
+                diff = (otime - last_time).seconds
+                if diff > 300:
+                    #All times should be in divisions of 5 minutes/300 seconds.
+                    for i in range(300,int(diff),300):
+                        missing_time = last_time + datetime.timedelta(seconds=i)
+                        if missing_time > ctime:
+                            t_list.append(missing_time.strftime('%Y:%j:%H:%M'))
+                            #Mark missing data with the invalid data marker (-1e5)
+                            f_list.append(-1e5)
+                if otime > ctime:
+                    t_list.append(otime.strftime('%Y:%j:%H:%M'))
+                    f_list.append(flux)
+                    last_time = otime
 
         d_save.append([t_list, f_list])
+#
+#--- Check if there is a missing energy at the beginning or ending of a band.
+#
+    for i in range(len(d_save)):
+        #Find a channel with all 24 needed data points and use those time values
+        if len(d_save[i][0]) == 24:
+            start = d_save[i][0][0]
+            stop = d_save[i][0][-1]
+            break
 
+    for i in range(len(d_save)):
+        if len(d_save[i][0]) < 24:
+            #if there is still not 24 data points, then we are missing the start or end of this channel
+            if d_save[i][0][0] != start:
+                d_save[i][0].insert(0,start)
+                d_save[i][1].insert(0,-1e5)
+                
+            if d_save[i][0][-1] != stop:
+                d_save[i][0].append(stop)
+                d_save[i][1].append(-1e5)
     return d_save
-
-#----------------------------------------------------------------------------
-#-- check_last_entry_time: check the last data entry time of the given data file 
-#----------------------------------------------------------------------------
-
-def check_last_entry_time(data):
-    """
-    check the last data entry time of the given data file
-    input:  data    --- data
-    output: ltime   --- the last entry time in seconds from 1998.1.1
-    """
-
-    ent = data[-1]
-    otime = ent['time_tag']
-    otime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(otime, '%Y-%m-%dT%H:%M:%SZ'))
-    stime = int(Chandra.Time.DateTime(otime).secs)
-
-    return stime
 
 #----------------------------------------------------------------------------
 #----------------------------------------------------------------------------
 #----------------------------------------------------------------------------
 
 def adjust_format(val):
-    
+
     val = float(val)
-    if val < 10:
+    if val < 0: #Missing entry
+        out = f"{val:5.0f}"
+    elif val < 10:
         out = "%1.5f" % (val)
     elif val < 100:
         out = "%2.4f" % (val)
@@ -341,11 +306,51 @@ def adjust_format(val):
         out = "%5.1f" % (val)
     else:
         out = "%5.0f" % (val)
-
+    
     return out
                                                                                            
 #----------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    parser.add_argument("-p", "--path", help = "Determine data output file path")
+    parser.add_argument("-j", "--json", help = "Determine json data file source")
+    args = parser.parse_args()
 
-    update_goes_integrate_page()
+    if args.mode == 'test':
+#
+#---Define pathing for test output
+#
+        OUT_DIR = f"{os.getcwd()}/test/outTest"
+        os.makedirs(OUT_DIR, exist_ok = True)
+        GOES_TEMPLATE_DIR = f"{os.getcwd()}/Template"
+        if args.path:
+            GOES_DATA_DIR = args.path
+            HTML_GOES_DIR = args.path
+        else:
+            GOES_DATA_DIR = OUT_DIR
+            HTML_GOES_DIR = OUT_DIR
+
+        if args.json:
+            PLINK = args.json
+        update_goes_integrate_page()
+    elif args.mode == "flight":
+        import getpass
+#
+#--- Create a lock file and exit strategy in case of race conditions
+#
+        name = os.path.basename(__file__).split(".")[0]
+        user = getpass.getuser()
+        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
+            sys.exit(f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog.")
+        else:
+            os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
+        try:
+            update_goes_integrate_page()
+        except:
+            traceback.print_exc()
+#
+#--- Remove lock file once process is completed
+#
+        os.system(f"rm /tmp/{user}/{name}.lock")
