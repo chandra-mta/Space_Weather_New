@@ -13,27 +13,19 @@
 import os
 import sys
 import re
-import string
-import math
-import numpy
 import time
 from datetime import datetime
 import Chandra.Time
 import copy 
 import subprocess
 #
-#--- reading directory list
+#--- Define Directory Pathing
 #
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
+ACE_DIR = "/data/mta4/Space_Weather/ACE"
+EPHEM_DIR = "/data/mta4/Space_Weather/EPHEM"
+KP_DIR = "/data/mta4/Space_Weather/KP/"
+ACE_HTML_DIR = "/data/mta4/www/RADIATION_new/ACE"
 
-with open(path, 'r') as f:
-    data = [line.strip() for line in f.readlines()]
-
-for ent in data:
-    atemp = re.split(':', ent)
-    var  = atemp[1].strip()
-    line = atemp[0].strip()
-    exec( "%s = %s" %(var, line))
 #
 #--- append  pathes to private folders to a python directory
 #
@@ -48,17 +40,7 @@ import mta_common_functions as mcf
 import random
 rtail  = int(time.time() * random.random())
 zspace = '/tmp/zspace' + str(rtail)
-#
-#--- set paths to the files
-#
-ephem_file       = ephem_dir + 'Data/PE.EPH.gsme_spherical'
-race_file        = ace_dir   + 'Data/ace.archive'
-fluence_file     = ace_dir   + 'Data/fluace.dat'
-fluence_file_bak = ace_dir   + 'Data/fluace.dat.good'
-fluence_archive  = ace_dir   + 'Data/fluace.arc'
-falert_file      = ace_dir   + 'Data/falert.dat'
-ace_web          = html_dir  + 'ACE/'
-ace_data         = ace_dir   + 'Data/'
+
 #for writing out files in test directory
 if (os.getenv('TEST') == 'TEST'):
     os.system('mkdir -p TestOut')
@@ -211,7 +193,7 @@ def read_past_ace_data():
             fluen   --- fluence
             head    --- a list of header part
     """
-    ifile = ace_data + 'ace.archive'
+    ifile = f"{ACE_DIR}/data/ace.archive"
     data  = mcf.read_data_file(ifile)
 #
 #--- [atime, jtime, echk, ech1, ech2, pchk, pch1, pch2, pch3, pch4, pch5, anis, ipol,fluen, head]
@@ -350,7 +332,7 @@ def find_reset_time():
             <ephem_dir>/Data/gephem.dat
     output: reset_time  --- a list of reset times in seconds from 1998.1.1
     """
-    data = mcf.read_data_file(ephem_file)
+    data = mcf.read_data_file(f"{EPHEM_DIR}/Data/PE.EPH.gsme_spherical")
     stime = []
     alt   = []
     for ent in data:
@@ -583,7 +565,7 @@ def update_ace_archive(updated_data, head):
             line = line + line_adjust(updated_data[13][m])
             line = line + '\n'
 
-    ofile = ace_data + 'ace.archive'
+    ofile = f"{ACE_DIR}/Data/ace.archive"
     
     if (os.getenv('TEST') == 'TEST'):
         ofile = test_out + '/ace.archive'
@@ -610,13 +592,13 @@ def update_secondary_archive_files(ndata):
 #
 #--- 12hr data set
 #
-    dfile  = ace_data + 'ace_12h_archive'
+    dfile = f"{ACE_DIR}/Data/ace_12h_archive"
     cut    = tstop  - 43200.0
     create_new_table(dfile, ndata, tstart, cut)
 #
 #--- 7 day data set
 #
-    dfile  = ace_data + 'ace_7day_archive'
+    dfile = f"{ACE_DIR}/Data/ace_7day_archive"
     cut    = tstop  - 7 * 86400.0
     create_new_table(dfile, ndata, tstart, cut)
 
@@ -630,7 +612,7 @@ def update_long_term_data(ndata):
     input:  ndata   --- a list of lists of new data
     output: <ace_dir>/Data/longterm/ace_data.txt
     """
-    dfile = ace_data + 'longterm/ace_data.txt'
+    dfile = f"{ACE_DIR}/Data/longterm/ace_data.txt"
     last_line = subprocess.check_output(f"tail -n 1 {dfile}", shell=True, executable='/bin/csh').decode()
     atemp = re.split('\s+', last_line)
 #
@@ -862,7 +844,7 @@ def updat_fluace_data_file(data_set, header,  c_start):
     line = line + '%10d' % tacc
     line = line + '\n'
     
-    ofile = ace_data + 'fluace.dat'
+    ofile = f"{ACE_DIR}/Data/fluace.dat"
     
     if (os.getenv('TEST') == 'TEST'):
         ofile = test_out + '/fluance.dat'
@@ -903,7 +885,7 @@ def update_kp_data_file():
 #
 #--- read kp data   
 #
-    ifile = kp_dir + 'Data/k_index_data_past'
+    ifile = f"{KP_DIR}/Data/k_index_data_past"
     data  = mcf.read_data_file(ifile)
     
     atemp = re.split('\s+', data[-1])
@@ -922,7 +904,7 @@ def update_kp_data_file():
     line  = line  + ldate + '\t\t' + kval + '\t\t' + kval + '\n'
     line  = head + line
     
-    ofile = ace_data + 'kp.dat'
+    ofile = f"{ACE_DIR}/Data/kp.dat"
     
     if (os.getenv('TEST') == 'TEST'):
         ofile = test_out + '/kp.dat'
