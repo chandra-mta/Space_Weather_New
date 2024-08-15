@@ -18,6 +18,7 @@ from datetime import datetime
 import Chandra.Time
 import copy 
 import subprocess
+import urllib.request
 #
 #--- Define Directory Pathing
 #
@@ -25,21 +26,6 @@ ACE_DIR = "/data/mta4/Space_Weather/ACE"
 EPHEM_DIR = "/data/mta4/Space_Weather/EPHEM"
 KP_DIR = "/data/mta4/Space_Weather/KP/"
 ACE_HTML_DIR = "/data/mta4/www/RADIATION_new/ACE"
-
-#
-#--- append  pathes to private folders to a python directory
-#
-sys.path.append('/data/mta4/Script/Python3.10/MTA/')
-#
-#--- import several functions
-#
-import mta_common_functions as mcf
-#
-#--- temp writing file name
-#
-import random
-rtail  = int(time.time() * random.random())
-zspace = '/tmp/zspace' + str(rtail)
 
 #for writing out files in test directory
 if (os.getenv('TEST') == 'TEST'):
@@ -49,7 +35,7 @@ if (os.getenv('TEST') == 'TEST'):
 #
 #--- ftp address
 #
-noaa_file       = 'https://services.swpc.noaa.gov/text/ace-epam.txt'
+NOAA_LINK = 'https://services.swpc.noaa.gov/text/ace-epam.txt'
 #
 #--- current time
 #
@@ -72,7 +58,7 @@ def update_ace_data_files():
     """
     update ace related data files
     input: none but read from:
-            ftp://ftp.swpc.noaa.gov/pub/lists/ace/ace_epam_5m.txt
+            ftp: 'https://services.swpc.noaa.gov/text/ace-epam.txt'
             <ephem_dir>/Data/gephem.dat
             <kp_dir>/Data/k_index_data_past
     output: <ace_dir>/Data/ace.archive
@@ -134,7 +120,7 @@ def read_current_ace_data():
     """
     read current ace data from a ftp site
     input:  none, but read from ftp site: 
-                ftp://ftp.swpc.noaa.gov/pub/lists/ace/ace_epam_5m.txt
+                ftp: 'https://services.swpc.noaa.gov/text/ace-epam.txt'
     output: a list of lists of:
             atime   --- a time in seconds from 1998.1.1
             jtime   --- a string time
@@ -155,10 +141,9 @@ def read_current_ace_data():
 #
 #--- read the current data file
 #
-    cmd = 'wget -q -O' + zspace + ' ' + noaa_file
-    os.system(cmd)
-
-    data = mcf.read_data_file(zspace, remove=1)
+    with urllib.request.urlopen(NOAA_LINK) as url:
+        filestring = url.read().decode()
+        data = [line.strip() for line in filestring.split("\n")]
 #
 #--- [atime, jtime, echk, ech1, ech2, pchk, pch1, pch2, pch3, pch4, pch5, anis, fluen, head]
 #
@@ -194,7 +179,8 @@ def read_past_ace_data():
             head    --- a list of header part
     """
     ifile = f"{ACE_DIR}/data/ace.archive"
-    data  = mcf.read_data_file(ifile)
+    with open(ifile) as f:
+        data = [line.strip() for line in f.readlines()]
 #
 #--- [atime, jtime, echk, ech1, ech2, pchk, pch1, pch2, pch3, pch4, pch5, anis, ipol,fluen, head]
 #
@@ -259,7 +245,9 @@ def read_ace_table_data(data):
         if ent[0] == "#":
             head.append(ent)
             continue
-        elif mcf.is_neumeric(ent[0]) == False:
+        try:
+            temp = float(ent[0])
+        except:
             continue
 
         atemp = re.split('\s+', ent)
@@ -332,7 +320,9 @@ def find_reset_time():
             <ephem_dir>/Data/gephem.dat
     output: reset_time  --- a list of reset times in seconds from 1998.1.1
     """
-    data = mcf.read_data_file(f"{EPHEM_DIR}/Data/PE.EPH.gsme_spherical")
+    ifile = f"{EPHEM_DIR}/Data/PE.EPH.gsme_spherical"
+    with open(ifile) as f:
+        data = [line.strip() for line in f.readlines()]
     stime = []
     alt   = []
     for ent in data:
@@ -668,7 +658,8 @@ def create_new_table(dfile, ndata, tstart, cut):
 #
 #--- read the previous data
 #
-    odata  = mcf.read_data_file(dfile)
+    with open(dfile) as f:
+        odata = [line.strip() for line in f.readlines()]
 
     line = ''
     for ent in odata:
@@ -886,7 +877,8 @@ def update_kp_data_file():
 #--- read kp data   
 #
     ifile = f"{KP_DIR}/Data/k_index_data_past"
-    data  = mcf.read_data_file(ifile)
+    with open(ifile) as f:
+        data = [line.strip() for line in f.readlines()]
     
     atemp = re.split('\s+', data[-1])
     ltime = float(atemp[0])
