@@ -11,41 +11,24 @@
 #########################################################################################
 
 import os
-import sys
 import re
-import random
 import time
 import numpy
 import Chandra.Time
 import matplotlib as mpl
+from calendar import isleap
 
 if __name__ == '__main__':
     mpl.use('Agg')
 
-from pylab import *
 import matplotlib.pyplot       as plt
 import matplotlib.font_manager as font_manager
-import matplotlib.lines        as lines
 #
 #--- Define Directory Pathing
 #
 ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
 ACE_PLOT_DIR = f"/data/mta4/www/RADIATION_new/ACE/Plots"
 
-#
-#--- append  pathes to private folders to a python directory
-#
-sys.path.append('/data/mta4/Script/Python3.10/MTA/')
-#
-#--- import several functions
-#
-import mta_common_functions as mcf
-#
-#--- temp writing file name
-#
-import random
-rtail  = int(time.time() *random.random())
-zspace = '/tmp/zspace' + str(rtail)
 
 #for writing out files in test directory
 if (os.getenv('TEST') == 'TEST'):
@@ -82,7 +65,8 @@ def plot_p3_data():
 #--- read data and save in column array data format
 #
     ifile = f"{ACE_DATA_DIR}/ace_7day_archive"
-    data  = mcf.read_data_file(ifile)
+    with open(ifile) as f:
+        data = [line.strip() for line in f.readlines()]
     adata = convert_to_arrays(data)
 #
 #--- plot data
@@ -122,10 +106,7 @@ def convert_to_arrays(data):
 #
         if chk == 0:                #--- keeping the year of the first data point
             byear = year
-            if mcf.is_leapyear(byear):
-                base = 366
-            else:
-                base = 365
+            base = 365 + isleap(byear)
             chk = 1
 
         if year > byear:
@@ -250,28 +231,28 @@ def plot_data(ndata):
 #
 #--- lengend for lines
 #
-    text(x0, yp1, '112-187*',      color=c_list[6], fontsize=10)
-    text(x1, yp1, '112-187**',     color=c_list[1], fontsize=10)
-    text(x2, yp1, '112-187***',    color=c_list[2], fontsize=10)
-    text(x3, yp1, '115-195',       color='#3573d6', fontsize=10)
-    text(x4, yp2, '310-580',       color=c_list[0], fontsize=10)
-    text(x5, yp2, '761-1220',      color='black',   fontsize=10)
-    text(x6, yp2, '1060-1910 keV', color=c_list[4], fontsize=10)
+    plt.text(x0, yp1, '112-187*',      color=c_list[6], fontsize=10)
+    plt.text(x1, yp1, '112-187**',     color=c_list[1], fontsize=10)
+    plt.text(x2, yp1, '112-187***',    color=c_list[2], fontsize=10)
+    plt.text(x3, yp1, '115-195',       color='#3573d6', fontsize=10)
+    plt.text(x4, yp2, '310-580',       color=c_list[0], fontsize=10)
+    plt.text(x5, yp2, '761-1220',      color='black',   fontsize=10)
+    plt.text(x6, yp2, '1060-1910 keV', color=c_list[4], fontsize=10)
 #
 #--- starting time of the data  6 days ago
 #
     dval  = int(xmin)
     if dval <= 0:
         dval = 1
-    dval  = mcf.add_leading_zero(dval, 3)
+    dval = f"{dval:>03}"
     ltime = str(this_year) + ':' + dval
     ltime = time.strftime('%Y-%m-%dT00:00:00UTC', time.strptime(ltime, '%Y:%j'))
     line = 'Begin: ' + ltime 
-    text(x7, yp4, line, fontsize=8)
+    plt.text(x7, yp4, line, fontsize=8)
 #
 #--- set the size of the plotting area in inch (width: 10.0in, height 2.08in x number of panels)
 #
-    fig = matplotlib.pyplot.gcf()
+    fig = plt.gcf()
     fig.set_size_inches(7.0, 5.5)
 #
 #--- save the plot in png format
