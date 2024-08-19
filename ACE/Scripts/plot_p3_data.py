@@ -17,6 +17,8 @@ import numpy
 import Chandra.Time
 import matplotlib as mpl
 from calendar import isleap
+import argparse
+import signal
 
 if __name__ == '__main__':
     mpl.use('Agg')
@@ -27,13 +29,7 @@ import matplotlib.font_manager as font_manager
 #--- Define Directory Pathing
 #
 ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
-ACE_PLOT_DIR = f"/data/mta4/www/RADIATION_new/ACE/Plots"
-
-
-#for writing out files in test directory
-if (os.getenv('TEST') == 'TEST'):
-    os.system('mkdir -p TestOut')
-    test_out = os.getcwd() + '/TestOut'
+ACE_PLOT_DIR = "/data/mta4/www/RADIATION_new/ACE/Plots"
 
 #
 #--- other setting
@@ -258,9 +254,6 @@ def plot_data(ndata):
 #--- save the plot in png format
 #
     outname = f"{ACE_PLOT_DIR}/mta_ace_plot_P3.png"
-    if (os.getenv('TEST') == 'TEST'):
-        outname = test_out + '/mta_ace_plot_P3.png'
-    
     plt.tight_layout()
     plt.savefig(outname, format='png', dpi=300)
 
@@ -269,5 +262,46 @@ def plot_data(ndata):
 #---------------------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    parser.add_argument("-d", "--data", required = False, help = "Directory path to determine input location of data.")
+    parser.add_argument("-p", "--path", required = False, help = "Directory path to determine output location of plot.")
+    args = parser.parse_args()
+#
+#--- Determine if running in test mode and change pathing if so
+#
+    if args.mode == "test":
+#
+#--- Path output to same location as unit tests
+#
+        if args.data:
+            ACE_DATA_DIR = args.data
+        else:
+            ACE_DATA_DIR = f"{os.getcwd()}/test/outTest"
 
-    plot_p3_data()
+        if args.path:
+            ACE_PLOT_DIR = args.path
+        else:
+            ACE_PLOT_DIR = f"{os.getcwd()}/test/outTest"
+        os.makedirs(ACE_PLOT_DIR, exist_ok = True)
+        plot_p3_data()
+    elif args.mode == 'flight':
+#
+#--- Create a lock file and exit strategy in case of race conditions
+#
+        import getpass
+        name = os.path.basename(__file__).split(".")[0]
+        user = getpass.getuser()
+        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
+            with open(f"/tmp/{user}/{name}.lock") as f:
+                pid = int(f.readlines()[-1].strip())
+            os.remove(f"/tmp/{user}/{name}.lock")
+            os.kill(pid,signal.SIGTERM)
+            os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
+        else:
+            os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
+        plot_p3_data()
+#
+#--- Remove lock file once process is completed
+#
+        os.system(f"rm /tmp/{user}/{name}.lock")
