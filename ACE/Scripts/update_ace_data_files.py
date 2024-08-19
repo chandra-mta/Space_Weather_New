@@ -19,19 +19,14 @@ import Chandra.Time
 import copy 
 import subprocess
 import urllib.request
+import argparse
 #
 #--- Define Directory Pathing
 #
-ACE_DIR = "/data/mta4/Space_Weather/ACE"
+ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
+OUT_ACE_DATA_DIR = ACE_DATA_DIR
 EPHEM_DIR = "/data/mta4/Space_Weather/EPHEM"
 KP_DIR = "/data/mta4/Space_Weather/KP/"
-ACE_HTML_DIR = "/data/mta4/www/RADIATION_new/ACE"
-
-#for writing out files in test directory
-if (os.getenv('TEST') == 'TEST'):
-    os.system('mkdir -p TestOut')
-    test_out = os.getcwd() + '/TestOut'
-
 #
 #--- ftp address
 #
@@ -59,14 +54,14 @@ def update_ace_data_files():
     update ace related data files
     input: none but read from:
             ftp: 'https://services.swpc.noaa.gov/text/ace-epam.txt'
-            <ephem_dir>/Data/gephem.dat
+            <ephem_dir>/Data/PE.EPH.gsme_spherical
             <kp_dir>/Data/k_index_data_past
-    output: <ace_dir>/Data/ace.archive
-            <ace_dir>/Data/ace_12h_archive
-            <ace_dir>/Data/ace_7day_archive
-            <ace_dir>/Data/longterm/ace_data.txt
-            <ace_dir>/Data/fluace.dat
-            <ace_dir>/Data/kp.dat
+    output: <ace_data_dir>/ace.archive
+            <ace_data_dir>/ace_12h_archive
+            <ace_data_dir>/ace_7day_archive
+            <ace_data_dir>/longterm/ace_data.txt
+            <ace_data_dir>/fluace.dat
+            <ace_data_dir>/kp.dat
     """
 #
 #--- data is a list of lists of (see definitions in read_current_ace_data):
@@ -143,7 +138,7 @@ def read_current_ace_data():
 #
     with urllib.request.urlopen(NOAA_LINK) as url:
         filestring = url.read().decode()
-        data = [line.strip() for line in filestring.split("\n")]
+        data = [line.strip() for line in filestring.split("\n") if line != '']
 #
 #--- [atime, jtime, echk, ech1, ech2, pchk, pch1, pch2, pch3, pch4, pch5, anis, fluen, head]
 #
@@ -160,7 +155,7 @@ def read_current_ace_data():
 def read_past_ace_data():
     """
     read the past ace data
-    input:  none, but read from <ace_dir>/Data/ace.archive
+    input:  none, but read from <ace_data_dir>/ace.archive
     output: a list of lists of:
             atime   --- a time in seconds from 1998.1.1
             jtime   --- a string time
@@ -178,7 +173,7 @@ def read_past_ace_data():
             fluen   --- fluence
             head    --- a list of header part
     """
-    ifile = f"{ACE_DIR}/data/ace.archive"
+    ifile = f"{ACE_DATA_DIR}/ace.archive"
     with open(ifile) as f:
         data = [line.strip() for line in f.readlines()]
 #
@@ -317,7 +312,7 @@ def find_reset_time():
     """
     find fluence reset time (at the nadir of the orbit)
     input: none but read from:
-            <ephem_dir>/Data/gephem.dat
+            <ephem_dir>/Data/PE.EPH.gsme_spherical
     output: reset_time  --- a list of reset times in seconds from 1998.1.1
     """
     ifile = f"{EPHEM_DIR}/Data/PE.EPH.gsme_spherical"
@@ -465,7 +460,7 @@ def compute_fluence(data, collection_start, collection_stop):
                                     data[0] ---time/data[17] --- fluence
             collection_start    --- a list of fluence collection starting time
             collection_stop     --- a list of fluence collection stopping time
-    output: data                --- fluecne updated data
+    output: data                --- fluence updated data
     """
 #
 #--- start from the last estimated fluence value at the beginning
@@ -520,7 +515,7 @@ def update_ace_archive(updated_data, head):
     update ace.archive data file
     input:  updated_data    --- a list of lists of data
             head            --- a list of header lines
-    output: <ace_dir>/Data/ace.archive
+    output: <ace_data_dir>/ace.archive
     """
 #
 #--- prep to update the table
@@ -555,10 +550,7 @@ def update_ace_archive(updated_data, head):
             line = line + line_adjust(updated_data[13][m])
             line = line + '\n'
 
-    ofile = f"{ACE_DIR}/Data/ace.archive"
-    
-    if (os.getenv('TEST') == 'TEST'):
-        ofile = test_out + '/ace.archive'
+    ofile = f"{OUT_ACE_DATA_DIR}/ace.archive"
     
     with open(ofile, 'w') as fo:
         fo.write(line)
@@ -571,8 +563,8 @@ def update_secondary_archive_files(ndata):
     """
     update ace_12h_archive, ace_7day_archive data files
     input:  ndata   --- a list of lists of the newest data
-    output: <ace_dir>/Data/ace_12h_archive
-            <ace_dir>/Data/ace_7day_archive
+    output: <ace_data_dir>/ace_12h_archive
+            <ace_data_dir>/ace_7day_archive
     """
 #
 #--- the start and stop time of the newest ace data table
@@ -582,13 +574,13 @@ def update_secondary_archive_files(ndata):
 #
 #--- 12hr data set
 #
-    dfile = f"{ACE_DIR}/Data/ace_12h_archive"
+    dfile = f"{OUT_ACE_DATA_DIR}/ace_12h_archive"
     cut    = tstop  - 43200.0
     create_new_table(dfile, ndata, tstart, cut)
 #
 #--- 7 day data set
 #
-    dfile = f"{ACE_DIR}/Data/ace_7day_archive"
+    dfile = f"{OUT_ACE_DATA_DIR}/ace_7day_archive"
     cut    = tstop  - 7 * 86400.0
     create_new_table(dfile, ndata, tstart, cut)
 
@@ -600,9 +592,9 @@ def update_long_term_data(ndata):
     """
     update long term data
     input:  ndata   --- a list of lists of new data
-    output: <ace_dir>/Data/longterm/ace_data.txt
+    output: <ace_data_dir>/longterm/ace_data.txt
     """
-    dfile = f"{ACE_DIR}/Data/longterm/ace_data.txt"
+    dfile = f"{ACE_DATA_DIR}/longterm/ace_data.txt"
     last_line = subprocess.check_output(f"tail -n 1 {dfile}", shell=True, executable='/bin/csh').decode()
     atemp = re.split('\s+', last_line)
 #
@@ -635,11 +627,8 @@ def update_long_term_data(ndata):
             line = line + line_adjust(ndata[10][m])
             line = line + '%7.2f' % ndata[11][m]
             line = line + '\n'
-
-    if (os.getenv('TEST') == 'TEST'):
-        dfile = test_out + '/ace_data.txt'
     
-    with open(dfile, 'a') as fo:
+    with open(f"{OUT_ACE_DATA_DIR}/longterm/ace_data.txt", 'a') as fo:
         fo.write(line)
 
 #-----------------------------------------------------------------------------
@@ -693,9 +682,6 @@ def create_new_table(dfile, ndata, tstart, cut):
         line = line + line_adjust(ndata[10][m])
         line = line + '%7.2f' % ndata[11][m]
         line = line + '\n'
-    
-    if (os.getenv('TEST') == 'TEST'):
-        dfile = test_out + '/' + os.path.split(dfile)[1]
 
     with open(dfile, 'w') as fo:
         fo.write(line)
@@ -781,7 +767,7 @@ def updat_fluace_data_file(data_set, header,  c_start):
     input:  data_set---  a list of lists of data
             header  --- a list of header lines
             c_start --- a list of fluence reset time
-    output: <ace_dir>/Data/fluace.dat
+    output: <ace_data_dir>/fluace.dat
     """
 #
 #--- compute the latest fluence
@@ -835,10 +821,7 @@ def updat_fluace_data_file(data_set, header,  c_start):
     line = line + '%10d' % tacc
     line = line + '\n'
     
-    ofile = f"{ACE_DIR}/Data/fluace.dat"
-    
-    if (os.getenv('TEST') == 'TEST'):
-        ofile = test_out + '/fluance.dat'
+    ofile = f"{OUT_ACE_DATA_DIR}/fluace.dat"
     
     with open(ofile, 'w') as fo:
         fo.write(line)
@@ -851,7 +834,7 @@ def update_kp_data_file():
     """
     copy kp data and create a file to match in the required format
     input: none but read from: <kp_dir>/Data/k_index_data_past
-    output: <ace_dir>/Data/kp.dat
+    output: <ace_data_dir>/kp.dat
     """
 #
 #--- header part
@@ -896,10 +879,7 @@ def update_kp_data_file():
     line  = line  + ldate + '\t\t' + kval + '\t\t' + kval + '\n'
     line  = head + line
     
-    ofile = f"{ACE_DIR}/Data/kp.dat"
-    
-    if (os.getenv('TEST') == 'TEST'):
-        ofile = test_out + '/kp.dat'
+    ofile = f"{OUT_ACE_DATA_DIR}/kp.dat"
 
     with open(ofile, 'w') as fo:
         fo.write(line)
@@ -907,6 +887,40 @@ def update_kp_data_file():
 #-----------------------------------------------------------------------------
 
 if __name__ == "__main__":
-
-    update_ace_data_files()
-
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    parser.add_argument("-p", "--path", required = False, help = "Directory path to determine output location of files.")
+    args = parser.parse_args()
+#
+#--- Determine if running in test mode and change pathing if so
+#
+    if args.mode == "test":
+#
+#--- Path output to same location as unit tests
+#
+        if args.path:
+            OUT_ACE_DATA_DIR = args.path
+        else:
+            OUT_ACE_DATA_DIR = f"{os.getcwd()}/test/outTest"
+        os.makedirs(f"{OUT_ACE_DATA_DIR}/longterm", exist_ok = True)
+        if not os.path.isfile(f"{OUT_ACE_DATA_DIR}/ace_12h_archive"):
+            os.system(f"cp {ACE_DATA_DIR}/ace_12h_archive {OUT_ACE_DATA_DIR}/ace_12h_archive")
+        if not os.path.isfile(f"{OUT_ACE_DATA_DIR}/ace_7day_archive"):
+            os.system(f"cp {ACE_DATA_DIR}/ace_7day_archive {OUT_ACE_DATA_DIR}/ace_7day_archive")
+        update_ace_data_files()
+    elif args.mode == "flight":
+#
+#--- Create a lock file and exit strategy in case of race conditions.
+#
+        import getpass
+        name = os.path.basename(__file__).split(".")[0]
+        user = getpass.getuser()
+        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
+            sys.exit(f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog.")
+        else:
+            os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
+        update_ace_data_files()
+#
+#--- Remove lock file once process is completed
+#
+        os.system(f"rm /tmp/{user}/{name}.lock")
