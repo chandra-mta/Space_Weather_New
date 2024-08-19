@@ -13,11 +13,8 @@
 import os
 import sys
 import re
-import string
 import random
-import operator
 import time
-import datetime
 import numpy
 import Chandra.Time
 import matplotlib as mpl
@@ -30,18 +27,11 @@ import matplotlib.pyplot       as plt
 import matplotlib.font_manager as font_manager
 import matplotlib.lines        as lines
 #
-#--- reading directory list
+#--- Define Directory Pathing
 #
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
+ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
+ACE_PLOT_DIR = f"/data/mta4/www/RADIATION_new/ACE/Plots"
 
-with open(path, 'r') as f:
-    data = [line.strip() for line in f.readlines()]
-
-for ent in data:
-    atemp = re.split(':', ent)
-    var  = atemp[1].strip()
-    line = atemp[0].strip()
-    exec("%s = %s" %(var, line))
 #
 #--- append  pathes to private folders to a python directory
 #
@@ -56,12 +46,7 @@ import mta_common_functions as mcf
 import random
 rtail  = int(time.time() *random.random())
 zspace = '/tmp/zspace' + str(rtail)
-#
-#--- set direcotries
-#
-data_dir   = ace_dir  + 'Data/'
-web_dir    = html_dir + 'ACE/'
-plot_dir   = web_dir  + 'Plots/'
+
 #for writing out files in test directory
 if (os.getenv('TEST') == 'TEST'):
     os.system('mkdir -p TestOut')
@@ -91,12 +76,12 @@ def plot_p3_data():
     """
     create scaled p3 data plot
     input: none but read from <data_dir>/ace_7day_archive
-    output: <html_dir>/ACE/Plots/mta_ace_plot_P3.png
+    output: <ace_plot_dir>/mta_ace_plot_P3.png
     """
 #
 #--- read data and save in column array data format
 #
-    ifile = data_dir + 'ace_7day_archive'
+    ifile = f"{ACE_DATA_DIR}/ace_7day_archive"
     data  = mcf.read_data_file(ifile)
     adata = convert_to_arrays(data)
 #
@@ -291,7 +276,7 @@ def plot_data(ndata):
 #
 #--- save the plot in png format
 #
-    outname = plot_dir + 'mta_ace_plot_P3.png'
+    outname = f"{ACE_PLOT_DIR}/mta_ace_plot_P3.png"
     if (os.getenv('TEST') == 'TEST'):
         outname = test_out + '/mta_ace_plot_P3.png'
     
