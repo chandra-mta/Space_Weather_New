@@ -30,13 +30,10 @@ ACE_PLOT_DIR = "/data/mta4/www/RADIATION_new/ACE/Plots"
 CRM_DIR = "/data/mta4/Space_Weather/CRM"
 COMM_DIR = "/data/mta4/Space_Weather/Comm_data"
 HOUSE_KEEPING = "/data/mta4/Space_Weather/house_keeping"
-
 #
-#--- temp writing file name
+#--- Defining other Globals
 #
-rtail  = int(time.time() * random.random())
-zspace = '/tmp/zspace' + str(rtail)
-
+TESTMAIL = False
 #
 #--- set parameters
 #
@@ -500,16 +497,13 @@ def ace_invalid_spec(speci, speci_lim):
 #---------------------------------------------------------------------------------------------------
 
 def send_mail(subject, content, address):
-
-    fo = open(zspace, 'w')
-    fo.write(content)
-    fo.close()
-
-    cmd = 'cat ' + zspace + '|mailx -s "' + subject + '" ' + address
-    os.system(cmd)
-    
-    cmd = 'rm ' + zspace
-    os.system(cmd)
+    if TESTMAIL:
+        print(f"Test Mode, interrupting following email.\n\
+              Subject: {subject}\n\
+              Address: {address}\n\
+              Content: {content}\n")
+    else:
+        os.system(f"echo '{content}' | mailx -s {subject} {address}")
 
 #---------------------------------------------------------------------------------------------------
 #-- curr_state: extract some satellite related information                                        --
