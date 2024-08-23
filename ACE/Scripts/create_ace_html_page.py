@@ -13,57 +13,30 @@
 import os
 import sys
 import re
-import string
 import random
-import operator
 import time
-import datetime
 import numpy
 import Chandra.Time
+import argparse
 #
-#--- reading directory list
+#---Define Directory Pathing
 #
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
+HTTP_EPAM = "http://services.swpc.noaa.gov/images/ace-epam-7-day.gif"
+HTTP_MAG = "http://services.swpc.noaa.gov/images/ace-mag-swepam-7-day.gif"
+ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
+TEMPLATE_DIR = "/data/mta4/Space_Weather/ACE/Scripts/Template"
+ACE_HTML_DIR = "/data/mta4/www/RADIATION_new/ACE"
+ACE_PLOT_DIR = "/data/mta4/www/RADIATION_new/ACE/Plots"
+CRM_DIR = "/data/mta4/Space_Weather/CRM"
+COMM_DIR = "/data/mta4/Space_Weather/Comm_data"
+HOUSE_KEEPING = "/data/mta4/Space_Weather/house_keeping"
 
-with open(path, 'r') as f:
-    data = [line.strip() for line in f.readlines()]
-
-for ent in data:
-    atemp = re.split(':', ent)
-    var  = atemp[1].strip()
-    line = atemp[0].strip()
-    exec("%s = %s" %(var, line))
-#
-#--- append  pathes to private folders to a python directory
-#
-sys.path.append('/data/mta4/Script/Python3.10/MTA/')
-#
-#--- import several functions
-#
-import mta_common_functions as mcf
 #
 #--- temp writing file name
 #
 rtail  = int(time.time() * random.random())
 zspace = '/tmp/zspace' + str(rtail)
-#
-#--- set direcotries
-#
-data_dir   = ace_dir + 'Data/'
-templ_dir  = ace_dir + 'Scripts/Template/'
-web_dir    = html_dir + 'ACE/'
-plot_dir   = web_dir  + 'Plots/'
 
-#for writing out files in test directory
-if (os.getenv('TEST') == 'TEST'):
-    os.system('mkdir -p TestOut')
-    test_out = os.getcwd() + '/TestOut'
-
-#
-#--- ftp, html site setting
-#
-http_epam = 'http://' + noaa_site + 'images/ace-epam-7-day.gif'
-http_mag  = 'http://' + noaa_site + 'images/ace-mag-swepam-7-day.gif'
 #
 #--- set parameters
 #
@@ -87,8 +60,8 @@ def create_ace_html_page():
 #
 #---- read 12h_archive data
 #
-    ifile          = data_dir + 'ace_12h_archive'
-    cdata          = mcf.read_data_file(ifile)
+    with open(f"{ACE_DATA_DIR}/ace_12h_archive") as f:
+        cdata = [line.strip() for line in f.readlines()]
 #
 #--- cdata:     a list of lists of electron/proton flux data 
 #--- l_vals:    a list of the 'last' entries of those electron/proton flux data
@@ -105,34 +78,27 @@ def create_ace_html_page():
 #
 #--- download images and reverse the color:
 #
-    download_img(http_epam)
-    download_img(http_mag)
+    download_img(HTTP_EPAM)
+    download_img(HTTP_MAG)
 #
 #--- update ace html page
 #
-    ifile = templ_dir + 'header'
-    line  = read_file(ifile)
-    line  = line + '\n'
+    line = ''
+    with open(f"{TEMPLATE_DIR}/header") as f:
+        line += f"{f.read()}\n"
 
-    ifile = templ_dir + 'header1'
-    line  = line + read_file(ifile)
+    with open(f"{TEMPLATE_DIR}/header1") as f:
+        line += f"{f.read()}\n"
 
-    line  = line + ace_table
-    line  = line + '\n'
+    line += f"{ace_table}\n"
 
-    ifile = templ_dir + 'image2'
-    line  = line + read_file(ifile)
-    line  = line + '\n'
+    with open(f"{TEMPLATE_DIR}/image2") as f:
+        line += f"{f.read()}\n"
 
-    ifile = templ_dir + 'footer'
-    line  = line + read_file(ifile)
-    line  = line + '\n'
+    with open(f"{TEMPLATE_DIR}/footer") as f:
+        line += f"{f.read()}\n"
 
-    out   = web_dir + 'ace.html'
-    if (os.getenv('TEST') == 'TEST'):
-        out = test_out + '/ace.html'
-
-    with open(out, 'w') as fo:
+    with open(f"{ACE_HTML_DIR}/ace.html", 'w') as fo:
         fo.write(line)
 
 #---------------------------------------------------------------------------------------------------
@@ -431,10 +397,10 @@ def create_ace_data_table(cdata, l_vals):
 
         ace_invalid_spec(speci, speci_lim)
 #
-#--- crate a summary table
+#--- create a summary table
 #
-    hfile = templ_dir + 'header2'
-    line  = line + "\n" +  read_file(hfile)
+    with open(f"{TEMPLATE_DIR}/header2") as f:
+        line += f"\n{f.read()}"
 
     line  = line + "%7s %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f\n"\
                    % ("AVERAGE        ", e38a, e175a, p56a, p130a, p5_p3a, p6_p3a, p337a, p761a, p1073a)
@@ -558,8 +524,8 @@ def curr_state():
 #
 #--- read CRM file to get some information
 #
-    sfile = crm_dir + 'CRMsummary.dat'
-    data  = mcf.read_data_file(sfile)
+    with open(f"{CRM_DIR}/CRMsummary.dat") as f:
+        data = [line.strip() for line in f.readlines()]
 
     dirct = 'NA'
     dist  = 'NA'
@@ -586,8 +552,8 @@ def curr_state():
     start = Chandra.Time.DateTime(ctime).secs 
     stop  = start + 3.0 * 86400.
 
-    ifile = comm_dir + 'Data/dsn_summary.dat'
-    data  = mcf.read_data_file(ifile)
+    with open(f"{COMM_DIR}/Data/dsn_summary.dat") as f:
+        data = [line.strip() for line in f.readlines()]
     line  = line + data[0] + '\n' + data[1] + '\n'
     data  = data[2:]
     for ent in data:
@@ -637,9 +603,8 @@ def download_img(file, chg=1):
 #
 #--- get the name of output img file name
 #
-    atemp = re.split('\/', file)
-    ofile = atemp[-1]
-    oimg  =  plot_dir + ofile
+    ofile = os.path.basename(file)
+    oimg = f"{ACE_PLOT_DIR}/{ofile}"
 #
 #--- download the img
 #
@@ -650,9 +615,9 @@ def download_img(file, chg=1):
     except:
         mc   = re.search('gif', oimg)
         if mc is not None:
-            cmd  = ' cp ' + house_keeping + 'no_plot.gif ' + oimg
+            cmd = f"cp {HOUSE_KEEPING}/no_plot.gif {oimg}"
         else:
-            cmd  = ' cp ' + house_keeping + 'no_data.png ' + oimg
+            cmd = f"cp {HOUSE_KEEPING}/no_data.png {oimg}"
         os.system(cmd)
 
         return
@@ -662,20 +627,6 @@ def download_img(file, chg=1):
     if chg == 1:
         cmd   = 'convert -negate ' +  oimg + ' ' + oimg
         os.system(cmd)
-
-
-#---------------------------------------------------------------------------------------------------
-#---------------------------------------------------------------------------------------------------
-#---------------------------------------------------------------------------------------------------
-
-def read_file(ifile):
-
-    f    = open(ifile, 'r')
-    data = f.read()
-    f.close()
-
-    return data
-
     
 #-----------------------------------------------------------------------------
 #-- convert_to_col_data: read  data into a list of lists                    --
