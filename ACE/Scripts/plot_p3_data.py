@@ -14,7 +14,6 @@ import os
 import re
 import time
 import numpy
-import Chandra.Time
 import matplotlib as mpl
 from calendar import isleap
 import argparse
@@ -41,11 +40,7 @@ t_arch      = 7         #--- how many days to
 #
 #--- current time
 #
-current_time_date    = time.strftime('%Y:%j:%H:%M:%S', time.gmtime())
-current_chandra_time = Chandra.Time.DateTime(current_time_date).secs
 this_year            = int(float(time.strftime('%Y', time.gmtime())))
-this_doy             = int(float(time.strftime('%j', time.gmtime())))
-year_start           = Chandra.Time.DateTime(str(this_year) + ':001:00:00:00').secs
 
 #---------------------------------------------------------------------------------------
 #-- plot_p3_data: get ace data and plot the data                                    --
