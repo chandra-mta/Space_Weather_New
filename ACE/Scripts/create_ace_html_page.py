@@ -13,7 +13,6 @@
 import os
 import sys
 import re
-import random
 import time
 import numpy
 import Chandra.Time
@@ -30,16 +29,16 @@ ACE_PLOT_DIR = "/data/mta4/www/RADIATION_new/ACE/Plots"
 CRM_DIR = "/data/mta4/Space_Weather/CRM"
 COMM_DIR = "/data/mta4/Space_Weather/Comm_data"
 HOUSE_KEEPING = "/data/mta4/Space_Weather/house_keeping"
+TMP_DIR = "/tmp/mta"
 #
 #--- Defining other Globals
 #
 TESTMAIL = False
-#
-#--- set parameters
-#
-p5_p3_scale  = 7.           #--- scale P5 to P3 values, while P3 is broke
-p6_p3_scale  = 36.          #--- scale P6 to P3 values, while P3 is broke
-p7_p3_scale  = 110.         #--- scale P7 to P3 values, while P3 is broke
+
+P5_P3_SCALE  = 7.           #--- scale P5 to P3 values, while P3 is broke
+P6_P3_SCALE  = 36.          #--- scale P6 to P3 values, while P3 is broke
+P7_P3_SCALE  = 110.         #--- scale P7 to P3 values, while P3 is broke
+P5_P6_LIM = 1.0e10
 
 #---------------------------------------------------------------------------------------------------
 #-- create_ace_html_page: read ace data and update html page                                      ---
@@ -99,7 +98,7 @@ def create_ace_html_page():
         fo.write(line)
 
 #---------------------------------------------------------------------------------------------------
-#-- create_ace_data_table: craete data tables from a given data list                              --
+#-- create_ace_data_table: create data tables from a given data list                              --
 #---------------------------------------------------------------------------------------------------
 
 def create_ace_data_table(cdata, l_vals):
@@ -209,13 +208,13 @@ def create_ace_data_table(cdata, l_vals):
 #---  replace the scaled data with valid data if the original values are good
 #
         if p5dat[k] > 0:
-            p5_p3_scaled[k] = p5dat[k] * p5_p3_scale
+            p5_p3_scaled[k] = p5dat[k] * P5_P3_SCALE
 
         if p6dat[k] > 0:
-            p6_p3_scaled[k] = p6dat[k] * p6_p3_scale
+            p6_p3_scaled[k] = p6dat[k] * P6_P3_SCALE
 
         if p7dat[k] > 0:
-            p7_p3_scaled[k] = p7dat[k] * p7_p3_scale
+            p7_p3_scaled[k] = p7dat[k] * P7_P3_SCALE
 #
 #--- if data is ok, add the line to the table data
 #
@@ -385,12 +384,9 @@ def create_ace_data_table(cdata, l_vals):
         val = "%.4e" % p130f
         #ace_violation_protons(val)
 
-    p5_p6_lim = 1.0                 #----????? this is what given in the original, but use below
-    p5_p6_lim = 1.0e10
-
-    if (p5_p6 > p5_p6_lim) or (p5_p6 < 1):
+    if (p5_p6 > P5_P6_LIM) or (p5_p6 < 1):
         speci     = "%12.1f" % p5_p6
-        speci_lim = "%8.1f"  % p5_p6_lim
+        speci_lim = "%8.1f"  % P5_P6_LIM
 
         ace_invalid_spec(speci, speci_lim)
 #
@@ -412,13 +408,13 @@ def create_ace_data_table(cdata, l_vals):
                    % ("SPECTRA        ", "p3/p5", p3_p5, "p3/p6", p3_p6, "p5/p6", p5_p6, "p6/p7", p6_p7)
 
     line  = line + "%62s %4.1f\n"\
-                   % ("*   This P3 channel is currently scaled from P5 data. P3* = P5 X ", p5_p3_scale)
+                   % ("*   This P3 channel is currently scaled from P5 data. P3* = P5 X ", P5_P3_SCALE)
 
     line  = line + "%62s %4.1f\n"\
-                   % ("**  This P3 channel is currently scaled from P6 data. P3** = P6 X ", p6_p3_scale)
+                   % ("**  This P3 channel is currently scaled from P6 data. P3** = P6 X ", P6_P3_SCALE)
 
     line  = line + "%62s %4.1f\n"\
-                   % ("*** This P3 channel (not shown) is currently scaled from P7 data. P3*** = P7 X ", p7_p3_scale)
+                   % ("*** This P3 channel (not shown) is currently scaled from P7 data. P3*** = P7 X ", P7_P3_SCALE)
 
     return line
 
@@ -468,7 +464,7 @@ def ace_invalid_spec(speci, speci_lim):
 #
 #--- check whether the mail is recently sent out
 #
-    out = '/tmp/mta/prot_spec_violate'
+    out = f'{TMP_DIR}/prot_spec_violate'
     if os.path.isfile(out):
         cmd = 'date >> ' + out
         os.system(cmd)
@@ -487,8 +483,6 @@ def ace_invalid_spec(speci, speci_lim):
 #
 #--- open a file indicating that the mail was sent
 #
-        if (os.getenv('TEST') == 'TEST'):
-            out = test_out + '/prot_spec_violate'
         with open(out, 'w') as fo:
             fo.write(line)
 
@@ -723,6 +717,52 @@ def convert_to_col_data(data):
 #---------------------------------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    parser.add_argument("-d", "--data", required = False, help = "Directory path to determine input location of data.")
+    parser.add_argument("-p", "--path", required = False, help = "Directory path to determine output location of plot.")
+    parser.add_argument("-w", "--web", required = False, help = "Directory path to determine output location of html page.")
+    args = parser.parse_args()
+#
+#--- Determine if running in test mode and change pathing if so
+#
+    if args.mode == "test":
+        TESTMAIL = True
+#
+#--- Path output to same location as unit tests
+#
+        TEMPLATE_DIR = f"{os.getcwd()}/Template"
+        TMP_DIR =  f"{os.getcwd()}/test/outTest"
+        if args.data:
+            ACE_DATA_DIR = args.data
+        else:
+            ACE_DATA_DIR = f"{os.getcwd()}/test/outTest"
 
-    create_ace_html_page()
-
+        if args.path:
+            ACE_PLOT_DIR = args.path
+        else:
+            ACE_PLOT_DIR = f"{os.getcwd()}/test/outTest"
+        
+        if args.web:
+            ACE_HTML_DIR = args.web
+        else:
+            ACE_HTML_DIR = f"{os.getcwd()}/test/outTest"
+        os.makedirs(ACE_PLOT_DIR, exist_ok = True)
+        os.makedirs(ACE_HTML_DIR, exist_ok = True)
+        create_ace_html_page()
+    elif args.mode == "flight":
+#
+#--- Create a lock file and exit strategy in case of race conditions.
+#
+        import getpass
+        name = os.path.basename(__file__).split(".")[0]
+        user = getpass.getuser()
+        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
+            sys.exit(f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog.")
+        else:
+            os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
+        create_ace_html_page()
+#
+#--- Remove lock file once process is completed
+#
+        os.system(f"rm /tmp/{user}/{name}.lock")
