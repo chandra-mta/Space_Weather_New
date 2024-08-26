@@ -497,7 +497,7 @@ def send_mail(subject, content, address):
               Address: {address}\n\
               Content: {content}\n")
     else:
-        os.system(f"echo '{content}' | mailx -s {subject} {address}")
+        os.system(f"echo '{content}' | mailx -s '{subject}' {address}")
 
 #---------------------------------------------------------------------------------------------------
 #-- curr_state: extract some satellite related information                                        --
