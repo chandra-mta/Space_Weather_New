@@ -215,15 +215,15 @@ def create_ace_data_table(cdata, l_vals):
 
         if p7dat[k] > 0:
             p7_p3_scaled[k] = p7dat[k] * P7_P3_SCALE
-#
-#--- if data is ok, add the line to the table data
-#
-        if pchk[k] == 0:
-            aline = "%s%11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f\n"\
-                    % (cdata[1][k], de1[k], de4[k], p2dat[k], p3dat[k],\
-                       p5_p3_scaled[k], p6_p3_scaled[k], p5dat[k], p6dat[k], p7dat[k])
+        append_data = [de1[k], de4[k], p2dat[k], p3dat[k],p5_p3_scaled[k], p6_p3_scaled[k], p5dat[k], p6dat[k], p7dat[k]]
+        aline = f'{cdata[1][k]}'
+        for i in append_data:
+            if i < 0:
+                aline += f" {-1e5:11.2e}"
+            else:
+                aline += f" {i:11.3f}"
+        line += f"{aline}\n"
 
-            line  = line + aline
 #
 #--- the table part is done, compute other entries
 #
