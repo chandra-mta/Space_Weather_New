@@ -895,6 +895,7 @@ if __name__ == "__main__":
 #--- Determine if running in test mode and change pathing if so
 #
     if args.mode == "test":
+        print("Running In Test Mode.")
 #
 #--- Path output to same location as unit tests
 #
@@ -903,10 +904,13 @@ if __name__ == "__main__":
         else:
             OUT_ACE_DATA_DIR = f"{os.getcwd()}/test/outTest"
         os.makedirs(f"{OUT_ACE_DATA_DIR}/longterm", exist_ok = True)
+        print(f"OUT_ACE_DATA_DIR: {OUT_ACE_DATA_DIR}")
         if not os.path.isfile(f"{OUT_ACE_DATA_DIR}/ace_12h_archive"):
             os.system(f"cp {ACE_DATA_DIR}/ace_12h_archive {OUT_ACE_DATA_DIR}/ace_12h_archive")
+            print(f"Ran: cp {ACE_DATA_DIR}/ace_12h_archive {OUT_ACE_DATA_DIR}/ace_12h_archive")
         if not os.path.isfile(f"{OUT_ACE_DATA_DIR}/ace_7day_archive"):
             os.system(f"cp {ACE_DATA_DIR}/ace_7day_archive {OUT_ACE_DATA_DIR}/ace_7day_archive")
+            print(f"Ran: cp {ACE_DATA_DIR}/ace_7day_archive {OUT_ACE_DATA_DIR}/ace_7day_archive")
         update_ace_data_files()
     elif args.mode == "flight":
 #

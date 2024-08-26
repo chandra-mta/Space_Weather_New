@@ -727,6 +727,7 @@ if __name__ == "__main__":
 #--- Determine if running in test mode and change pathing if so
 #
     if args.mode == "test":
+        print("Running In Test Mode.")
         TESTMAIL = True
 #
 #--- Path output to same location as unit tests
@@ -741,7 +742,7 @@ if __name__ == "__main__":
         if args.path:
             ACE_PLOT_DIR = args.path
         else:
-            ACE_PLOT_DIR = f"{os.getcwd()}/test/outTest"
+            ACE_PLOT_DIR = f"{os.getcwd()}/test/outTest/Plots"
         
         if args.web:
             ACE_HTML_DIR = args.web
@@ -749,6 +750,11 @@ if __name__ == "__main__":
             ACE_HTML_DIR = f"{os.getcwd()}/test/outTest"
         os.makedirs(ACE_PLOT_DIR, exist_ok = True)
         os.makedirs(ACE_HTML_DIR, exist_ok = True)
+        print(f"ACE_DATA_DIR: {ACE_DATA_DIR}")
+        print(f"ACE_PLOT_DIR: {ACE_PLOT_DIR}")
+        print(f"ACE_HTML_DIR: {ACE_HTML_DIR}")
+        print(f"TEMPLATE_DIR: {TEMPLATE_DIR}")
+        print(f"TMP_DIR: {TMP_DIR}")
         create_ace_html_page()
     elif args.mode == "flight":
 #
