@@ -1,5 +1,6 @@
 #!/proj/sot/ska3/flight/bin/python
 import os
+import sys
 import argparse
 #
 #--- Define Globals
@@ -58,3 +59,45 @@ def send_mail(subject, content, address):
               Content: {content}\n")
     else:
         os.system(f"echo '{content}' | mailx -s '{subject}' {address}")
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    parser.add_argument("-p", "--path", required = False, help = "Directory path to determine input data location.")
+    args = parser.parse_args()
+#
+#--- Determine if running in test mode and change pathing if so
+#
+    if args.mode == "test":
+        print("Running In Test Mode.")
+        TESTMAIL = True
+#
+#--- Path output to same location as unit tests
+#
+        if args.path:
+            ACE_DATA_DIR = args.path
+        else:
+            ACE_DATA_DIR = f"{os.getcwd()}/test/outTest"
+        TMP_DIR = f"{os.getcwd()}/test/outTest"
+        os.makedirs(f"{ACE_DATA_DIR}", exist_ok = True)
+        os.makedirs(f"{TMP_DIR}", exist_ok = True)
+        print(f"ACE_DATA_DIR: {ACE_DATA_DIR}")
+        print(f"TMP_DIR: {TMP_DIR}")
+        check_viol()
+
+    elif args.mode == "flight":
+#
+#--- Create a lock file and exit strategy in case of race conditions.
+#
+        import getpass
+        name = os.path.basename(__file__).split(".")[0]
+        user = getpass.getuser()
+        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
+            sys.exit(f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog.")
+        else:
+            os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
+        check_viol()
+#
+#--- Remove lock file once process is completed
+#
+        os.system(f"rm /tmp/{user}/{name}.lock")
