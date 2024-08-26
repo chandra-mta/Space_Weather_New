@@ -16,6 +16,7 @@ import sys
 import re
 import time
 import Chandra.Time
+import argparse
 #
 #--- Define Directory Pathing
 #
@@ -204,4 +205,41 @@ def compute_fluence_cxo70():
 #-----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    compute_fluence_cxo70()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    parser.add_argument("-d", "--data", required = False, help = "Directory path to determine input location of data.")
+    parser.add_argument("-w", "--web", required = False, help = "Directory path to determine output location of html page.")
+    args = parser.parse_args()
+#
+#--- Determine if running in test mode and change pathing if so
+#
+    if args.mode == "test":
+        print("Running In Test Mode.")
+        if args.data:
+            ACE_DATA_DIR = args.data
+        else:
+            ACE_DATA_DIR = f"{os.getcwd()}/test/outTest"
+        if args.web:
+            ACE_HTML_DIR = args.web
+        else:
+            ACE_HTML_DIR = f"{os.getcwd()}/test/outTest"
+        os.makedirs(ACE_HTML_DIR, exist_ok = True)
+        print(f"ACE_DATA_DIR: {ACE_DATA_DIR}")
+        print(f"ACE_HTML_DIR: {ACE_HTML_DIR}")
+        compute_fluence_cxo70()
+    elif args.mode == "flight":
+#
+#--- Create a lock file and exit strategy in case of race conditions.
+#
+        import getpass
+        name = os.path.basename(__file__).split(".")[0]
+        user = getpass.getuser()
+        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
+            sys.exit(f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog.")
+        else:
+            os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
+        compute_fluence_cxo70()
+#
+#--- Remove lock file once process is completed
+#
+        os.system(f"rm /tmp/{user}/{name}.lock")
