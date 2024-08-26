@@ -1,119 +1,60 @@
 #!/proj/sot/ska3/flight/bin/python
-
-import sys
 import os
-from datetime import datetime
-import re
-
+import argparse
 #
-#--- reading directory list
+#--- Define Globals
 #
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
+ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
+TESTMAIL = False
+VIOL_HOUR = 8
+ARCHIVE_LENGTH_LIM = 12 * VIOL_HOUR
+ADMIN = 'mtadude@cfa.harvard.edu'
+ALERT = 'sot_ace_alert@cfa.harvard.edu'
+TMP_DIR = "/tmp/mta"
 
-with open(path, 'r') as f:
-    data = [line.strip() for line in f.readlines()]
-
-for ent in data:
-    atemp = re.split(':', ent)
-    var  = atemp[1].strip()
-    line = atemp[0].strip()
-    exec( "%s = %s" %(var, line))
-
+def check_viol():
+    ifile = f"{ACE_DATA_DIR}/ace_12h_archive"
+    if not os.path.isfile(ifile):
+        content = f"Error: {ifile} not found\n"
+        content += f"by script {__file__}.\n"
+        content += f"Alerts depend on this file. Please Investigate.\n"
+        content += f"This message was sent to {ADMIN}"
+        send_mail("Missing ACE archive",content, ADMIN)
+    else:
+        with open(f"{ACE_DATA_DIR}/ace_12h_archive") as f:
+            file_data = [line.strip() for line in f.readlines() if line != '']
+            file_data.reverse()
 #
-#--- append paths to private folders to a python directory
+#--- Check only the time subsection of data which corresponds to
+#--- an ARCHIVE_LENGTH_LIM number of 5-min increments
 #
-sys.path.append('/data/mta4/Script/Python3.10/MTA/')
+        data = [line.split() for line in file_data[:ARCHIVE_LENGTH_LIM]]
 #
-#-command line arguments for reading in different hours before alert
+#--- If the entire data set is invalid, then email alert, otherwise proceed as normal
 #
-if (len(sys.argv) == 1):#if no arguments passed
-    viol_hour = 8#defaults to alert after 8 hours
-else:
-    viol_hour = int(sys.argv[1]) #if arguments passed
-
-
-if (viol_hour >= 13):
-    raise Exception(f'Error: Violation hour until notification: {viol_hour}h: exceeds 12h.')
-
-#
-#---infile definition and setup of violation directory
-#
-
-ace12hfile = ace_dir + "Data/ace_12h_archive"
-infile = ace_dir +  "Data/ace.archive"#read in full archive file to read most recent data in order
-archive_length_lim = 12 * viol_hour # 12 five-min segments per hour.
-
-#for writing out files in test directory
-if (os.getenv('TEST') == 'TEST'):
-    os.system('mkdir -p TestOut')
-    test_out = os.getcwd() + '/TestOut'
-
-
-
-lockdir = "/tmp/mta"
-
-if (not os.path.exists(lockdir)):
-    os.system(f'mkdir {lockdir}')
-
-lockfile = lockdir + "/ace_viol.out"
-
-
-#
-#--Loop A: iterating over file lines
-#
-
-VALID_DATA_MARK = False
-
-line_count = 0#count of lines in the While loop, one we exceed the archive limit of lines, we leave the While loop
-with open(infile, 'r') as archive_file:
-    while True:
-        line = archive_file.readline()
-        if not line:#end of file reached. This should never happen since the archive file spans years, hence the error warning
-            raise Exception("File reading of ace.archive reaches end. Should stop after reading archive_length_limit number of lines.")
-        if line[0] != "#": #Not a comment line in the archive file
-            line_count += 1
-            data = line.split()
-            print(f'Count: {line_count} - Data: {data}')
-            if (data[6] == "0" or data[9] == "0"):
-                VALID_DATA_MARK = True
-                print('VALID_DATA_MARK found')
+        valid_marker = False
+        for entry in data:
+            if (entry[6] == "0" or entry[9] == "0"):
+                valid_marker = True
                 break
-            if (line_count >= archive_length_lim):
-                print('Archive_Length_Limit reached')
-                break
-archive_file.close()
+        if not valid_marker:
+            lockfile = f"{TMP_DIR}/ace_viol.out"
+            if (os.path.exists(lockfile)):
+                os.system(f'date >> {lockfile}')
+            else:
+                content = f'Alert Trigger Script: {__file__} \n'
+                content += f'Alert in file: {ifile}\n'
+                content += f'No valid ACE data for at least {VIOL_HOUR} hours.\n'
+                content += f"Radiation team should investigate.\n"
+                content += f"This message was sent to {ALERT}\n"
+                send_mail(f"ACE no valid data for >{VIOL_HOUR}h", content, ALERT)
+                os.system(f"cp {ifile} {lockfile}")
 
-#
-#--Alert Check: Does not send alerts between midnight and 8 am
-#
-hour_now = int(datetime.now().strftime("%H"))#get current hour
-
-if ((hour_now < 24) and (hour_now > 7)):
-
-    if (not VALID_DATA_MARK):
-        #No valid data for viol_hour hours, send out an alert if it has not been sent out yet
-        #writing the lock file
-        if (os.path.exists(lockfile)):
-            os.system(f'date >> {lockfile}')#touch lockfile, updating the date
-        else:
-            line = ''
-            line += f'Alert Trigger Script: {os.path.realpath(os.path.dirname(__file__)) + "/" + os.path.basename(__file__)} \n'
-            line += f'Alert in file: {infile}\n'
-            line += f'No valid ACE data for at least {viol_hour}h\n'
-            line += f"Radiation team should investigate\n"
-            line += f"this message sent to sot_ace_alert\n"
-            
-            if (os.getenv('TEST') == "TEST"):
-                lockfile = test_out + "/ace_viol.out"
-            with open(lockfile, "w+") as fo:
-                fo.write(line)
-
-            os.system(f'cat {lockfile} | mailx -s "ACE no valid data for >{viol_hour}h" sot_ace_alert')
-            #os.system(f'cat {lockfile} | mailx -s "ACE no valid data for >{viol_hour}h" waaron')
-
-            
-            #store the 12h archive file that triggered the alert
-            if (os.getenv('TEST') != 'TEST'):
-                os.system(f'cp {ace12hfile} {lockdir+"/ace_12h_archive_alert"}')
-
-            
+def send_mail(subject, content, address):
+    if TESTMAIL:
+        print(f"Test Mode, interrupting following email.\n\
+              Subject: {subject}\n\
+              Address: {address}\n\
+              Content: {content}\n")
+    else:
+        os.system(f"echo '{content}' | mailx -s '{subject}' {address}")
