@@ -13,63 +13,32 @@
 import os
 import sys
 import re
-import string
-import random
-import operator
 import time
-import datetime
 import numpy
 import Chandra.Time
+import argparse
 #
-#--- reading directory list
+#---Define Directory Pathing
 #
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
+HTTP_EPAM = "http://services.swpc.noaa.gov/images/ace-epam-7-day.gif"
+HTTP_MAG = "http://services.swpc.noaa.gov/images/ace-mag-swepam-7-day.gif"
+ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
+TEMPLATE_DIR = "/data/mta4/Space_Weather/ACE/Scripts/Template"
+ACE_HTML_DIR = "/data/mta4/www/RADIATION_new/ACE"
+ACE_PLOT_DIR = "/data/mta4/www/RADIATION_new/ACE/Plots"
+CRM_DIR = "/data/mta4/Space_Weather/CRM"
+COMM_DIR = "/data/mta4/Space_Weather/Comm_data"
+HOUSE_KEEPING = "/data/mta4/Space_Weather/house_keeping"
+TMP_DIR = "/tmp/mta"
+#
+#--- Defining other Globals
+#
+TESTMAIL = False
 
-with open(path, 'r') as f:
-    data = [line.strip() for line in f.readlines()]
-
-for ent in data:
-    atemp = re.split(':', ent)
-    var  = atemp[1].strip()
-    line = atemp[0].strip()
-    exec("%s = %s" %(var, line))
-#
-#--- append  pathes to private folders to a python directory
-#
-sys.path.append('/data/mta4/Script/Python3.10/MTA/')
-#
-#--- import several functions
-#
-import mta_common_functions as mcf
-#
-#--- temp writing file name
-#
-rtail  = int(time.time() * random.random())
-zspace = '/tmp/zspace' + str(rtail)
-#
-#--- set direcotries
-#
-data_dir   = ace_dir + 'Data/'
-templ_dir  = ace_dir + 'Scripts/Template/'
-web_dir    = html_dir + 'ACE/'
-plot_dir   = web_dir  + 'Plots/'
-
-#for writing out files in test directory
-if (os.getenv('TEST') == 'TEST'):
-    os.system('mkdir -p TestOut')
-    test_out = os.getcwd() + '/TestOut'
-
-#
-#--- ftp, html site setting
-#
-http_epam = 'http://' + noaa_site + 'images/ace-epam-7-day.gif'
-http_mag  = 'http://' + noaa_site + 'images/ace-mag-swepam-7-day.gif'
-#
-#--- set parameters
-#
-p5_p3_scale  = 7.           #--- scale P5 to P3 values, while P3 is broke
-p6_p3_scale  = 36.          #--- scale P6 to P3 values, while P3 is broke
-p7_p3_scale  = 110.         #--- scale P7 to P3 values, while P3 is broke
+P5_P3_SCALE  = 7.           #--- scale P5 to P3 values, while P3 is broke
+P6_P3_SCALE  = 36.          #--- scale P6 to P3 values, while P3 is broke
+P7_P3_SCALE  = 110.         #--- scale P7 to P3 values, while P3 is broke
+P5_P6_LIM = 1.0e10
 
 #---------------------------------------------------------------------------------------------------
 #-- create_ace_html_page: read ace data and update html page                                      ---
@@ -87,8 +56,8 @@ def create_ace_html_page():
 #
 #---- read 12h_archive data
 #
-    ifile          = data_dir + 'ace_12h_archive'
-    cdata          = mcf.read_data_file(ifile)
+    with open(f"{ACE_DATA_DIR}/ace_12h_archive") as f:
+        cdata = [line.strip() for line in f.readlines()]
 #
 #--- cdata:     a list of lists of electron/proton flux data 
 #--- l_vals:    a list of the 'last' entries of those electron/proton flux data
@@ -105,38 +74,31 @@ def create_ace_html_page():
 #
 #--- download images and reverse the color:
 #
-    download_img(http_epam)
-    download_img(http_mag)
+    download_img(HTTP_EPAM)
+    download_img(HTTP_MAG)
 #
 #--- update ace html page
 #
-    ifile = templ_dir + 'header'
-    line  = read_file(ifile)
-    line  = line + '\n'
+    line = ''
+    with open(f"{TEMPLATE_DIR}/header") as f:
+        line += f"{f.read()}\n"
 
-    ifile = templ_dir + 'header1'
-    line  = line + read_file(ifile)
+    with open(f"{TEMPLATE_DIR}/header1") as f:
+        line += f"{f.read()}\n"
 
-    line  = line + ace_table
-    line  = line + '\n'
+    line += f"{ace_table}\n"
 
-    ifile = templ_dir + 'image2'
-    line  = line + read_file(ifile)
-    line  = line + '\n'
+    with open(f"{TEMPLATE_DIR}/image2") as f:
+        line += f"{f.read()}\n"
 
-    ifile = templ_dir + 'footer'
-    line  = line + read_file(ifile)
-    line  = line + '\n'
+    with open(f"{TEMPLATE_DIR}/footer") as f:
+        line += f"{f.read()}\n"
 
-    out   = web_dir + 'ace.html'
-    if (os.getenv('TEST') == 'TEST'):
-        out = test_out + '/ace.html'
-
-    with open(out, 'w') as fo:
+    with open(f"{ACE_HTML_DIR}/ace.html", 'w') as fo:
         fo.write(line)
 
 #---------------------------------------------------------------------------------------------------
-#-- create_ace_data_table: craete data tables from a given data list                              --
+#-- create_ace_data_table: create data tables from a given data list                              --
 #---------------------------------------------------------------------------------------------------
 
 def create_ace_data_table(cdata, l_vals):
@@ -246,22 +208,22 @@ def create_ace_data_table(cdata, l_vals):
 #---  replace the scaled data with valid data if the original values are good
 #
         if p5dat[k] > 0:
-            p5_p3_scaled[k] = p5dat[k] * p5_p3_scale
+            p5_p3_scaled[k] = p5dat[k] * P5_P3_SCALE
 
         if p6dat[k] > 0:
-            p6_p3_scaled[k] = p6dat[k] * p6_p3_scale
+            p6_p3_scaled[k] = p6dat[k] * P6_P3_SCALE
 
         if p7dat[k] > 0:
-            p7_p3_scaled[k] = p7dat[k] * p7_p3_scale
-#
-#--- if data is ok, add the line to the table data
-#
-        if pchk[k] == 0:
-            aline = "%s%11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f\n"\
-                    % (cdata[1][k], de1[k], de4[k], p2dat[k], p3dat[k],\
-                       p5_p3_scaled[k], p6_p3_scaled[k], p5dat[k], p6dat[k], p7dat[k])
+            p7_p3_scaled[k] = p7dat[k] * P7_P3_SCALE
+        append_data = [de1[k], de4[k], p2dat[k], p3dat[k],p5_p3_scaled[k], p6_p3_scaled[k], p5dat[k], p6dat[k], p7dat[k]]
+        aline = f'{cdata[1][k]}'
+        for i in append_data:
+            if i < 0:
+                aline += f" {-1e5:11.2e}"
+            else:
+                aline += f" {i:11.3f}"
+        line += f"{aline}\n"
 
-            line  = line + aline
 #
 #--- the table part is done, compute other entries
 #
@@ -422,19 +384,16 @@ def create_ace_data_table(cdata, l_vals):
         val = "%.4e" % p130f
         #ace_violation_protons(val)
 
-    p5_p6_lim = 1.0                 #----????? this is what given in the original, but use below
-    p5_p6_lim = 1.0e10
-
-    if (p5_p6 > p5_p6_lim) or (p5_p6 < 1):
+    if (p5_p6 > P5_P6_LIM) or (p5_p6 < 1):
         speci     = "%12.1f" % p5_p6
-        speci_lim = "%8.1f"  % p5_p6_lim
+        speci_lim = "%8.1f"  % P5_P6_LIM
 
         ace_invalid_spec(speci, speci_lim)
 #
-#--- crate a summary table
+#--- create a summary table
 #
-    hfile = templ_dir + 'header2'
-    line  = line + "\n" +  read_file(hfile)
+    with open(f"{TEMPLATE_DIR}/header2") as f:
+        line += f"\n{f.read()}"
 
     line  = line + "%7s %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f\n"\
                    % ("AVERAGE        ", e38a, e175a, p56a, p130a, p5_p3a, p6_p3a, p337a, p761a, p1073a)
@@ -449,13 +408,13 @@ def create_ace_data_table(cdata, l_vals):
                    % ("SPECTRA        ", "p3/p5", p3_p5, "p3/p6", p3_p6, "p5/p6", p5_p6, "p6/p7", p6_p7)
 
     line  = line + "%62s %4.1f\n"\
-                   % ("*   This P3 channel is currently scaled from P5 data. P3* = P5 X ", p5_p3_scale)
+                   % ("*   This P3 channel is currently scaled from P5 data. P3* = P5 X ", P5_P3_SCALE)
 
     line  = line + "%62s %4.1f\n"\
-                   % ("**  This P3 channel is currently scaled from P6 data. P3** = P6 X ", p6_p3_scale)
+                   % ("**  This P3 channel is currently scaled from P6 data. P3** = P6 X ", P6_P3_SCALE)
 
     line  = line + "%62s %4.1f\n"\
-                   % ("*** This P3 channel (not shown) is currently scaled from P7 data. P3*** = P7 X ", p7_p3_scale)
+                   % ("*** This P3 channel (not shown) is currently scaled from P7 data. P3*** = P7 X ", P7_P3_SCALE)
 
     return line
 
@@ -505,7 +464,7 @@ def ace_invalid_spec(speci, speci_lim):
 #
 #--- check whether the mail is recently sent out
 #
-    out = '/tmp/mta/prot_spec_violate'
+    out = f'{TMP_DIR}/prot_spec_violate'
     if os.path.isfile(out):
         cmd = 'date >> ' + out
         os.system(cmd)
@@ -524,8 +483,6 @@ def ace_invalid_spec(speci, speci_lim):
 #
 #--- open a file indicating that the mail was sent
 #
-        if (os.getenv('TEST') == 'TEST'):
-            out = test_out + '/prot_spec_violate'
         with open(out, 'w') as fo:
             fo.write(line)
 
@@ -534,16 +491,13 @@ def ace_invalid_spec(speci, speci_lim):
 #---------------------------------------------------------------------------------------------------
 
 def send_mail(subject, content, address):
-
-    fo = open(zspace, 'w')
-    fo.write(content)
-    fo.close()
-
-    cmd = 'cat ' + zspace + '|mailx -s "' + subject + '" ' + address
-    os.system(cmd)
-    
-    cmd = 'rm ' + zspace
-    os.system(cmd)
+    if TESTMAIL:
+        print(f"Test Mode, interrupting following email.\n\
+              Subject: {subject}\n\
+              Address: {address}\n\
+              Content: {content}\n")
+    else:
+        os.system(f"echo '{content}' | mailx -s '{subject}' {address}")
 
 #---------------------------------------------------------------------------------------------------
 #-- curr_state: extract some satellite related information                                        --
@@ -558,8 +512,8 @@ def curr_state():
 #
 #--- read CRM file to get some information
 #
-    sfile = crm_dir + 'CRMsummary.dat'
-    data  = mcf.read_data_file(sfile)
+    with open(f"{CRM_DIR}/CRMsummary.dat") as f:
+        data = [line.strip() for line in f.readlines()]
 
     dirct = 'NA'
     dist  = 'NA'
@@ -586,8 +540,8 @@ def curr_state():
     start = Chandra.Time.DateTime(ctime).secs 
     stop  = start + 3.0 * 86400.
 
-    ifile = comm_dir + 'Data/dsn_summary.dat'
-    data  = mcf.read_data_file(ifile)
+    with open(f"{COMM_DIR}/Data/dsn_summary.dat") as f:
+        data = [line.strip() for line in f.readlines()]
     line  = line + data[0] + '\n' + data[1] + '\n'
     data  = data[2:]
     for ent in data:
@@ -637,9 +591,8 @@ def download_img(file, chg=1):
 #
 #--- get the name of output img file name
 #
-    atemp = re.split('\/', file)
-    ofile = atemp[-1]
-    oimg  =  plot_dir + ofile
+    ofile = os.path.basename(file)
+    oimg = f"{ACE_PLOT_DIR}/{ofile}"
 #
 #--- download the img
 #
@@ -650,9 +603,9 @@ def download_img(file, chg=1):
     except:
         mc   = re.search('gif', oimg)
         if mc is not None:
-            cmd  = ' cp ' + house_keeping + 'no_plot.gif ' + oimg
+            cmd = f"cp {HOUSE_KEEPING}/no_plot.gif {oimg}"
         else:
-            cmd  = ' cp ' + house_keeping + 'no_data.png ' + oimg
+            cmd = f"cp {HOUSE_KEEPING}/no_data.png {oimg}"
         os.system(cmd)
 
         return
@@ -662,20 +615,6 @@ def download_img(file, chg=1):
     if chg == 1:
         cmd   = 'convert -negate ' +  oimg + ' ' + oimg
         os.system(cmd)
-
-
-#---------------------------------------------------------------------------------------------------
-#---------------------------------------------------------------------------------------------------
-#---------------------------------------------------------------------------------------------------
-
-def read_file(ifile):
-
-    f    = open(ifile, 'r')
-    data = f.read()
-    f.close()
-
-    return data
-
     
 #-----------------------------------------------------------------------------
 #-- convert_to_col_data: read  data into a list of lists                    --
@@ -778,6 +717,58 @@ def convert_to_col_data(data):
 #---------------------------------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    parser.add_argument("-d", "--data", required = False, help = "Directory path to determine input location of data.")
+    parser.add_argument("-p", "--path", required = False, help = "Directory path to determine output location of plot.")
+    parser.add_argument("-w", "--web", required = False, help = "Directory path to determine output location of html page.")
+    args = parser.parse_args()
+#
+#--- Determine if running in test mode and change pathing if so
+#
+    if args.mode == "test":
+        print("Running In Test Mode.")
+        TESTMAIL = True
+#
+#--- Path output to same location as unit tests
+#
+        TEMPLATE_DIR = f"{os.getcwd()}/Template"
+        TMP_DIR =  f"{os.getcwd()}/test/outTest"
+        if args.data:
+            ACE_DATA_DIR = args.data
+        else:
+            ACE_DATA_DIR = f"{os.getcwd()}/test/outTest"
 
-    create_ace_html_page()
-
+        if args.path:
+            ACE_PLOT_DIR = args.path
+        else:
+            ACE_PLOT_DIR = f"{os.getcwd()}/test/outTest/Plots"
+        
+        if args.web:
+            ACE_HTML_DIR = args.web
+        else:
+            ACE_HTML_DIR = f"{os.getcwd()}/test/outTest"
+        os.makedirs(ACE_PLOT_DIR, exist_ok = True)
+        os.makedirs(ACE_HTML_DIR, exist_ok = True)
+        print(f"ACE_DATA_DIR: {ACE_DATA_DIR}")
+        print(f"ACE_PLOT_DIR: {ACE_PLOT_DIR}")
+        print(f"ACE_HTML_DIR: {ACE_HTML_DIR}")
+        print(f"TEMPLATE_DIR: {TEMPLATE_DIR}")
+        print(f"TMP_DIR: {TMP_DIR}")
+        create_ace_html_page()
+    elif args.mode == "flight":
+#
+#--- Create a lock file and exit strategy in case of race conditions.
+#
+        import getpass
+        name = os.path.basename(__file__).split(".")[0]
+        user = getpass.getuser()
+        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
+            sys.exit(f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog.")
+        else:
+            os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
+        create_ace_html_page()
+#
+#--- Remove lock file once process is completed
+#
+        os.system(f"rm /tmp/{user}/{name}.lock")

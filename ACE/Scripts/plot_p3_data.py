@@ -11,61 +11,24 @@
 #########################################################################################
 
 import os
-import sys
 import re
-import string
-import random
-import operator
 import time
-import datetime
 import numpy
-import Chandra.Time
 import matplotlib as mpl
+from calendar import isleap
+import argparse
+import signal
 
 if __name__ == '__main__':
     mpl.use('Agg')
 
-from pylab import *
 import matplotlib.pyplot       as plt
 import matplotlib.font_manager as font_manager
-import matplotlib.lines        as lines
 #
-#--- reading directory list
+#--- Define Directory Pathing
 #
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
-
-with open(path, 'r') as f:
-    data = [line.strip() for line in f.readlines()]
-
-for ent in data:
-    atemp = re.split(':', ent)
-    var  = atemp[1].strip()
-    line = atemp[0].strip()
-    exec("%s = %s" %(var, line))
-#
-#--- append  pathes to private folders to a python directory
-#
-sys.path.append('/data/mta4/Script/Python3.10/MTA/')
-#
-#--- import several functions
-#
-import mta_common_functions as mcf
-#
-#--- temp writing file name
-#
-import random
-rtail  = int(time.time() *random.random())
-zspace = '/tmp/zspace' + str(rtail)
-#
-#--- set direcotries
-#
-data_dir   = ace_dir  + 'Data/'
-web_dir    = html_dir + 'ACE/'
-plot_dir   = web_dir  + 'Plots/'
-#for writing out files in test directory
-if (os.getenv('TEST') == 'TEST'):
-    os.system('mkdir -p TestOut')
-    test_out = os.getcwd() + '/TestOut'
+ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
+ACE_PLOT_DIR = "/data/mta4/www/RADIATION_new/ACE/Plots"
 
 #
 #--- other setting
@@ -77,11 +40,7 @@ t_arch      = 7         #--- how many days to
 #
 #--- current time
 #
-current_time_date    = time.strftime('%Y:%j:%H:%M:%S', time.gmtime())
-current_chandra_time = Chandra.Time.DateTime(current_time_date).secs
 this_year            = int(float(time.strftime('%Y', time.gmtime())))
-this_doy             = int(float(time.strftime('%j', time.gmtime())))
-year_start           = Chandra.Time.DateTime(str(this_year) + ':001:00:00:00').secs
 
 #---------------------------------------------------------------------------------------
 #-- plot_p3_data: get ace data and plot the data                                    --
@@ -91,13 +50,14 @@ def plot_p3_data():
     """
     create scaled p3 data plot
     input: none but read from <data_dir>/ace_7day_archive
-    output: <html_dir>/ACE/Plots/mta_ace_plot_P3.png
+    output: <ace_plot_dir>/mta_ace_plot_P3.png
     """
 #
 #--- read data and save in column array data format
 #
-    ifile = data_dir + 'ace_7day_archive'
-    data  = mcf.read_data_file(ifile)
+    ifile = f"{ACE_DATA_DIR}/ace_7day_archive"
+    with open(ifile) as f:
+        data = [line.strip() for line in f.readlines()]
     adata = convert_to_arrays(data)
 #
 #--- plot data
@@ -137,10 +97,7 @@ def convert_to_arrays(data):
 #
         if chk == 0:                #--- keeping the year of the first data point
             byear = year
-            if mcf.is_leapyear(byear):
-                base = 366
-            else:
-                base = 365
+            base = 365 + isleap(byear)
             chk = 1
 
         if year > byear:
@@ -265,36 +222,33 @@ def plot_data(ndata):
 #
 #--- lengend for lines
 #
-    text(x0, yp1, '112-187*',      color=c_list[6], fontsize=10)
-    text(x1, yp1, '112-187**',     color=c_list[1], fontsize=10)
-    text(x2, yp1, '112-187***',    color=c_list[2], fontsize=10)
-    text(x3, yp1, '115-195',       color='#3573d6', fontsize=10)
-    text(x4, yp2, '310-580',       color=c_list[0], fontsize=10)
-    text(x5, yp2, '761-1220',      color='black',   fontsize=10)
-    text(x6, yp2, '1060-1910 keV', color=c_list[4], fontsize=10)
+    plt.text(x0, yp1, '112-187*',      color=c_list[6], fontsize=10)
+    plt.text(x1, yp1, '112-187**',     color=c_list[1], fontsize=10)
+    plt.text(x2, yp1, '112-187***',    color=c_list[2], fontsize=10)
+    plt.text(x3, yp1, '115-195',       color='#3573d6', fontsize=10)
+    plt.text(x4, yp2, '310-580',       color=c_list[0], fontsize=10)
+    plt.text(x5, yp2, '761-1220',      color='black',   fontsize=10)
+    plt.text(x6, yp2, '1060-1910 keV', color=c_list[4], fontsize=10)
 #
 #--- starting time of the data  6 days ago
 #
     dval  = int(xmin)
     if dval <= 0:
         dval = 1
-    dval  = mcf.add_leading_zero(dval, 3)
+    dval = f"{dval:>03}"
     ltime = str(this_year) + ':' + dval
     ltime = time.strftime('%Y-%m-%dT00:00:00UTC', time.strptime(ltime, '%Y:%j'))
     line = 'Begin: ' + ltime 
-    text(x7, yp4, line, fontsize=8)
+    plt.text(x7, yp4, line, fontsize=8)
 #
 #--- set the size of the plotting area in inch (width: 10.0in, height 2.08in x number of panels)
 #
-    fig = matplotlib.pyplot.gcf()
+    fig = plt.gcf()
     fig.set_size_inches(7.0, 5.5)
 #
 #--- save the plot in png format
 #
-    outname = plot_dir + 'mta_ace_plot_P3.png'
-    if (os.getenv('TEST') == 'TEST'):
-        outname = test_out + '/mta_ace_plot_P3.png'
-    
+    outname = f"{ACE_PLOT_DIR}/mta_ace_plot_P3.png"
     plt.tight_layout()
     plt.savefig(outname, format='png', dpi=300)
 
@@ -303,5 +257,49 @@ def plot_data(ndata):
 #---------------------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    parser.add_argument("-d", "--data", required = False, help = "Directory path to determine input location of data.")
+    parser.add_argument("-p", "--path", required = False, help = "Directory path to determine output location of plot.")
+    args = parser.parse_args()
+#
+#--- Determine if running in test mode and change pathing if so
+#
+    if args.mode == "test":
+        print("Running In Test Mode.")
+#
+#--- Path output to same location as unit tests
+#
+        if args.data:
+            ACE_DATA_DIR = args.data
+        else:
+            ACE_DATA_DIR = f"{os.getcwd()}/test/outTest"
 
-    plot_p3_data()
+        if args.path:
+            ACE_PLOT_DIR = args.path
+        else:
+            ACE_PLOT_DIR = f"{os.getcwd()}/test/outTest/Plots"
+        os.makedirs(ACE_PLOT_DIR, exist_ok = True)
+        print(f"ACE_DATA_DIR: {ACE_DATA_DIR}")
+        print(f"ACE_PLOT_DIR: {ACE_PLOT_DIR}")
+        plot_p3_data()
+    elif args.mode == 'flight':
+#
+#--- Create a lock file and exit strategy in case of race conditions
+#
+        import getpass
+        name = os.path.basename(__file__).split(".")[0]
+        user = getpass.getuser()
+        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
+            with open(f"/tmp/{user}/{name}.lock") as f:
+                pid = int(f.readlines()[-1].strip())
+            os.remove(f"/tmp/{user}/{name}.lock")
+            os.kill(pid,signal.SIGTERM)
+            os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
+        else:
+            os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
+        plot_p3_data()
+#
+#--- Remove lock file once process is completed
+#
+        os.system(f"rm /tmp/{user}/{name}.lock")

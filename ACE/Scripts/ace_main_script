@@ -1,13 +1,11 @@
 cd /data/mta4/Space_Weather/ACE/Scripts
 
-/data/mta4/Space_Weather/ACE/Scripts/update_ace_data_files.py
+/data/mta4/Space_Weather/ACE/Scripts/update_ace_data_files.py -m flight
 
-/data/mta4/Space_Weather/ACE/Scripts/check_prev_process.py
+/data/mta4/Space_Weather/ACE/Scripts/plot_p3_data.py -m flight
 
-/data/mta4/Space_Weather/ACE/Scripts/plot_p3_data.py
+/data/mta4/Space_Weather/ACE/Scripts/create_ace_html_page.py -m flight
 
-/data/mta4/Space_Weather/ACE/Scripts/create_ace_html_page.py
+/data/mta4/Space_Weather/ACE/Scripts/compute_fluence_cxo70.py -m flight
 
-/data/mta4/Space_Weather/ACE/Scripts/compute_fluence_cxo70.py
-
-/data/mta4/Space_Weather/ACE/Scripts/ace_viol.py
+/data/mta4/Space_Weather/ACE/Scripts/ace_viol.py -m flight

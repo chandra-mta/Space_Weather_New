@@ -14,57 +14,21 @@
 import os
 import sys
 import re
-import string
-import math
-import numpy
 import time
-from datetime import datetime
 import Chandra.Time
-import copy 
+import argparse
 #
-#--- reading directory list
+#--- Define Directory Pathing
 #
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
+EPHEM_DIR = "/data/mta4/Space_Weather/EPHEM"
+ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
+ACE_HTML_DIR = "/data/mta4/www/RADIATION_new/ACE"
+WEB_LINK = "cxc.cfa.harvard.edu/mta/RADIATION_new"
 
-with open(path, 'r') as f:
-    data = [line.strip() for line in f.readlines()]
-
-for ent in data:
-    atemp = re.split(':', ent)
-    var  = atemp[1].strip()
-    line = atemp[0].strip()
-    exec( "%s = %s" %(var, line))
-#
-#--- append  pathes to private folders to a python directory
-#
-sys.path.append('/data/mta4/Script/Python3.10/MTA/')
-#
-#--- import several functions
-#
-import mta_common_functions as mcf
-#
-#--- temp writing file name
-#
-import random
-rtail  = int(time.time() * random.random())
-zspace = '/tmp/zspace' + str(rtail)
-#
-#--- set paths to the files
-#
-ephem_file       = ephem_dir + 'Data/PE.EPH.gsme_spherical'
-ace_file         = ace_dir   + 'Data/ace_7day_archive'
-#for writing out files in test directory
-if (os.getenv('TEST') == 'TEST'):
-    os.system('mkdir -p TestOut')
-    test_out = os.getcwd() + '/TestOut'
 #
 #--- current time
 #
-current_time_date    = time.strftime('%Y:%j:%H:%M:%S', time.gmtime())
-current_chandra_time = Chandra.Time.DateTime(current_time_date).secs
-this_year            = int(float(time.strftime('%Y', time.gmtime())))
-this_doy             = int(float(time.strftime('%j', time.gmtime())))
-year_start           = Chandra.Time.DateTime(str(this_year) + ':001:00:00:00').secs
+CURRENT_CHANDRA_TIME = Chandra.Time.DateTime().secs
 
 #-----------------------------------------------------------------------------
 #-- compute_fluence_cxo70: create a html page displaying ace fluence when cxo is above 70kkm
@@ -81,7 +45,8 @@ def compute_fluence_cxo70():
 #
 #--- read orbital info
 #
-    data  = mcf.read_data_file(ephem_file)
+    with open(f"{EPHEM_DIR}/Data/PE.EPH.gsme_spherical") as f:
+        data = [line.strip() for line in f.readlines()]
     data  = data[::-1]
     start = 0
 #
@@ -94,7 +59,7 @@ def compute_fluence_cxo70():
 #
 #--- make sure that the span is before the curren time
 #
-        if stime > current_chandra_time:
+        if stime > CURRENT_CHANDRA_TIME:
             continue
 
         alt   = float(atemp[1])
@@ -108,7 +73,8 @@ def compute_fluence_cxo70():
 #
 #--- read ace data
 #
-    data   = mcf.read_data_file(ace_file)
+    with open(f"{ACE_DATA_DIR}/ace_7day_archive") as f:
+        data = [line.strip() for line in f.readlines()]
     e1     = 0.0
     e2     = 0.0
     p1     = 0.0
@@ -201,10 +167,7 @@ def compute_fluence_cxo70():
     except:
         aline = aline + '              N/A\n'
 
-    ofile = html_dir + 'ACE/ace_flux.dat'
-    if (os.getenv('TEST') == 'TEST'):
-        ofile = test_out + '/ace_flux.dat'
-    with open(ofile, 'w') as fo:
+    with open(f"{ACE_HTML_DIR}/ace_flux.dat", 'w') as fo:
         fo.write(aline)
 #
 #--- create the html page
@@ -227,23 +190,56 @@ def compute_fluence_cxo70():
     line = line + '</pre>\n'
     line = line + '<p style="padding-top:30p;">'
 
-    line = line + '<a href="https://' + main_web + 'ACE/ace.html">'
+    line = line + f'<a href="https://{WEB_LINK}/ACE/ace.html">'
     line = line + 'Go to ACE page</a><br />'
 
-    line = line + '<a href="https://' + main_web + 'Orbit/orbit.html">'
+    line = line + f'<a href="https://{WEB_LINK}/Orbit/orbit.html">'
     line = line + 'See the current CXO orbital information</a></p>'
     line = line + '</body>\n'
     line = line + '<html>\n'
 
-
-    ofile = html_dir + 'ACE/ace_flux_dat.html'
-    if (os.getenv('TEST') == 'TEST'):
-        ofile = test_out + '/ace_flux_data.html'
-    with open(ofile , 'w') as fo:
+    with open(f"{ACE_HTML_DIR}/ace_flux_data.html" , 'w') as fo:
         fo.write(line)
 
 
 #-----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    compute_fluence_cxo70()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    parser.add_argument("-d", "--data", required = False, help = "Directory path to determine input location of data.")
+    parser.add_argument("-w", "--web", required = False, help = "Directory path to determine output location of html page.")
+    args = parser.parse_args()
+#
+#--- Determine if running in test mode and change pathing if so
+#
+    if args.mode == "test":
+        print("Running In Test Mode.")
+        if args.data:
+            ACE_DATA_DIR = args.data
+        else:
+            ACE_DATA_DIR = f"{os.getcwd()}/test/outTest"
+        if args.web:
+            ACE_HTML_DIR = args.web
+        else:
+            ACE_HTML_DIR = f"{os.getcwd()}/test/outTest"
+        os.makedirs(ACE_HTML_DIR, exist_ok = True)
+        print(f"ACE_DATA_DIR: {ACE_DATA_DIR}")
+        print(f"ACE_HTML_DIR: {ACE_HTML_DIR}")
+        compute_fluence_cxo70()
+    elif args.mode == "flight":
+#
+#--- Create a lock file and exit strategy in case of race conditions.
+#
+        import getpass
+        name = os.path.basename(__file__).split(".")[0]
+        user = getpass.getuser()
+        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
+            sys.exit(f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog.")
+        else:
+            os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
+        compute_fluence_cxo70()
+#
+#--- Remove lock file once process is completed
+#
+        os.system(f"rm /tmp/{user}/{name}.lock")
