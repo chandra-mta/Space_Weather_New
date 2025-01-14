@@ -78,7 +78,7 @@ def alert_ace():
     )
     data_select = ace_table[sel]
     p130f = (
-        np.mean(data_select[_P3_CHANNEL].data) * len(data_select) * 300
+        np.mean(data_select[_P3_CHANNEL].data) * 7200
     )  #: Calculates the fluence with available data.
 
     #
