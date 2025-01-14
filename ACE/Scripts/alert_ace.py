@@ -26,6 +26,8 @@ import signal
 #
 ACE_URL = "https://cxc.cfa.harvard.edu/mta/RADIATION_new/ACE/ace.html"
 ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
+CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
+COMM_DATA_DIR = "/data/mta4/Space_Weather/Comm_data/Data"
 SNAPSHOT_DIR = "/data/mta4/www/Snapshot"
 _ADMIN = "mtadude@cfa.harvard.edu"
 _INPUT_ACE_COLUMNS = [
@@ -118,6 +120,13 @@ def alert_ace():
             else:
                 recipients = "sot_ace_alert@cfa.harvard.edu"
                 text_body += "The ACIS on-call person should review the data and call a telecon if necessary.\n"
+            #
+            # --- Include additional CRM and Comm data
+            #
+            with open(f"{CRM_DATA_DIR}/CRMsummary.dat") as f:
+                text_body += f"CRM:\n{f.read()}\n"
+            with open(f"{COMM_DATA_DIR}/dsn_summary.dat") as f:
+                text_body += f"DSN:\n{f.read()}\n"
             text_body += f"This message sent to {recipients.split('@')[0]}"
             send_mail("ACE_p3", recipients, text_body)
             with open(f"{ACE_DATA_DIR}/ace_alert.json", "w") as f:
