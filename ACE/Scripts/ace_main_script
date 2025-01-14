@@ -9,3 +9,5 @@ cd /data/mta4/Space_Weather/ACE/Scripts
 /data/mta4/Space_Weather/ACE/Scripts/compute_fluence_cxo70.py -m flight
 
 /data/mta4/Space_Weather/ACE/Scripts/ace_viol.py -m flight
+
+/data/mta4/Space_Weather/ACE/Scripts/alert_ace.py -m flight
