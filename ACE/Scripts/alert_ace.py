@@ -207,7 +207,7 @@ if __name__ == "__main__":
         if args.path:
             ACE_DATA_DIR = args.path
         else:
-            ACE_DATA_DIR = f"{os.getcwd()}/test/__outTest"
+            ACE_DATA_DIR = f"{os.getcwd()}/test/_outTest"
         os.makedirs(ACE_DATA_DIR, exist_ok=True)
         if not os.path.isfile(f"{ACE_DATA_DIR}/ace_12h_archive"):
             os.system(

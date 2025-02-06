@@ -470,7 +470,7 @@ def send_mail(subject, content, address):
 
 def convert_to_stime(year, yday):
 
-    atemp = re.split('\.', yday)
+    atemp = re.split(r'\.', yday)
     frac  = float(f"0.{atemp[1]}") 
     val   = 24 * frac
     hh    = int(val)
@@ -551,7 +551,7 @@ def convert_to_col_data(data):
 #
 #--- find the most recent entry time and set the cutting time to 2 hrs before that
 #
-    atemp   = re.split('\s+', data[-1])
+    atemp   = re.split(r'\s+', data[-1])
     ltime = atemp[0] + ':' + atemp[1] + ':' + atemp[2] + ':' + atemp[3][0] + atemp[3][1] + ':'
     ltime = ltime    + atemp[3][2] + atemp[3][3] + ':00' 
     ltime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(ltime, '%Y:%m:%d:%H:%M:%S'))
@@ -570,7 +570,7 @@ def convert_to_col_data(data):
     pch7  = []
     ptime = 0
     for ent in data:
-        atemp = re.split('\s+', ent)
+        atemp = re.split(r'\s+', ent)
         clen  = len(atemp)
 #
 #--- convert time in Chandra Time

@@ -54,7 +54,7 @@ def compute_fluence_cxo70():
 #
     stop  = 0
     for ent in data:
-        atemp = re.split('\s+', ent)
+        atemp = re.split(r'\s+', ent)
         stime = float(atemp[0])
 #
 #--- make sure that the span is before the curren time
@@ -85,7 +85,7 @@ def compute_fluence_cxo70():
     cstart = 0.0
     cstop  = 0.0
     for ent in data:
-        atemp = re.split('\s+', ent)
+        atemp = re.split(r'\s+', ent)
 #
 #--- convert time in Chandra Time
 #
