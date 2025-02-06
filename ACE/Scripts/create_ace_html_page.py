@@ -49,7 +49,7 @@ def create_ace_html_page():
     read ace data and update html page
     input:  none, but read from:
             http://services.swpc.noaa.gov/images/ace-epam-7-day.gif
-            http://services.swpc.noaa.gov/images/images/ace-mag-swepam-7-day.gif
+            http://services.swpc.noaa.gov/images/ace-mag-swepam-7-day.gif
             <ace_dir>/Data/ace_12h_archive
     output: <html_dir>/ACE/ace.html
     """
@@ -380,9 +380,6 @@ def create_ace_data_table(cdata, l_vals):
 #
 #--- violation check
 #
-    if p130f > 360000000:
-        val = "%.4e" % p130f
-        #ace_violation_protons(val)
 
     if (p5_p6 > P5_P6_LIM) or (p5_p6 < 1):
         speci     = "%12.1f" % p5_p6
@@ -417,38 +414,6 @@ def create_ace_data_table(cdata, l_vals):
                    % ("*** This P3 channel (not shown) is currently scaled from P7 data. P3*** = P7 X ", P7_P3_SCALE)
 
     return line
-
-#---------------------------------------------------------------------------------------------------
-#-- ace_violation_protons: send out a warning email                                               --
-#---------------------------------------------------------------------------------------------------
-
-def ace_violation_protons(val):
-    """
-    send out a warning email
-    input:  val --- value
-    output: email sent out
-    """
-    line = 'A Radiation violation of P3 (130KeV) has been observed by ACE\n'
-    line = line + 'Observed = ' + val + '\n'
-    line = line + '(limit = fluence of 3.6e8 particles/cm2-ster-MeV within 2 hours)\n'
-    line = line + 'see http://cxc.harvard.edu/mta/ace.html\n'
-#
-#--- add current spacecraft info
-#
-    line = line + curr_state()
-#
-#--- read alert case
-#
-    if os.path.isfile('/data/mta4/www/Snapshot/.scs107alert'):
-        line = line + 'The ACIS on-call person should review the data and call a telecon if necessary.\n'
-        line = line + 'This message sent to sot_ace_alert\n'
-        send_mail('ACE_p3', line, 'sot_ace_alert@cfa.harvard.edu')
-#
-#--- yellow alert case
-#
-    else:
-        line = line + 'This message sent to sot_yellow_alert\n'
-        send_mail('ACE_p3', line, 'sot_yellow_alert@cfa.harvard.edu')
 
 #---------------------------------------------------------------------------------------------------
 #-- ace_invalid_spec: sending out a warning email                                                 --
@@ -500,69 +465,12 @@ def send_mail(subject, content, address):
         os.system(f"echo '{content}' | mailx -s '{subject}' {address}")
 
 #---------------------------------------------------------------------------------------------------
-#-- curr_state: extract some satellite related information                                        --
-#---------------------------------------------------------------------------------------------------
-
-def curr_state():
-    """
-    extract some satellite related information
-    input:  none
-    output: line    --- lines which display the satellite information
-    """
-#
-#--- read CRM file to get some information
-#
-    with open(f"{CRM_DIR}/CRMsummary.dat") as f:
-        data = [line.strip() for line in f.readlines()]
-
-    dirct = 'NA'
-    dist  = 'NA'
-    if len(data) < 1:
-        dline = ''
-    else:
-        dline = data[0]
-    for ent in data:
-        mc = re.search('Geocentric Distance', ent)
-        if mc is not None:
-            atemp = re.split(':', ent)
-            btemp = re.split('\s+', atemp[1].strip())
-            dist  = btemp[0]
-            if btemp[1] == 'A':
-                dirct = 'Ascending'
-            else:
-                dirct = 'Descending'
-
-    line  = 'Currently ' + dirct + ' through ' + dist + 'km with ' + dline + '\n\n'
-#
-#-- get DSN contact info from ephem data
-#
-    ctime = time.strftime("%Y:%j:%H:%M:%S", time.gmtime())
-    start = Chandra.Time.DateTime(ctime).secs 
-    stop  = start + 3.0 * 86400.
-
-    with open(f"{COMM_DIR}/Data/dsn_summary.dat") as f:
-        data = [line.strip() for line in f.readlines()]
-    line  = line + data[0] + '\n' + data[1] + '\n'
-    data  = data[2:]
-    for ent in data:
-        atemp = re.split('\s+', ent)
-        year  = atemp[10]
-        yday  = atemp[11]
-        stime = convert_to_stime(year, yday)
-        if stime >= start and stime < stop:
-            line = line + ent + '\n'
-
-    line = line + '\n'
-
-    return line
-
-#---------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------
 
 def convert_to_stime(year, yday):
 
-    atemp = re.split('\.', yday)
+    atemp = re.split(r'\.', yday)
     frac  = float(f"0.{atemp[1]}") 
     val   = 24 * frac
     hh    = int(val)
@@ -643,7 +551,7 @@ def convert_to_col_data(data):
 #
 #--- find the most recent entry time and set the cutting time to 2 hrs before that
 #
-    atemp   = re.split('\s+', data[-1])
+    atemp   = re.split(r'\s+', data[-1])
     ltime = atemp[0] + ':' + atemp[1] + ':' + atemp[2] + ':' + atemp[3][0] + atemp[3][1] + ':'
     ltime = ltime    + atemp[3][2] + atemp[3][3] + ':00' 
     ltime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(ltime, '%Y:%m:%d:%H:%M:%S'))
@@ -662,7 +570,7 @@ def convert_to_col_data(data):
     pch7  = []
     ptime = 0
     for ent in data:
-        atemp = re.split('\s+', ent)
+        atemp = re.split(r'\s+', ent)
         clen  = len(atemp)
 #
 #--- convert time in Chandra Time
@@ -733,21 +641,21 @@ if __name__ == "__main__":
 #--- Path output to same location as unit tests
 #
         TEMPLATE_DIR = f"{os.getcwd()}/Template"
-        TMP_DIR =  f"{os.getcwd()}/test/outTest"
+        TMP_DIR =  f"{os.getcwd()}/test/_outTest"
         if args.data:
             ACE_DATA_DIR = args.data
         else:
-            ACE_DATA_DIR = f"{os.getcwd()}/test/outTest"
+            ACE_DATA_DIR = f"{os.getcwd()}/test/_outTest"
 
         if args.path:
             ACE_PLOT_DIR = args.path
         else:
-            ACE_PLOT_DIR = f"{os.getcwd()}/test/outTest/Plots"
+            ACE_PLOT_DIR = f"{os.getcwd()}/test/_outTest/Plots"
         
         if args.web:
             ACE_HTML_DIR = args.web
         else:
-            ACE_HTML_DIR = f"{os.getcwd()}/test/outTest"
+            ACE_HTML_DIR = f"{os.getcwd()}/test/_outTest"
         os.makedirs(ACE_PLOT_DIR, exist_ok = True)
         os.makedirs(ACE_HTML_DIR, exist_ok = True)
         print(f"ACE_DATA_DIR: {ACE_DATA_DIR}")

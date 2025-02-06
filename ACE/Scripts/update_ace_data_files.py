@@ -245,7 +245,7 @@ def read_ace_table_data(data):
         except:
             continue
 
-        atemp = re.split('\s+', ent)
+        atemp = re.split(r'\s+', ent)
         clen  = len(atemp)
 #
 #--- convert time in Chandra Time
@@ -321,7 +321,7 @@ def find_reset_time():
     stime = []
     alt   = []
     for ent in data:
-        atemp = re.split('\s+', ent)
+        atemp = re.split(r'\s+', ent)
         stime.append(float(atemp[0]))
         alt.append(float(atemp[1]))
 
@@ -596,7 +596,7 @@ def update_long_term_data(ndata):
     """
     dfile = f"{ACE_DATA_DIR}/longterm/ace_data.txt"
     last_line = subprocess.check_output(f"tail -n 1 {dfile}", shell=True, executable='/bin/csh').decode()
-    atemp = re.split('\s+', last_line)
+    atemp = re.split(r'\s+', last_line)
 #
 #--- convert time in Chandra Time
 #
@@ -652,7 +652,7 @@ def create_new_table(dfile, ndata, tstart, cut):
 
     line = ''
     for ent in odata:
-        atemp = re.split('\s+', ent)
+        atemp = re.split(r'\s+', ent)
 #
 #--- convert time in Chandra Time
 #
@@ -863,14 +863,14 @@ def update_kp_data_file():
     with open(ifile) as f:
         data = [line.strip() for line in f.readlines()]
     
-    atemp = re.split('\s+', data[-1])
+    atemp = re.split(r'\s+', data[-1])
     ltime = float(atemp[0])
     kval  = atemp[1]
     
     ltime = Chandra.Time.DateTime(ltime).date
-    mc= re.search('\.', ltime)
+    mc= re.search(r'\.', ltime)
     if mc is not None:
-        btemp = re.split('\.', ltime)
+        btemp = re.split(r'\.', ltime)
         ltime = btemp[0]
     
     ldate = datetime.strptime(ltime, '%Y:%j:%H:%M:%S').strftime("%Y %m %d %H%M")
@@ -902,7 +902,7 @@ if __name__ == "__main__":
         if args.path:
             OUT_ACE_DATA_DIR = args.path
         else:
-            OUT_ACE_DATA_DIR = f"{os.getcwd()}/test/outTest"
+            OUT_ACE_DATA_DIR = f"{os.getcwd()}/test/_outTest"
         os.makedirs(f"{OUT_ACE_DATA_DIR}/longterm", exist_ok = True)
         print(f"OUT_ACE_DATA_DIR: {OUT_ACE_DATA_DIR}")
         if not os.path.isfile(f"{OUT_ACE_DATA_DIR}/ace_12h_archive"):

@@ -76,7 +76,7 @@ def convert_to_arrays(data):
 
     chk = 0
     for ent in data:
-        atemp = re.split('\s+', ent)
+        atemp = re.split(r'\s+', ent)
         chk1  = float(atemp[6])
         chk2  = float(atemp[9])
         if (chk1 != 0) or (chk2 != 0):
@@ -273,12 +273,12 @@ if __name__ == "__main__":
         if args.data:
             ACE_DATA_DIR = args.data
         else:
-            ACE_DATA_DIR = f"{os.getcwd()}/test/outTest"
+            ACE_DATA_DIR = f"{os.getcwd()}/test/_outTest"
 
         if args.path:
             ACE_PLOT_DIR = args.path
         else:
-            ACE_PLOT_DIR = f"{os.getcwd()}/test/outTest/Plots"
+            ACE_PLOT_DIR = f"{os.getcwd()}/test/_outTest/Plots"
         os.makedirs(ACE_PLOT_DIR, exist_ok = True)
         print(f"ACE_DATA_DIR: {ACE_DATA_DIR}")
         print(f"ACE_PLOT_DIR: {ACE_PLOT_DIR}")
