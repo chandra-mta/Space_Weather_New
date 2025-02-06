@@ -36,7 +36,7 @@ CURRENT_CHANDRA_TIME = Chandra.Time.DateTime().secs
 
 def compute_fluence_cxo70():
     """
-    create a html page displaying ace fluence when cxo is above 70kkm
+    create a html page displaying ace fluence when cxo is above 70km
     input:  none but read from:
             <ephem_dir>/Data/PE.EPH.gsme_spherical
             <ace_dir>/Data/ace_7day_archive
@@ -218,11 +218,11 @@ if __name__ == '__main__':
         if args.data:
             ACE_DATA_DIR = args.data
         else:
-            ACE_DATA_DIR = f"{os.getcwd()}/test/outTest"
+            ACE_DATA_DIR = f"{os.getcwd()}/test/_outTest"
         if args.web:
             ACE_HTML_DIR = args.web
         else:
-            ACE_HTML_DIR = f"{os.getcwd()}/test/outTest"
+            ACE_HTML_DIR = f"{os.getcwd()}/test/_outTest"
         os.makedirs(ACE_HTML_DIR, exist_ok = True)
         print(f"ACE_DATA_DIR: {ACE_DATA_DIR}")
         print(f"ACE_HTML_DIR: {ACE_HTML_DIR}")

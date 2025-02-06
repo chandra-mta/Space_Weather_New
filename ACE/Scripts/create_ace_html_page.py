@@ -49,7 +49,7 @@ def create_ace_html_page():
     read ace data and update html page
     input:  none, but read from:
             http://services.swpc.noaa.gov/images/ace-epam-7-day.gif
-            http://services.swpc.noaa.gov/images/images/ace-mag-swepam-7-day.gif
+            http://services.swpc.noaa.gov/images/ace-mag-swepam-7-day.gif
             <ace_dir>/Data/ace_12h_archive
     output: <html_dir>/ACE/ace.html
     """
@@ -641,21 +641,21 @@ if __name__ == "__main__":
 #--- Path output to same location as unit tests
 #
         TEMPLATE_DIR = f"{os.getcwd()}/Template"
-        TMP_DIR =  f"{os.getcwd()}/test/outTest"
+        TMP_DIR =  f"{os.getcwd()}/test/_outTest"
         if args.data:
             ACE_DATA_DIR = args.data
         else:
-            ACE_DATA_DIR = f"{os.getcwd()}/test/outTest"
+            ACE_DATA_DIR = f"{os.getcwd()}/test/_outTest"
 
         if args.path:
             ACE_PLOT_DIR = args.path
         else:
-            ACE_PLOT_DIR = f"{os.getcwd()}/test/outTest/Plots"
+            ACE_PLOT_DIR = f"{os.getcwd()}/test/_outTest/Plots"
         
         if args.web:
             ACE_HTML_DIR = args.web
         else:
-            ACE_HTML_DIR = f"{os.getcwd()}/test/outTest"
+            ACE_HTML_DIR = f"{os.getcwd()}/test/_outTest"
         os.makedirs(ACE_PLOT_DIR, exist_ok = True)
         os.makedirs(ACE_HTML_DIR, exist_ok = True)
         print(f"ACE_DATA_DIR: {ACE_DATA_DIR}")

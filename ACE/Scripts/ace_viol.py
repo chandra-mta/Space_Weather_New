@@ -14,6 +14,14 @@ ALERT = 'sot_ace_alert@cfa.harvard.edu'
 TMP_DIR = "/tmp/mta"
 
 def check_viol():
+    """
+    Emails admins alert if ace data invalid for period of time
+
+    input:	<ace_dir>/Data/ace_12h_archive
+        <ace_dir>/Data/ace.archive
+    output:	Admin Email
+        /tmp/mta/ace_viol.out
+    """
     ifile = f"{ACE_DATA_DIR}/ace_12h_archive"
     if not os.path.isfile(ifile):
         content = f"Error: {ifile} not found\n"
@@ -77,8 +85,8 @@ if __name__ == "__main__":
         if args.path:
             ACE_DATA_DIR = args.path
         else:
-            ACE_DATA_DIR = f"{os.getcwd()}/test/outTest"
-        TMP_DIR = f"{os.getcwd()}/test/outTest"
+            ACE_DATA_DIR = f"{os.getcwd()}/test/_outTest"
+        TMP_DIR = f"{os.getcwd()}/test/_outTest"
         os.makedirs(f"{ACE_DATA_DIR}", exist_ok = True)
         os.makedirs(f"{TMP_DIR}", exist_ok = True)
         print(f"ACE_DATA_DIR: {ACE_DATA_DIR}")

@@ -273,12 +273,12 @@ if __name__ == "__main__":
         if args.data:
             ACE_DATA_DIR = args.data
         else:
-            ACE_DATA_DIR = f"{os.getcwd()}/test/outTest"
+            ACE_DATA_DIR = f"{os.getcwd()}/test/_outTest"
 
         if args.path:
             ACE_PLOT_DIR = args.path
         else:
-            ACE_PLOT_DIR = f"{os.getcwd()}/test/outTest/Plots"
+            ACE_PLOT_DIR = f"{os.getcwd()}/test/_outTest/Plots"
         os.makedirs(ACE_PLOT_DIR, exist_ok = True)
         print(f"ACE_DATA_DIR: {ACE_DATA_DIR}")
         print(f"ACE_PLOT_DIR: {ACE_PLOT_DIR}")

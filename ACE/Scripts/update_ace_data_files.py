@@ -902,7 +902,7 @@ if __name__ == "__main__":
         if args.path:
             OUT_ACE_DATA_DIR = args.path
         else:
-            OUT_ACE_DATA_DIR = f"{os.getcwd()}/test/outTest"
+            OUT_ACE_DATA_DIR = f"{os.getcwd()}/test/_outTest"
         os.makedirs(f"{OUT_ACE_DATA_DIR}/longterm", exist_ok = True)
         print(f"OUT_ACE_DATA_DIR: {OUT_ACE_DATA_DIR}")
         if not os.path.isfile(f"{OUT_ACE_DATA_DIR}/ace_12h_archive"):
