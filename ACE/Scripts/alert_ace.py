@@ -123,10 +123,10 @@ def alert_ace():
             #
             # --- Include additional CRM and Comm data
             #
-            with open(f"{CRM_DATA_DIR}/CRMsummary.dat") as f:
-                text_body += f"CRM:\n{f.read()}\n"
-            with open(f"{COMM_DATA_DIR}/dsn_summary.dat") as f:
-                text_body += f"DSN:\n{f.read()}\n"
+            #with open(f"{CRM_DATA_DIR}/CRMsummary.dat") as f:
+            #    text_body += f"CRM:\n{f.read()}\n"
+            #with open(f"{COMM_DATA_DIR}/dsn_summary.dat") as f:
+            #    text_body += f"DSN:\n{f.read()}\n"
             text_body += f"This message sent to {recipients.split('@')[0]}"
             send_mail("ACE_p3", recipients, text_body)
             with open(f"{ACE_DATA_DIR}/ace_alert.json", "w") as f:

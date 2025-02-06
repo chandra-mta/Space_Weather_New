@@ -26,8 +26,6 @@ ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
 TEMPLATE_DIR = "/data/mta4/Space_Weather/ACE/Scripts/Template"
 ACE_HTML_DIR = "/data/mta4/www/RADIATION_new/ACE"
 ACE_PLOT_DIR = "/data/mta4/www/RADIATION_new/ACE/Plots"
-CRM_DIR = "/data/mta4/Space_Weather/CRM"
-COMM_DIR = "/data/mta4/Space_Weather/Comm_data"
 HOUSE_KEEPING = "/data/mta4/Space_Weather/house_keeping"
 TMP_DIR = "/tmp/mta"
 #

@@ -26,7 +26,7 @@ import argparse
 ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
 OUT_ACE_DATA_DIR = ACE_DATA_DIR
 EPHEM_DIR = "/data/mta4/Space_Weather/EPHEM"
-KP_DIR = "/data/mta4/Space_Weather/KP/"
+KP_DIR = "/data/mta4/Space_Weather/KP"
 #
 #--- ftp address
 #
