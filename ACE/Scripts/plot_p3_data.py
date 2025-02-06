@@ -1,4 +1,4 @@
-#!/proj/sot/ska3/flight/bin/python
+#!/proj/sot/ska3/test/bin/python
 
 #########################################################################################
 #                                                                                       #
@@ -76,7 +76,7 @@ def convert_to_arrays(data):
 
     chk = 0
     for ent in data:
-        atemp = re.split('\s+', ent)
+        atemp = re.split(r'\s+', ent)
         chk1  = float(atemp[6])
         chk2  = float(atemp[9])
         if (chk1 != 0) or (chk2 != 0):
