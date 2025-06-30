@@ -162,22 +162,11 @@ def extract_goes_table(jlink):
 
     """
     if os.path.isfile(jlink):
-        try:
-            with open(jlink) as f:
-                data = json.load(f)
-        except:  # noqa: E722
-            traceback.print_exc()
-            data = []
+        with open(jlink) as f:
+            data = json.load(f)
     else:
-        try:
-            with urllib.request.urlopen(jlink) as url:
-                data = json.loads(url.read().decode())
-        except:  # noqa: E722
-            traceback.print_exc()
-            data = []
-
-    if len(data) < 1:
-        exit(1)
+        with urllib.request.urlopen(jlink) as url:
+            data = json.loads(url.read().decode())
     data = Table(data)
     return data
 
@@ -347,7 +336,11 @@ if __name__ == "__main__":
         if args.path:
             PLOT_DIR = args.path
         os.makedirs(PLOT_DIR, exist_ok=True)
-        plot_goes_data()
+        try:
+            plot_goes_data()
+        except json.decoder.JSONDecodeError:
+            traceback.print_exc()
+            #: No cleanup of lock files
     elif args.mode == "flight":
         #
         # --- Create a lock file and exit strategy in case of race conditions
@@ -363,8 +356,10 @@ if __name__ == "__main__":
         else:
             os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
 
-        plot_goes_data()
-
+        try:
+            plot_goes_data()
+        except json.decoder.JSONDecodeError:
+            traceback.print_exc() #: Record issue with downloaded JSON and finish.
         #
         # --- Remove lock file once process is completed
         #
