@@ -1,15 +1,10 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**create_ace_html_page.py**: Read ACE data and update html page
 
-#####################################################################################################
-#                                                                                                   #
-#               create_ace_html_page.py: read ace data and update html page                         #
-#                                                                                                   #
-#               author: t. isobe    (tisobe@cfa.harvard.edu)                                        #
-#                                                                                                   #
-#               Last update: Nov 04, 2021                                                           #
-#                                                                                                   #
-#####################################################################################################
-
+:Author: W. Aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Jul 01, 2025
+"""
 import os
 import sys
 import re
@@ -61,10 +56,7 @@ def create_ace_html_page():
 #--- l_vals:    a list of the 'last' entries of those electron/proton flux data
 #--- data is also trimmed to the last 2 hours
 #
-    try:
-        cdata_cols, l_vals = convert_to_col_data(cdata)
-    except:
-        exit(1)
+    cdata_cols, l_vals = convert_to_col_data(cdata)
 #
 #--- create data table for the html page
 #
