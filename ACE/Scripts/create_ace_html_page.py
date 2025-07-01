@@ -12,6 +12,7 @@ import time
 import numpy
 from cxotime import CxoTime
 import argparse
+from jinja2 import Environment, FileSystemLoader
 #
 #---Define Directory Pathing
 #
@@ -33,9 +34,10 @@ P6_P3_SCALE  = 36.          #--- scale P6 to P3 values, while P3 is broke
 P7_P3_SCALE  = 110.         #--- scale P7 to P3 values, while P3 is broke
 P5_P6_LIM = 1.0e10
 
-#---------------------------------------------------------------------------------------------------
-#-- create_ace_html_page: read ace data and update html page                                      ---
-#---------------------------------------------------------------------------------------------------
+#
+# --- Template Globals
+#
+_JINJA_ENV = Environment(loader = FileSystemLoader('Template', followlinks = True))
 
 def create_ace_html_page():
     """
@@ -69,27 +71,11 @@ def create_ace_html_page():
 #
 #--- update ace html page
 #
-    line = ''
-    with open(f"{TEMPLATE_DIR}/header") as f:
-        line += f"{f.read()}\n"
-
-    with open(f"{TEMPLATE_DIR}/header1") as f:
-        line += f"{f.read()}\n"
-
-    line += f"{ace_table}\n"
-
-    with open(f"{TEMPLATE_DIR}/image2") as f:
-        line += f"{f.read()}\n"
-
-    with open(f"{TEMPLATE_DIR}/footer") as f:
-        line += f"{f.read()}\n"
+    ace_template = _JINJA_ENV.get_template('ace.jinja')
+    ace_render = ace_template.render(ace_table = ace_table)
 
     with open(f"{ACE_HTML_DIR}/ace.html", 'w') as fo:
-        fo.write(line)
-
-#---------------------------------------------------------------------------------------------------
-#-- create_ace_data_table: create data tables from a given data list                              --
-#---------------------------------------------------------------------------------------------------
+        fo.write(ace_render)
 
 def create_ace_data_table(cdata, l_vals):
     """
@@ -405,10 +391,6 @@ def create_ace_data_table(cdata, l_vals):
 
     return line
 
-#---------------------------------------------------------------------------------------------------
-#-- ace_invalid_spec: sending out a warning email                                                 --
-#---------------------------------------------------------------------------------------------------
-
 def ace_invalid_spec(speci, speci_lim):
     """
     sending out a warning email 
@@ -441,10 +423,6 @@ def ace_invalid_spec(speci, speci_lim):
         with open(out, 'w') as fo:
             fo.write(line)
 
-#---------------------------------------------------------------------------------------------------
-#---------------------------------------------------------------------------------------------------
-#---------------------------------------------------------------------------------------------------
-
 def send_mail(subject, content, address):
     if TESTMAIL:
         print(f"Test Mode, interrupting following email.\n\
@@ -453,10 +431,6 @@ def send_mail(subject, content, address):
               Content: {content}\n")
     else:
         os.system(f"echo '{content}' | mailx -s '{subject}' {address}")
-
-#---------------------------------------------------------------------------------------------------
-#---------------------------------------------------------------------------------------------------
-#---------------------------------------------------------------------------------------------------
 
 def convert_to_stime(year, yday):
 
@@ -474,10 +448,6 @@ def convert_to_stime(year, yday):
     stime = CxoTime(htime).secs 
 
     return stime
-
-#---------------------------------------------------------------------------------------------------
-#-- download_img: down load an image from web site                                                --
-#---------------------------------------------------------------------------------------------------
 
 def download_img(file, chg=1):
     """
@@ -513,10 +483,6 @@ def download_img(file, chg=1):
     if chg == 1:
         cmd   = 'convert -negate ' +  oimg + ' ' + oimg
         os.system(cmd)
-    
-#-----------------------------------------------------------------------------
-#-- convert_to_col_data: read  data into a list of lists                    --
-#-----------------------------------------------------------------------------
 
 def convert_to_col_data(data):
     """
@@ -611,8 +577,6 @@ def convert_to_col_data(data):
 
     return [atime, jtime, echk, ech1, ech2, pchk, pch2, pch3, pch5, pch6, pch7],\
                 [ech1_last, ech2_last, pch2_last, pch3_last, pch5_last, pch6_last, pch7_last]
-
-#---------------------------------------------------------------------------------------------------
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
