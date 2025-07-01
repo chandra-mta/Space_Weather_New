@@ -10,7 +10,7 @@ import sys
 import re
 import time
 import numpy
-import Chandra.Time
+from cxotime import CxoTime
 import argparse
 #
 #---Define Directory Pathing
@@ -471,7 +471,7 @@ def convert_to_stime(year, yday):
     ss    = int(60 *diff)
 
     htime = str(year).zfill(4) + ':' + atemp[0].zfill(3) + ':' + str(hh).zfill(2) + ':' + str(mm).zfill(2) + ':' + str(ss).zfill(2)
-    stime = Chandra.Time.DateTime(htime).secs 
+    stime = CxoTime(htime).secs 
 
     return stime
 
@@ -545,7 +545,7 @@ def convert_to_col_data(data):
     ltime = atemp[0] + ':' + atemp[1] + ':' + atemp[2] + ':' + atemp[3][0] + atemp[3][1] + ':'
     ltime = ltime    + atemp[3][2] + atemp[3][3] + ':00' 
     ltime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(ltime, '%Y:%m:%d:%H:%M:%S'))
-    cut   = int(Chandra.Time.DateTime(ltime).secs) - 2 * 3600.0 - 60.0
+    cut   = int(CxoTime(ltime).secs) - 2 * 3600.0 - 60.0
 
     atime = []
     jtime = []
@@ -568,7 +568,7 @@ def convert_to_col_data(data):
         ltime = atemp[0] + ':' + atemp[1] + ':' + atemp[2] + ':' + atemp[3][0] + atemp[3][1] + ':'
         ltime = ltime    + atemp[3][2] + atemp[3][3] + ':00' 
         ltime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(ltime, '%Y:%m:%d:%H:%M:%S'))
-        stime = int(Chandra.Time.DateTime(ltime).secs)
+        stime = int(CxoTime(ltime).secs)
 #
 #--- sometime, there are double entries; so remove those
 #
