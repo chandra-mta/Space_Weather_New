@@ -376,7 +376,7 @@ def make_xray_table(xlink, eventlink):
     # --- and we don't overwrite the data storage of previous flare table.
     #
     if len(flare_table) == 0 and len(flare_matching_events) == 0:
-        table = "<p style='font-size:35px;'><b>No Notable Solar Flares</b></p>"
+        table = "<p style='font-size:15px;color: #e74c3c;'><b>No notable flares</b></p>"
         table += "<table id='flare_table' class='display'><thead><tr><th>Time at Maximum</th><th>Maximum Class</th><th>Region</th></tr></thead>"
         table += "</table>"
     else:
