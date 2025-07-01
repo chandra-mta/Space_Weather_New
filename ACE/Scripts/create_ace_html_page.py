@@ -62,7 +62,7 @@ def create_ace_html_page():
 #
 #--- create data table for the html page
 #
-    ace_table = create_ace_data_table(cdata_cols, l_vals)
+    ace_table, summary_table = create_ace_data_table(cdata_cols, l_vals)
 #
 #--- download images and reverse the color:
 #
@@ -72,7 +72,7 @@ def create_ace_html_page():
 #--- update ace html page
 #
     ace_template = _JINJA_ENV.get_template('ace.jinja')
-    ace_render = ace_template.render(ace_table = ace_table)
+    ace_render = ace_template.render(ace_table = ace_table, summary_table = summary_table)
 
     with open(f"{ACE_HTML_DIR}/ace.html", 'w') as fo:
         fo.write(ace_render)
@@ -123,7 +123,7 @@ def create_ace_data_table(cdata, l_vals):
 #
 #--- go through the data
 #
-    line = ''
+    ace_table = ''
     for k in range(0, c_len):
 #
 #--- pchk and p3
@@ -198,7 +198,7 @@ def create_ace_data_table(cdata, l_vals):
                 aline += f" {-1e5:11.2e}"
             else:
                 aline += f" {i:11.3f}"
-        line += f"{aline}\n"
+        ace_table += f"{aline}\n"
 
 #
 #--- the table part is done, compute other entries
@@ -275,13 +275,14 @@ def create_ace_data_table(cdata, l_vals):
     chk2   = len(echk[ind2])
 
     if (chk == 0) or (chk2 == 0):
-        line = line + '<p style="padding-top:40px;padding-bottom:40px;">'
-        line = line + " No Valid data for last 2 hours."
-        line = line + '</p>\n'
-        return  line
+        ace_table = ace_table + '<p style="padding-top:40px;padding-bottom:40px;">'
+        ace_table = ace_table + " No Valid data for last 2 hours."
+        ace_table = ace_table + '</p>\n'
+        return  ace_table, None
 #
 #--- there are good data
 #
+    summary_table = ''
     p56    = p2dat[ind]
     p56    = p56[p56 >0]
     p130   = p3dat[ind]
@@ -365,31 +366,28 @@ def create_ace_data_table(cdata, l_vals):
 #
 #--- create a summary table
 #
-    with open(f"{TEMPLATE_DIR}/header2") as f:
-        line += f"\n{f.read()}"
 
-    line  = line + "%7s %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f\n"\
+    summary_table = "%7s %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f\n"\
                    % ("AVERAGE        ", e38a, e175a, p56a, p130a, p5_p3a, p6_p3a, p337a, p761a, p1073a)
 
-    line  = line + "%7s %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f\n"\
+    summary_table += "%7s %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f\n"\
                    % ("MINIMUM        ", e38m, e175m, p56m, p130m, p5_p3m, p6_p3m, p337m, p761m, p1073m)
 
-    line  = line + "%7s %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e\n\n"\
+    summary_table += "%7s %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e\n\n"\
                    % ("FLUENCE        ", e38f, e175f, p56f, p130f, p5_p3f, p6_p3f, p337f, p761f, p1073f)
 
-    line  = line + "%7s %11s %11.3f %11s %11.3f %11s %11.3f %11s %11.3f \n\n"\
+    summary_table += "%7s %11s %11.3f %11s %11.3f %11s %11.3f %11s %11.3f \n\n"\
                    % ("SPECTRA        ", "p3/p5", p3_p5, "p3/p6", p3_p6, "p5/p6", p5_p6, "p6/p7", p6_p7)
-
-    line  = line + "%62s %4.1f\n"\
+    summary_table += "%62s %4.1f\n"\
                    % ("*   This P3 channel is currently scaled from P5 data. P3* = P5 X ", P5_P3_SCALE)
 
-    line  = line + "%62s %4.1f\n"\
+    summary_table += "%62s %4.1f\n"\
                    % ("**  This P3 channel is currently scaled from P6 data. P3** = P6 X ", P6_P3_SCALE)
 
-    line  = line + "%62s %4.1f\n"\
+    summary_table+= "%62s %4.1f\n"\
                    % ("*** This P3 channel (not shown) is currently scaled from P7 data. P3*** = P7 X ", P7_P3_SCALE)
 
-    return line
+    return ace_table, summary_table
 
 def ace_invalid_spec(speci, speci_lim):
     """
