@@ -1,51 +1,23 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**run_goes_fluence_extract.py**: Compute GOES fluence of this orbital period
 
-#################################################################################
-#                                                                               #
-#   run_goes_fluence_extract.py: compute goese fluece of this orbital period    #
-#                                                                               #
-#           author: t. isobe (tisobe@cfa.harvard.edu)                           #
-#           last update: Mar 16, 2021                                           #
-#                                                                               #
-#################################################################################
-
-import os
-import sys
+:Author: W. Aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Jul 01, 2025
+"""
 import re
-import string
-import math
 import time
 import Chandra.Time
-import maude
 import urllib.request
 import json
-import random
+#
+# --- Define Directory Pathing
+#
+GOES_DATA_DIR = "/data/mta4/Space_Weather/GOES/Data"
+EPHEM_FILE = "/data/mta4/Space_Weather/EPHEM/Data/PE.EPH.gsme_spherical"
+ALERTS_DIR = "/data/mta4/Space_Weather/ALERTS"
+ALERTS_WEB_DIR = "/data/mta4/www/RADIATION/Alerts"
 
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
-with open(path, 'r') as f:
-    data = [line.strip() for line in f.readlines()]
-
-for ent in data:
-    atemp = re.split(':', ent)
-    var   = atemp[1].strip()
-    line  = atemp[0].strip()
-    exec("%s = %s" %(var, line))
-#for writing out files in test directory
-if (os.getenv('TEST') == 'TEST'):
-    os.system('mkdir -p TestOut')
-    test_out = os.getcwd() + '/TestOut'
-#
-#--- append path to a private folder
-#
-sys.path.append(goes_dir)
-sys.path.append('/data/mta4/Script/Python3.10/MTA/')
-
-import mta_common_functions     as mcf
-#
-#--- set a temporary file name
-#
-rtail  = int(time.time()*random.random())
-zspace = '/tmp/zspace' + str(rtail)
 #
 #--- current goes satellite #
 #
@@ -73,12 +45,6 @@ pout_list   = ['P4', 'P7']
 #
 elec_list = ['>=2 MeV',]
 eout_list = ['goes_electron',]
-#
-#--- directories, files...
-#
-data_dir = goes_dir + 'Data/'
-ephem_file       = ephem_dir + 'Data/PE.EPH.gsme_spherical'
-
 #
 #--- current time
 #
@@ -137,10 +103,7 @@ def run_goes_fluence_extract():
         line = line +  adjust_format(p_acc[1])  + '\t'
         line = line +  adjust_format(e_acc[0])  + '\n'
 
-    ofile = alerts_dir + 'Data/goes_fluence.dat'
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        ofile = test_out + '/goes_fluence.dat'
+    ofile = f"{ALERTS_DIR}/Data/goes_fluence.dat"
     with open(ofile, 'w') as fo:
         fo.write(line)
 
@@ -149,13 +112,10 @@ def run_goes_fluence_extract():
 #----------------------------------------------------------------------------
 
 def adjust_format(val):
-
-    if mcf.is_neumeric(val):
-        out = '%5.3e' % float(val)
-    else:
-        out = 'n/a'
-
-    return out
+    try:
+        return '%5.3e' % float(val)
+    except:  # noqa: E722
+        return 'n/a'
 
 #----------------------------------------------------------------------------
 #-- compute_goes_fluence: extract GOES satellite flux data and compute the fluence of the current period
@@ -238,7 +198,8 @@ def find_the_orbit_period():
                 <ephem_dir>/Data/PE.EPH.gsme_spherical
     output: the orbit starting time in seconds from 19981.1.
     """
-    data = mcf.read_data_file(ephem_file)
+    with open(EPHEM_FILE) as f:
+        data = [line.strip() for line in f.readlines()]
     t_list = []
     alt    = []
     for ent in data:
