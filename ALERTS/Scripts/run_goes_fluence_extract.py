@@ -5,6 +5,8 @@
 :Author: W. Aaron (william.aaron@cfa.harvard.edu)
 :Last Updated: Jul 01, 2025
 """
+import os
+from astropy.table import Table
 import re
 import time
 import Chandra.Time
@@ -18,10 +20,6 @@ EPHEM_FILE = "/data/mta4/Space_Weather/EPHEM/Data/PE.EPH.gsme_spherical"
 ALERTS_DIR = "/data/mta4/Space_Weather/ALERTS"
 ALERTS_WEB_DIR = "/data/mta4/www/RADIATION/Alerts"
 
-#
-#--- current goes satellite #
-#
-satellite = 16
 #
 #--- json data locations proton and electron
 #
@@ -54,10 +52,6 @@ this_year            = int(float(time.strftime('%Y', time.gmtime())))
 this_doy             = int(float(time.strftime('%j', time.gmtime())))
 year_start           = Chandra.Time.DateTime(str(this_year) + ':001:00:00:00').secs
 
-
-#----------------------------------------------------------------------------
-#-- run_goes_fluence_extract: compute goese fluece of this orbital period  --
-#----------------------------------------------------------------------------
 
 def run_goes_fluence_extract():
     """
@@ -107,19 +101,11 @@ def run_goes_fluence_extract():
     with open(ofile, 'w') as fo:
         fo.write(line)
 
-#----------------------------------------------------------------------------
-#----------------------------------------------------------------------------
-#----------------------------------------------------------------------------
-
 def adjust_format(val):
     try:
         return '%5.3e' % float(val)
     except:  # noqa: E722
         return 'n/a'
-
-#----------------------------------------------------------------------------
-#-- compute_goes_fluence: extract GOES satellite flux data and compute the fluence of the current period
-#----------------------------------------------------------------------------
 
 def compute_goes_fluence(dlink, energy_list, ostart, factor):
     """
@@ -187,10 +173,6 @@ def compute_goes_fluence(dlink, energy_list, ostart, factor):
 
     return d_save, a_save
 
-#----------------------------------------------------------------------------
-#-- find_the_orbit_period: find the last orbital starting time             --
-#----------------------------------------------------------------------------
-
 def find_the_orbit_period():
     """
     find the last orbital starting time
@@ -220,8 +202,23 @@ def find_the_orbit_period():
 
     return False
 
+def extract_goes_table(jlink):
+    """Extract GOES satellite flux data
 
-#----------------------------------------------------------------------------
+    :param jlink: JSON web address or file
+    :type jlink: str
+    :return: astropy table of the GOES data.
+    :rtype: astropy.Table
+
+    """
+    if os.path.isfile(jlink):
+        with open(jlink) as f:
+            data = json.load(f)
+    else:
+        with urllib.request.urlopen(jlink) as url:
+            data = json.loads(url.read().decode())
+    data = Table(data)
+    return data
 
 if __name__ == "__main__":
 
