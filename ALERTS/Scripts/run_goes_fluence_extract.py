@@ -10,6 +10,7 @@ from astropy.table import Table
 import re
 import time
 import Chandra.Time
+from cxotime import CxoTime
 import urllib.request
 import json
 #
@@ -19,6 +20,7 @@ GOES_DATA_DIR = "/data/mta4/Space_Weather/GOES/Data"
 EPHEM_FILE = "/data/mta4/Space_Weather/EPHEM/Data/PE.EPH.gsme_spherical"
 ALERTS_DIR = "/data/mta4/Space_Weather/ALERTS"
 ALERTS_WEB_DIR = "/data/mta4/www/RADIATION/Alerts"
+CXONOW = CxoTime()
 
 #
 #--- json data locations proton and electron
@@ -63,9 +65,8 @@ def run_goes_fluence_extract():
 #--- get the orbit starting time
 #
     ostart = find_the_orbit_period()
-    if ostart == False:
-        print("Something is wrong and could not get the orbit starting time\n")
-        exit(1)
+    if ostart is None:
+        raise ValueError("Orbit starting time not found.")
 #
 #--- proton data
 #
@@ -179,17 +180,19 @@ def find_the_orbit_period():
     input: none but read from: 
                 <ephem_dir>/Data/PE.EPH.gsme_spherical
     output: the orbit starting time in seconds from 19981.1.
+
+    :TODO: Store ephemeris calculation in small csv file for astropy ascii parsing
     """
     with open(EPHEM_FILE) as f:
         data = [line.strip() for line in f.readlines()]
     t_list = []
     alt    = []
     for ent in data:
-        atemp = re.split('\s+', ent)
+        atemp = re.split(r'\s+', ent)
         stime = float(atemp[0])
-        if stime > current_chandra_time:
+        if stime > CXONOW.secs:
             break
-
+        #: saves time and altitude only
         t_list.append(stime)
         alt.append(float(atemp[1]))
 
@@ -199,8 +202,6 @@ def find_the_orbit_period():
     for k in range(0, dlen-2):
         if (alt[k] >= alt[k+1]) and (alt[k+1] <= alt[k+2]):
             return t_list[k+1]
-
-    return False
 
 def extract_goes_table(jlink):
     """Extract GOES satellite flux data
