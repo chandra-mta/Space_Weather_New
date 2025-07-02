@@ -13,6 +13,7 @@ from cxotime import CxoTime
 import urllib.request
 import json
 import argparse
+import traceback
 
 #
 # --- Define directory pathing
@@ -118,11 +119,8 @@ def extract_goes_data(dlink, energy_list):
             energy_list --- a list of energy designation
     output: <data_dir>/<out file>
     """
-    try:
-        with urllib.request.urlopen(dlink) as url:
-            data = json.loads(url.read().decode())  #: Read json file from the web
-    except:
-        data = []
+    with urllib.request.urlopen(dlink) as url:
+        data = json.loads(url.read().decode())  #: Read json file from the web
     #
     # --- go through all energy ranges
     #
@@ -253,7 +251,10 @@ if __name__ == "__main__":
         else:
             os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
 
-        collect_goes_long()
+        try:
+            collect_goes_long()
+        except json.decoder.JSONDecodeError:
+            traceback.print_exc() #: Record issue with downloaded JSON and finish.
         #
         # --- Remove lock file once process is completed
         #
