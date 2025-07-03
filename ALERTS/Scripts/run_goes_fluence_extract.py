@@ -25,34 +25,9 @@ CXONOW = CxoTime()
 #
 #--- json data locations proton and electron
 #
-plink = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json'
-elink = 'https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-3-day.json'
-#proton_list = ['1020-1860 keV','1900-2300 keV','2310-3340 keV','3400-6480 keV', '5840-11000 keV',\
-#               '11640-23270 keV','25900-38100 keV','40300-73400 keV','83700-98500 keV',\
-#               '99900-118000 keV','115000-143000 keV', '160000-242000 keV','276000-404000 keV']
-#pout_list   = ['P1', 'P2A', 'P2B', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8A', 'P8B', 'P8C', 'P9', 'P10']
-#elink = 'https://services.swpc.noaa.gov/json/goes/primary/differential-electrons-3-day.json'
-#elec_list  = ["80-115 keV", "115-165 keV", "165-235 keV", "235-340 keV",\
-#              "340-500 keV", "500-700 keV", "700-1000 keV", "1000-1900 keV"]
-#eout_list   = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7', 'E8']
-#
-#--- protone energy designations and output file names
-#
-proton_list = ['5840-11000 keV', '40300-73400 keV']
-pout_list   = ['P4', 'P7']
-#
-#--- electron energy designation and output file name
-#
-elec_list = ['>=2 MeV',]
-eout_list = ['goes_electron',]
-#
-#--- current time
-#
-current_time_date    = time.strftime('%Y:%j:%H:%M:%S', time.gmtime())
-current_chandra_time = Chandra.Time.DateTime(current_time_date).secs
-this_year            = int(float(time.strftime('%Y', time.gmtime())))
-this_doy             = int(float(time.strftime('%j', time.gmtime())))
-year_start           = Chandra.Time.DateTime(str(this_year) + ':001:00:00:00').secs
+PLINK = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json'
+ELINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-3-day.json'
+
 
 
 def run_goes_fluence_extract():
