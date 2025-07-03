@@ -27,8 +27,6 @@ CXONOW = CxoTime()
 PLINK = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json'
 ELINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-3-day.json'
 
-
-
 def run_goes_fluence_extract():
     """
     compute goese fluece of this orbital period
@@ -38,17 +36,33 @@ def run_goes_fluence_extract():
 #
 #--- get the orbit starting time
 #
-    ostart = find_the_orbit_period()
-    if ostart is None:
+    orbit_start = find_the_orbit_period()
+    if orbit_start is None:
         raise ValueError("Orbit starting time not found.")
-#
-#--- proton data
-#
-    p_diff, p_acc = compute_goes_fluence(plink, proton_list, ostart, 1.e3)
-#
-#--- electron data
-#
-    e_diff, e_acc = compute_goes_fluence(elink, elec_list, ostart, 1.0)
+
+    proton_table = json2table(PLINK)
+    electron_table = json2table(ELINK)
+    proton_table = reorient_particle_table(proton_table, gen_column = 'channel', column_list = ['P4', 'P7'])
+    electron_table = reorient_particle_table(electron_table)
+
+    #: Keep only entires which are after the start of this orbit.
+    proton_table.add_column(CxoTime(proton_table['time_tag']).secs, name='cxotime')
+    electron_table.add_column(CxoTime(electron_table['time_tag']).secs, name='cxotime')
+    proton_table = proton_table[proton_table['cxotime'] >= orbit_start]
+    electron_table = electron_table[electron_table['cxotime'] >= orbit_start]
+
+    #: Convert proton unit to MEV in line with Electron Unit
+    proton_table['P4'] = proton_table['P4']*1e3
+    proton_table['P7'] = proton_table['P7']*1e3
+
+    #: Compute fluence for each energy distinction. Multiply by 300 seconds for sum of 5-min segment table entries
+    #: Ignore invalid values. Invalid proton marker is -1e5, invalid electron marker is 4?
+    p4_fluence = sum(proton_table[proton_table['P4'] >= 0]['P4']) * 300
+    p7_fluence = sum(proton_table[proton_table['P7'] >= 0]['P7']) * 300
+    e2_fluence = sum(electron_table[electron_table['>=2 MeV'] < 4]['>=2 MeV']) * 300
+
+    #: Also record the final flux value for each channel.
+
 #
 #--- print out the data
 #
@@ -81,72 +95,6 @@ def adjust_format(val):
         return '%5.3e' % float(val)
     except:  # noqa: E722
         return 'n/a'
-
-def compute_goes_fluence(dlink, energy_list, ostart, factor):
-    """
-    extract GOES satellite flux data and compute the fluence of the current period
-    input: dlink        --- json web address
-            energy_list --- a list of energy designation 
-            ostart      --- orbit starting time in seconds from 1998.1.1
-    output: <data_dir>/<out file>
-    """
-#
-#--- read json file from the web
-#
-    try:
-        with urllib.request.urlopen(dlink) as url:
-            data = json.loads(url.read().decode())
-    except:
-        return ['na', 'na'], ['na', 'na']
-#
-#--- go through all energy ranges
-#
-    elen   = len(energy_list)
-    d_save = []
-    a_save = []
-    for k in range(0, elen):
-        fluence = 0.0
-        aflux   = 0.0
-        energy = energy_list[k]
-        for ent in data:
-#
-#--- read time and flux of the given energy range
-#
-            if ent['energy'] == energy:
-#
-#--- convert time into seconds from 1998.1.1
-#
-                otime = ent['time_tag']
-                otime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(otime, '%Y-%m-%dT%H:%M:%SZ'))
-                stime = int(Chandra.Time.DateTime(otime).secs)
-                if stime < ostart:
-                    continue
-                try:
-                    flux  = float(ent['flux'])
-                except:
-                    continue
-#
-#--- a bad value appeas as negative
-#
-                if flux < 0.0:
-                    continue 
-#
-#--- for the case of electron,  the null value seems 4.0; so drop it
-#
-                if factor == 1.0 and flux <= 4.0:
-                    continue
-#
-#--- data is given every 5 mins
-#
-                aflux    = flux * factor
-                fluence += aflux * 300
-
-
-        d_save.append(aflux)
-        a_save.append(fluence)
-
-
-    return d_save, a_save
 
 def find_the_orbit_period():
     """
