@@ -2,8 +2,8 @@
 """
 **plot_goes_data.py**: Get and plot goes data.
 
-:Author: t. isobe (tisobe@cfa.harvard.edu)
-:Last Updated: Feb 18, 2025
+:Author: w. aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Jul 7, 2025
 
 """
 import sys
@@ -13,6 +13,7 @@ import urllib.request
 from astropy.table import Table
 from datetime import datetime
 import matplotlib as mpl
+import numpy as np
 
 if __name__ == "__main__":
     mpl.use("Agg")
@@ -53,11 +54,11 @@ BAND_LIMITS = {
 }  #: Band limits by GOES channel in MeV
 
 
-class Group_Info:
+class GroupInfo:
     """Stores info used in averaging differential flux data from GOES energy band channels into an ACE energy band channel format."""
 
     def __init__(self, channel_tuple):
-        """Initialize a Group_Info object
+        """Initialize a GroupInfo object
 
         :param channel_tuple: A tuple of strings naming GOES energy band channels
         :type channel_tuple: tuple(str)
@@ -73,12 +74,18 @@ class Group_Info:
             self.weights.append(
                 round(BAND_LIMITS[channel]["max"] - BAND_LIMITS[channel]["min"], 2)
             ) #: Determines weight used in averaging algorithm converting GOES energy bands into ACE energy bands
+    def __repr__(self):
+        return f"GroupInfo(channels={self.channel_tuple!r}, min={self.min!r}, max={self.max!r})"
 
 DIFF_GROUP_SELECTION = [
-    Group_Info(("P1", "P2A", "P2B")),
-    Group_Info(("P3", "P4")),
-    Group_Info(("P7", "P8A")),
+    GroupInfo(("P1", "P2A", "P2B")),
+    GroupInfo(("P3", "P4")),
+    GroupInfo(("P7", "P8A")),
 ]  #: Differential Group Selection by channel. Determined by Band Limits to mimic ACE channels.
+
+ALL_DIFF_CHANNEL = set()
+for x in DIFF_GROUP_SELECTION:
+    ALL_DIFF_CHANNEL = ALL_DIFF_CHANNEL.union(set(x.channel_tuple))
 
 INTG_GROUP_SELECTION = [
     ">=10 MeV",
@@ -86,7 +93,7 @@ INTG_GROUP_SELECTION = [
     ">=100 MeV",
 ]  #: Integral Group Selection
 
-ASTROPY_FORMATTING = (
+ISO_FORMATTING = (
     "%Y-%m-%dT%H:%M:%SZ"  #: String formatting used in date conversion and plotting axes
 )
 
@@ -119,8 +126,15 @@ def plot_goes_data(dlink=DLINK, clink=CLINK, choice=["diff", "intg"]):
     :type choice: list, optional
     """
     if "diff" in choice:
-        diff_table = extract_goes_table(dlink)
-        diff_data_dict = format_differential_data(diff_table)
+        diff_table = json2table(dlink)
+        diff_table = reorient_particle_table(diff_table, gen_column="channel", column_list=ALL_DIFF_CHANNEL)
+        lines = []
+        for info in DIFF_GROUP_SELECTION:
+            avg = group_avg(diff_table, info)
+            lines.append(avg)
+
+        times = [datetime.strptime(x, ISO_FORMATTING) for x in diff_table['time_tag']]
+        diff_data_dict = {"times": times, "lines": lines}
         #
         # --- Define extra plotting variables
         #
@@ -139,8 +153,12 @@ def plot_goes_data(dlink=DLINK, clink=CLINK, choice=["diff", "intg"]):
         plot_data(diff_data_dict)
 
     if "intg" in choice:
-        intg_table = extract_goes_table(clink)
-        intg_data_dict = format_integral_data(intg_table)
+        intg_table = json2table(clink)
+        intg_table = reorient_particle_table(intg_table, column_list=INTG_GROUP_SELECTION)
+        lines = [intg_table[energy] for energy in INTG_GROUP_SELECTION]
+        times = [datetime.strptime(x, ISO_FORMATTING) for x in intg_table['time_tag']]
+
+        intg_data_dict = {"times": times, "lines": lines}
         #
         # --- Define extra plotting variables
         #
@@ -152,12 +170,12 @@ def plot_goes_data(dlink=DLINK, clink=CLINK, choice=["diff", "intg"]):
         intg_data_dict["limits"] = {"y_min": 1e-2, "y_max": 1e4}
         plot_data(intg_data_dict)
 
-def extract_goes_table(jlink):
-    """Extract GOES satellite flux data
+def json2table(jlink):
+    """Extract JSON file and format into Astropy Table
 
     :param jlink: JSON web address or file
     :type jlink: str
-    :return: astropy table of the GOES data.
+    :return: astropy table of the provided data.
     :rtype: astropy.Table
 
     """
@@ -170,67 +188,48 @@ def extract_goes_table(jlink):
     data = Table(data)
     return data
 
-def format_differential_data(table):
-    """Create combined flux data of astropy table based on weighted average
-
-    :param table: astropy table of the differential protons.
-    :type table: astropy.Table
-    :return: Combined flux data averaged into ACE energy bands.
-    :rtype: dict
+def reorient_particle_table(table, gen_column = 'energy', column_list = None):
     """
-    diff_data_dict = {"plot_data": []}
-
-    for group_info in DIFF_GROUP_SELECTION:
-        #
-        # --- Initialize group data arrays
-        #
-        channel = group_info.channel_tuple[0]
-        sel = table["channel"] == channel
-        subtable = table[sel]
-        if "times" not in diff_data_dict.keys():
-            diff_data_dict["times"] = [
-                datetime.strptime(x, ASTROPY_FORMATTING)
-                for x in subtable["time_tag"].data
-            ]
-        #
-        # --- Flux averaged across energy bands from protons/cm2-s-ster-KeV to protons/cm2-s-ster-MeV
-        #
-        avgs = subtable["flux"] * 1e3 * group_info.weights[0]
-
-        for i in range(1, len(group_info.channel_tuple)):
-            #
-            # --- Iterate over the rest of the channels to calculate the averages
-            #
-            channel = group_info.channel_tuple[i]
-            sel = table["channel"] == channel
-            subtable = table[sel]
-            avgs = avgs + subtable["flux"] * 1e3 * group_info.weights[i]
-
-        avgs = avgs / (group_info.max - group_info.min)
-        diff_data_dict["plot_data"].append(avgs)
-    return diff_data_dict
-
-def format_integral_data(intg_table):
-    """Formats the GOES integral flux astropy table into a data table
-
-    :param intg_table: astropy table of the integral protons
-    :type intg_table: astropy.Table
-    :return: Formatted integral protons data
-    :rtype: dict
+    Take a particle table with multiple time tag entires (one for each energy).
+    This is the default for SWPC data products. Then reorient to single time entries with flux for each column
     """
-    intg_data_dict = {"plot_data": []}
-    sel = intg_table["energy"] == INTG_GROUP_SELECTION[0]
-    subtable = intg_table[sel]
-    intg_data_dict["times"] = [
-        datetime.strptime(x, ASTROPY_FORMATTING) for x in subtable["time_tag"].data
-    ]
-    intg_data_dict["plot_data"].append(subtable["flux"])
+    for col in table.columns:
+        if 'time' in col:
+            time_column = col
+    
+    time_list = sorted(set(table[time_column].data))
+    if column_list is None:
+        column_list = sorted(set(table[gen_column]))
+    
+    new_rows = []
+    for time in time_list:
+        row = {time_column: time}
+        for col in column_list:
+            selection = np.logical_and(table[time_column] == time, table[gen_column] == col)
+            if sum(selection) == 0:
+                flux = np.ma.masked
+            else:
+                flux = table[selection]['flux'].data[0]
+            row.update({col: flux})
+        new_rows.append(row)
+    
+    return Table(rows = new_rows)
 
-    for i in range(1, len(INTG_GROUP_SELECTION)):
-        sel = intg_table["energy"] == INTG_GROUP_SELECTION[i]
-        subtable = intg_table[sel]
-        intg_data_dict["plot_data"].append(subtable["flux"])
-    return intg_data_dict
+def group_avg(table, group_info, factor = 1e3):
+    """
+    Calculate the differential channel grouping average column
+    :Note: Group Info is in MeV, therefore factor converts flux KeV -> MeV
+    """
+    #
+    # --- Initialize a fully-false zeroed masked array for the averages
+    # --- If any of the channels for that data point are unavailable
+    #
+    avg = np.ma.masked_array(np.zeros(len(table)), mask = np.zeros(len(table)))
+    for channel, weight in zip(group_info.channel_tuple, group_info.weights):
+        avg = np.ma.add(avg, table[channel] * weight)
+    
+    avg = avg * factor / (group_info.max - group_info.min)
+    return avg
 
 def plot_data(data_dict):
     """Generate a plot and save to a png file.
@@ -249,11 +248,10 @@ def plot_data(data_dict):
     )
     #
     # --- Plotting section
-    #
-    for i in range(len(data_dict["plot_data"])):
+    for i in range(len(data_dict["lines"])):
         (p,) = plt.semilogy(
-            data_dict["times"],
-            data_dict["plot_data"][i],
+            data_dict['times'],
+            data_dict["lines"][i],
             color=data_dict["colors"][i],
             label=data_dict["labels"][i],
             marker=".",
