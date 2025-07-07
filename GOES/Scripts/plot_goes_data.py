@@ -53,11 +53,11 @@ BAND_LIMITS = {
 }  #: Band limits by GOES channel in MeV
 
 
-class Group_Info:
+class GroupInfo:
     """Stores info used in averaging differential flux data from GOES energy band channels into an ACE energy band channel format."""
 
     def __init__(self, channel_tuple):
-        """Initialize a Group_Info object
+        """Initialize a GroupInfo object
 
         :param channel_tuple: A tuple of strings naming GOES energy band channels
         :type channel_tuple: tuple(str)
@@ -73,11 +73,13 @@ class Group_Info:
             self.weights.append(
                 round(BAND_LIMITS[channel]["max"] - BAND_LIMITS[channel]["min"], 2)
             ) #: Determines weight used in averaging algorithm converting GOES energy bands into ACE energy bands
+    def __repr__(self):
+        return f"GroupInfo(channels={self.channel_tuple!r}, min={self.min!r}, max={self.max!r})"
 
 DIFF_GROUP_SELECTION = [
-    Group_Info(("P1", "P2A", "P2B")),
-    Group_Info(("P3", "P4")),
-    Group_Info(("P7", "P8A")),
+    GroupInfo(("P1", "P2A", "P2B")),
+    GroupInfo(("P3", "P4")),
+    GroupInfo(("P7", "P8A")),
 ]  #: Differential Group Selection by channel. Determined by Band Limits to mimic ACE channels.
 
 INTG_GROUP_SELECTION = [
@@ -119,7 +121,7 @@ def plot_goes_data(dlink=DLINK, clink=CLINK, choice=["diff", "intg"]):
     :type choice: list, optional
     """
     if "diff" in choice:
-        diff_table = extract_goes_table(dlink)
+        diff_table = json2table(dlink)
         diff_data_dict = format_differential_data(diff_table)
         #
         # --- Define extra plotting variables
@@ -139,7 +141,7 @@ def plot_goes_data(dlink=DLINK, clink=CLINK, choice=["diff", "intg"]):
         plot_data(diff_data_dict)
 
     if "intg" in choice:
-        intg_table = extract_goes_table(clink)
+        intg_table = json2table(clink)
         intg_data_dict = format_integral_data(intg_table)
         #
         # --- Define extra plotting variables
@@ -152,12 +154,12 @@ def plot_goes_data(dlink=DLINK, clink=CLINK, choice=["diff", "intg"]):
         intg_data_dict["limits"] = {"y_min": 1e-2, "y_max": 1e4}
         plot_data(intg_data_dict)
 
-def extract_goes_table(jlink):
-    """Extract GOES satellite flux data
+def json2table(jlink):
+    """Extract JSON file and format into Astropy Table
 
     :param jlink: JSON web address or file
     :type jlink: str
-    :return: astropy table of the GOES data.
+    :return: astropy table of the provided data.
     :rtype: astropy.Table
 
     """
@@ -180,11 +182,11 @@ def format_differential_data(table):
     """
     diff_data_dict = {"plot_data": []}
 
-    for group_info in DIFF_GROUP_SELECTION:
+    for GroupInfo in DIFF_GROUP_SELECTION:
         #
         # --- Initialize group data arrays
         #
-        channel = group_info.channel_tuple[0]
+        channel = GroupInfo.channel_tuple[0]
         sel = table["channel"] == channel
         subtable = table[sel]
         if "times" not in diff_data_dict.keys():
@@ -195,18 +197,18 @@ def format_differential_data(table):
         #
         # --- Flux averaged across energy bands from protons/cm2-s-ster-KeV to protons/cm2-s-ster-MeV
         #
-        avgs = subtable["flux"] * 1e3 * group_info.weights[0]
+        avgs = subtable["flux"] * 1e3 * GroupInfo.weights[0]
 
-        for i in range(1, len(group_info.channel_tuple)):
+        for i in range(1, len(GroupInfo.channel_tuple)):
             #
             # --- Iterate over the rest of the channels to calculate the averages
             #
-            channel = group_info.channel_tuple[i]
+            channel = GroupInfo.channel_tuple[i]
             sel = table["channel"] == channel
             subtable = table[sel]
-            avgs = avgs + subtable["flux"] * 1e3 * group_info.weights[i]
+            avgs = avgs + subtable["flux"] * 1e3 * GroupInfo.weights[i]
 
-        avgs = avgs / (group_info.max - group_info.min)
+        avgs = avgs / (GroupInfo.max - GroupInfo.min)
         diff_data_dict["plot_data"].append(avgs)
     return diff_data_dict
 
