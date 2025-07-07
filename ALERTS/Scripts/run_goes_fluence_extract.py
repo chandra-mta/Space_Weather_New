@@ -63,38 +63,17 @@ def run_goes_fluence_extract():
 
     #: Also record the final flux value for each channel.
 
-#
-#--- print out the data
-#
-    line = '#TIME\t\t\t\tP4\t\t\tP7\t\t\tE>2.0MeV\n'
-    line = line + current_time_date + '\t'
-
-    if p_diff[0] == 'na':
-        line = line + 'NA\t'
-        line = line + 'NA\t'
-        line = line + 'NA\n'
-        line = line + 'Fluence:' + ' ' * 9 + '\t'
-        line = line + 'NA\t'
-        line = line + 'NA\t'
-        line = line + 'NA\n'
-    else:
-        line = line +  adjust_format(p_diff[0]) + '\t'
-        line = line +  adjust_format(p_diff[1]) + '\t'
-        line = line +  adjust_format(e_diff[0]) + '\n'
-        line = line + 'Fluence:' + ' ' * 9 + '\t'
-        line = line +  adjust_format(p_acc[0])  + '\t'
-        line = line +  adjust_format(p_acc[1])  + '\t'
-        line = line +  adjust_format(e_acc[0])  + '\n'
-
-    ofile = f"{ALERTS_DIR}/Data/goes_fluence.dat"
-    with open(ofile, 'w') as fo:
-        fo.write(line)
-
-def adjust_format(val):
-    try:
-        return '%5.3e' % float(val)
-    except:  # noqa: E722
-        return 'n/a'
+    goes_fluence_dict = {
+        "cxotime": proton_table['cxotime'],
+        "p4_fluence": p4_fluence,
+        "p7_fluence": p7_fluence,
+        "e2_fluence": e2_fluence,
+        "p4_last_flux": proton_table['P4'][-1],
+        "p7_last_flux": proton_table['P7'][-1],
+        "e2_last_flux": proton_table['>=2 MeV'][-1]
+    }
+    with open(f"{ALERTS_DIR}/Data/goes_fluence.json", 'w') as f:
+        json.dump(goes_fluence_dict, f, indent = 4)
 
 def find_the_orbit_period():
     """
@@ -162,7 +141,7 @@ def reorient_particle_table(table, gen_column = 'energy', column_list = None):
         for col in column_list:
             selection = np.logical_and(table[time_column] == time, table[gen_column] == col)
             if sum(selection) == 0:
-                flux = None
+                flux = np.ma.masked
             else:
                 flux = table[selection]['flux'].data[0]
             row.update({col: flux})
