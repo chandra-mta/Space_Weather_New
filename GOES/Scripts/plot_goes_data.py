@@ -2,8 +2,8 @@
 """
 **plot_goes_data.py**: Get and plot goes data.
 
-:Author: t. isobe (tisobe@cfa.harvard.edu)
-:Last Updated: Feb 18, 2025
+:Author: w. aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Jul 7, 2025
 
 """
 import sys
@@ -93,7 +93,7 @@ INTG_GROUP_SELECTION = [
     ">=100 MeV",
 ]  #: Integral Group Selection
 
-ASTROPY_FORMATTING = (
+ISO_FORMATTING = (
     "%Y-%m-%dT%H:%M:%SZ"  #: String formatting used in date conversion and plotting axes
 )
 
@@ -133,7 +133,7 @@ def plot_goes_data(dlink=DLINK, clink=CLINK, choice=["diff", "intg"]):
             avg = group_avg(diff_table, info)
             lines.append(avg)
 
-        times = [datetime.strptime(x, ASTROPY_FORMATTING) for x in diff_table['time_tag']]
+        times = [datetime.strptime(x, ISO_FORMATTING) for x in diff_table['time_tag']]
         diff_data_dict = {"times": times, "lines": lines}
         #
         # --- Define extra plotting variables
@@ -156,7 +156,7 @@ def plot_goes_data(dlink=DLINK, clink=CLINK, choice=["diff", "intg"]):
         intg_table = json2table(clink)
         intg_table = reorient_particle_table(intg_table, column_list=INTG_GROUP_SELECTION)
         lines = [intg_table[energy] for energy in INTG_GROUP_SELECTION]
-        times = [datetime.strptime(x, ASTROPY_FORMATTING) for x in intg_table['time_tag']]
+        times = [datetime.strptime(x, ISO_FORMATTING) for x in intg_table['time_tag']]
 
         intg_data_dict = {"times": times, "lines": lines}
         #
