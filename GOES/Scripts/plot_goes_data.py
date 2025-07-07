@@ -200,6 +200,22 @@ def reorient_particle_table(table, gen_column = 'energy', column_list = None):
     
     return Table(rows = new_rows)
 
+def group_avg(table, group_info, factor = 1e3):
+    """
+    Calculate the differential channel grouping average column
+    :Note: Group Info is in MeV, therefore factor converts flux KeV -> MeV
+    """
+    #
+    # --- Initialize a fully-false zeroed masked array for the averages
+    # --- If any of the channels for that data point are unavailable
+    #
+    avg = np.ma.masked_array(np.zeros(len(table)), mask = np.zeros(len(table)))
+    for channel, weight in zip(group_info.channel_tuple, group_info.weights):
+        avg = np.ma.add(avg, table[channel] * weight)
+    
+    avg = avg * factor / (group_info.max - group_info.min)
+    return avg
+
 def format_differential_data(table):
     """Create combined flux data of astropy table based on weighted average
 
