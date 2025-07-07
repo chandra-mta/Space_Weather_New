@@ -13,6 +13,7 @@ import urllib.request
 from astropy.table import Table
 from datetime import datetime
 import matplotlib as mpl
+import numpy as np
 
 if __name__ == "__main__":
     mpl.use("Agg")
@@ -171,6 +172,33 @@ def json2table(jlink):
             data = json.loads(url.read().decode())
     data = Table(data)
     return data
+
+def reorient_particle_table(table, gen_column = 'energy', column_list = None):
+    """
+    Take a particle table with multiple time tag entires (one for each energy).
+    This is the default for SWPC data products. Then reorient to single time entries with flux for each column
+    """
+    for col in table.columns:
+        if 'time' in col:
+            time_column = col
+    
+    time_list = sorted(set(table[time_column].data))
+    if column_list is None:
+        column_list = sorted(set(table[gen_column]))
+    
+    new_rows = []
+    for time in time_list:
+        row = {time_column: time}
+        for col in column_list:
+            selection = np.logical_and(table[time_column] == time, table[gen_column] == col)
+            if sum(selection) == 0:
+                flux = np.ma.masked
+            else:
+                flux = table[selection]['flux'].data[0]
+            row.update({col: flux})
+        new_rows.append(row)
+    
+    return Table(rows = new_rows)
 
 def format_differential_data(table):
     """Create combined flux data of astropy table based on weighted average
