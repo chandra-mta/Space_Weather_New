@@ -231,68 +231,6 @@ def group_avg(table, group_info, factor = 1e3):
     avg = avg * factor / (group_info.max - group_info.min)
     return avg
 
-def format_differential_data(table):
-    """Create combined flux data of astropy table based on weighted average
-
-    :param table: astropy table of the differential protons.
-    :type table: astropy.Table
-    :return: Combined flux data averaged into ACE energy bands.
-    :rtype: dict
-    """
-    diff_data_dict = {"plot_data": []}
-
-    for GroupInfo in DIFF_GROUP_SELECTION:
-        #
-        # --- Initialize group data arrays
-        #
-        channel = GroupInfo.channel_tuple[0]
-        sel = table["channel"] == channel
-        subtable = table[sel]
-        if "times" not in diff_data_dict.keys():
-            diff_data_dict["times"] = [
-                datetime.strptime(x, ASTROPY_FORMATTING)
-                for x in subtable["time_tag"].data
-            ]
-        #
-        # --- Flux averaged across energy bands from protons/cm2-s-ster-KeV to protons/cm2-s-ster-MeV
-        #
-        avgs = subtable["flux"] * 1e3 * GroupInfo.weights[0]
-
-        for i in range(1, len(GroupInfo.channel_tuple)):
-            #
-            # --- Iterate over the rest of the channels to calculate the averages
-            #
-            channel = GroupInfo.channel_tuple[i]
-            sel = table["channel"] == channel
-            subtable = table[sel]
-            avgs = avgs + subtable["flux"] * 1e3 * GroupInfo.weights[i]
-
-        avgs = avgs / (GroupInfo.max - GroupInfo.min)
-        diff_data_dict["plot_data"].append(avgs)
-    return diff_data_dict
-
-def format_integral_data(intg_table):
-    """Formats the GOES integral flux astropy table into a data table
-
-    :param intg_table: astropy table of the integral protons
-    :type intg_table: astropy.Table
-    :return: Formatted integral protons data
-    :rtype: dict
-    """
-    intg_data_dict = {"plot_data": []}
-    sel = intg_table["energy"] == INTG_GROUP_SELECTION[0]
-    subtable = intg_table[sel]
-    intg_data_dict["times"] = [
-        datetime.strptime(x, ASTROPY_FORMATTING) for x in subtable["time_tag"].data
-    ]
-    intg_data_dict["plot_data"].append(subtable["flux"])
-
-    for i in range(1, len(INTG_GROUP_SELECTION)):
-        sel = intg_table["energy"] == INTG_GROUP_SELECTION[i]
-        subtable = intg_table[sel]
-        intg_data_dict["plot_data"].append(subtable["flux"])
-    return intg_data_dict
-
 def plot_data(data_dict):
     """Generate a plot and save to a png file.
 
