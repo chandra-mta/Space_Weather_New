@@ -3,8 +3,9 @@
 **run_goes_fluence_extract.py**: Compute GOES fluence of this orbital period
 
 :Author: W. Aaron (william.aaron@cfa.harvard.edu)
-:Last Updated: Jul 01, 2025
+:Last Updated: Jul 07, 2025
 """
+import sys
 import os
 from astropy.table import Table
 import re
@@ -12,13 +13,14 @@ import numpy as np
 from cxotime import CxoTime
 import urllib.request
 import json
+import argparse
+import getpass
+import traceback
 #
 # --- Define Directory Pathing
 #
-GOES_DATA_DIR = "/data/mta4/Space_Weather/GOES/Data"
 EPHEM_FILE = "/data/mta4/Space_Weather/EPHEM/Data/PE.EPH.gsme_spherical"
-ALERTS_DIR = "/data/mta4/Space_Weather/ALERTS"
-ALERTS_WEB_DIR = "/data/mta4/www/RADIATION/Alerts"
+ALERTS_DATA_DIR = "/data/mta4/Space_Weather/ALERTS/Data"
 CXONOW = CxoTime()
 
 #
@@ -29,7 +31,7 @@ ELINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-3-d
 
 def run_goes_fluence_extract():
     """
-    compute goese fluece of this orbital period
+    compute GOES fluence of this orbital period
     input: none, but read from web
     output: <alert_dir>/Data/goes_fluence.dat
     """
@@ -64,15 +66,15 @@ def run_goes_fluence_extract():
     #: Also record the final flux value for each channel.
 
     goes_fluence_dict = {
-        "cxotime": proton_table['cxotime'],
+        "cxotime": proton_table['cxotime'][-1],
         "p4_fluence": p4_fluence,
         "p7_fluence": p7_fluence,
         "e2_fluence": e2_fluence,
         "p4_last_flux": proton_table['P4'][-1],
         "p7_last_flux": proton_table['P7'][-1],
-        "e2_last_flux": proton_table['>=2 MeV'][-1]
+        "e2_last_flux": electron_table['>=2 MeV'][-1]
     }
-    with open(f"{ALERTS_DIR}/Data/goes_fluence.json", 'w') as f:
+    with open(f"{ALERTS_DATA_DIR}/goes_fluence.json", 'w') as f:
         json.dump(goes_fluence_dict, f, indent = 4)
 
 def find_the_orbit_period():
@@ -150,5 +152,60 @@ def reorient_particle_table(table, gen_column = 'energy', column_list = None):
     return Table(rows = new_rows)
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
 
-    run_goes_fluence_extract()
+    parser.add_argument(
+        "-m",
+        "--mode",
+        choices=["flight", "test"],
+        required=True,
+        help="Determine running mode.",
+    )
+    parser.add_argument(
+        "-p",
+        "--path",
+        required=False,
+        help="Directory path to determine output location of plot.",
+    )
+    args = parser.parse_args()
+    #
+    # --- Determine if running in test mode and change pathing if so
+    #
+
+    if args.mode == "test":
+        #
+        # --- Path output to same location as unit tests
+        #
+        ALERTS_DATA_DIR = f"{os.getcwd()}/test/_outTest"
+        if args.path:
+            ALERTS_DATA_DIR = args.path
+        os.makedirs(ALERTS_DATA_DIR, exist_ok=True)
+        try:
+            run_goes_fluence_extract()
+        except json.decoder.JSONDecodeError:
+            traceback.print_exc()
+            #: No cleanup of lock files
+    elif args.mode == "flight":
+        #
+        # --- Create a lock file and exit strategy in case of race conditions
+        #
+        import getpass
+
+        name = os.path.basename(__file__).split(".")[0]
+        user = getpass.getuser()
+        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
+            sys.exit(
+                f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog."
+            )
+        else:
+            os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
+
+        try:
+            run_goes_fluence_extract()
+        except json.decoder.JSONDecodeError:
+            traceback.print_exc() #: Record issue with downloaded JSON and finish.
+        #
+        # --- Remove lock file once process is completed
+        #
+        os.system(f"rm /tmp/{user}/{name}.lock")
+
