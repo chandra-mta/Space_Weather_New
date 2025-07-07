@@ -58,10 +58,10 @@ def run_goes_fluence_extract():
     proton_table['P7'] = proton_table['P7']*1e3
 
     #: Compute fluence for each energy distinction. Multiply by 300 seconds for sum of 5-min segment table entries
-    #: Ignore invalid values. Invalid proton marker is -1e5, invalid electron marker is 4?
+    #: Ignore invalid values. Invalid proton marker is -1e5, invalid electron marker is 4.
     p4_fluence = sum(proton_table[proton_table['P4'] >= 0]['P4']) * 300
     p7_fluence = sum(proton_table[proton_table['P7'] >= 0]['P7']) * 300
-    e2_fluence = sum(electron_table[electron_table['>=2 MeV'] < 4]['>=2 MeV']) * 300
+    e2_fluence = sum(electron_table[electron_table['>=2 MeV'] > 4]['>=2 MeV']) * 300
 
     #: Also record the final flux value for each channel.
 
