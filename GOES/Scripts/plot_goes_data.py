@@ -83,6 +83,10 @@ DIFF_GROUP_SELECTION = [
     GroupInfo(("P7", "P8A")),
 ]  #: Differential Group Selection by channel. Determined by Band Limits to mimic ACE channels.
 
+ALL_DIFF_CHANNEL = set()
+for x in DIFF_GROUP_SELECTION:
+    ALL_DIFF_CHANNEL = ALL_DIFF_CHANNEL.union(set(x.channel_tuple))
+
 INTG_GROUP_SELECTION = [
     ">=10 MeV",
     ">=50 MeV",
@@ -123,7 +127,14 @@ def plot_goes_data(dlink=DLINK, clink=CLINK, choice=["diff", "intg"]):
     """
     if "diff" in choice:
         diff_table = json2table(dlink)
-        diff_data_dict = format_differential_data(diff_table)
+        diff_table = reorient_particle_table(diff_table, gen_column="channel", column_list=ALL_DIFF_CHANNEL)
+        lines = []
+        for info in DIFF_GROUP_SELECTION:
+            avg = group_avg(diff_table, info)
+            lines.append(avg)
+
+        times = [datetime.strptime(x, ASTROPY_FORMATTING) for x in diff_table['time_tag']]
+        diff_data_dict = {"times": times, "lines": lines}
         #
         # --- Define extra plotting variables
         #
@@ -143,7 +154,11 @@ def plot_goes_data(dlink=DLINK, clink=CLINK, choice=["diff", "intg"]):
 
     if "intg" in choice:
         intg_table = json2table(clink)
-        intg_data_dict = format_integral_data(intg_table)
+        intg_table = reorient_particle_table(intg_table, column_list=INTG_GROUP_SELECTION)
+        lines = [intg_table[energy] for energy in INTG_GROUP_SELECTION]
+        times = [datetime.strptime(x, ASTROPY_FORMATTING) for x in intg_table['time_tag']]
+
+        intg_data_dict = {"times": times, "lines": lines}
         #
         # --- Define extra plotting variables
         #
@@ -295,11 +310,10 @@ def plot_data(data_dict):
     )
     #
     # --- Plotting section
-    #
-    for i in range(len(data_dict["plot_data"])):
+    for i in range(len(data_dict["lines"])):
         (p,) = plt.semilogy(
-            data_dict["times"],
-            data_dict["plot_data"][i],
+            data_dict['times'],
+            data_dict["lines"][i],
             color=data_dict["colors"][i],
             label=data_dict["labels"][i],
             marker=".",
