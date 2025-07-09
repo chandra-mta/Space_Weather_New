@@ -27,7 +27,6 @@ ALERTS_DATA_DIR = "/data/mta4/Space_Weather/ALERTS/Data"
 CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
 ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
 COMM_DATA_DIR = "/data/mta4/Space_Weather/Comm_data/Data"
-EPHEM_FILE = "/data/mta4/Space_Weather/EPHEM/Data/PE.EPH.gsme_spherical"
 ACIS_FILE = "/proj/sot/acis/FLU-MON/FPHIST-2001.dat"
 CXONOW = CxoTime()
 
@@ -40,7 +39,7 @@ ELINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-3-d
 def create_radiation_summary():
 
     crm_data = read_crm_summary()
-    run_goes_fluence_extract()
+    goes_fluence_data = compute_goes_fluence(cxo_orbit_start = CxoTime(crm_data['orbit_start']))
 
 
 def read_crm_summary():
@@ -64,18 +63,13 @@ def read_crm_summary():
         crm_data['crm_last_update'] = data[13].split(": ")[1].strip()
     return crm_data
 
-def run_goes_fluence_extract():
+def compute_goes_fluence(cxo_orbit_start):
     """
     compute GOES fluence of this orbital period
-    input: none, but read from web
-    output: <alert_dir>/Data/goes_fluence.dat
+
+    :param cxo_orbit_start: CxoTime object of the start of this current orbit as read from the CRM summary.
+    :type cxo_orbit_start: CxoTime
     """
-#
-#--- get the orbit starting time
-#
-    orbit_start = find_the_orbit_period()
-    if orbit_start is None:
-        raise ValueError("Orbit starting time not found.")
 
     proton_table = json2table(PLINK)
     electron_table = json2table(ELINK)
@@ -85,8 +79,8 @@ def run_goes_fluence_extract():
     #: Keep only entires which are after the start of this orbit.
     proton_table.add_column(CxoTime(proton_table['time_tag']).secs, name='cxotime')
     electron_table.add_column(CxoTime(electron_table['time_tag']).secs, name='cxotime')
-    proton_table = proton_table[proton_table['cxotime'] >= orbit_start]
-    electron_table = electron_table[electron_table['cxotime'] >= orbit_start]
+    proton_table = proton_table[proton_table['cxotime'] >= cxo_orbit_start.secs]
+    electron_table = electron_table[electron_table['cxotime'] >= cxo_orbit_start.secs]
 
     #: Convert proton unit to MEV in line with Electron Unit
     proton_table['P4'] = proton_table['P4']*1e3
@@ -100,8 +94,8 @@ def run_goes_fluence_extract():
 
     #: Also record the final flux value for each channel.
 
-    goes_fluence_dict = {
-        "cxotime": proton_table['cxotime'][-1],
+    goes_fluence_data = {
+        "goes_last_updated": CxoTime(proton_table['cxotime'][-1]).date.split('.')[0],
         "p4_fluence": p4_fluence,
         "p7_fluence": p7_fluence,
         "e2_fluence": e2_fluence,
@@ -109,37 +103,8 @@ def run_goes_fluence_extract():
         "p7_last_flux": proton_table['P7'][-1],
         "e2_last_flux": electron_table['>=2 MeV'][-1]
     }
-    with open(f"{ALERTS_DATA_DIR}/goes_fluence.json", 'w') as f:
-        json.dump(goes_fluence_dict, f, indent = 4)
 
-def find_the_orbit_period():
-    """
-    find the last orbital starting time
-    input: none but read from: 
-                <ephem_dir>/Data/PE.EPH.gsme_spherical
-    output: the orbit starting time in seconds from 19981.1.
-
-    :TODO: Store ephemeris calculation in small csv file for astropy ascii parsing
-    """
-    with open(EPHEM_FILE) as f:
-        data = [line.strip() for line in f.readlines()]
-    t_list = []
-    alt    = []
-    for ent in data:
-        atemp = re.split(r'\s+', ent)
-        stime = float(atemp[0])
-        if stime > CXONOW.secs:
-            break
-        #: saves time and altitude only
-        t_list.append(stime)
-        alt.append(float(atemp[1]))
-
-    dlen   = len(t_list)
-    t_list = t_list[::-1]
-    alt    = alt[::-1]
-    for k in range(0, dlen-2):
-        if (alt[k] >= alt[k+1]) and (alt[k+1] <= alt[k+2]):
-            return t_list[k+1]
+    return goes_fluence_data
 
 def json2table(jlink):
     """Extract JSON file and format into Astropy Table
