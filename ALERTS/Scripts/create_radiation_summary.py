@@ -11,7 +11,7 @@
 import sys
 import os
 from astropy.table import Table
-import re
+from datetime import datetime
 import numpy as np
 from cxotime import CxoTime
 import urllib.request
@@ -25,8 +25,9 @@ import traceback
 #
 ALERTS_DATA_DIR = "/data/mta4/Space_Weather/ALERTS/Data"
 CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
-ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
 COMM_DATA_DIR = "/data/mta4/Space_Weather/Comm_data/Data"
+
+ACIS_ACE_FILE = "/proj/web-cxc/htdocs/acis/Fluence/current.dat"
 ACIS_FILE = "/proj/sot/acis/FLU-MON/FPHIST-2001.dat"
 CXONOW = CxoTime()
 
@@ -40,11 +41,12 @@ def create_radiation_summary():
 
     crm_data = read_crm_summary()
     goes_fluence_data = compute_goes_fluence(cxo_orbit_start = CxoTime(crm_data['orbit_start']))
+    acis_ace_data = read_acis_ace_data()
 
 
 def read_crm_summary():
     """
-    Read the CRM summary file
+    Read the CRM summary file.
     
     :NOTE: Altitude describes the geocentric distance in (km), and the orbit leg (ascending or descending)
     :TODO: Identify manner of attenuation.
@@ -65,7 +67,7 @@ def read_crm_summary():
 
 def compute_goes_fluence(cxo_orbit_start):
     """
-    compute GOES fluence of this orbital period
+    Compute GOES fluence of this orbital period.
 
     :param cxo_orbit_start: CxoTime object of the start of this current orbit as read from the CRM summary.
     :type cxo_orbit_start: CxoTime
@@ -95,7 +97,7 @@ def compute_goes_fluence(cxo_orbit_start):
     #: Also record the final flux value for each channel.
 
     goes_fluence_data = {
-        "goes_last_updated": CxoTime(proton_table['cxotime'][-1]).date.split('.')[0],
+        "goes_last_update": CxoTime(proton_table['cxotime'][-1]).date.split('.')[0],
         "p4_fluence": p4_fluence,
         "p7_fluence": p7_fluence,
         "e2_fluence": e2_fluence,
@@ -105,6 +107,23 @@ def compute_goes_fluence(cxo_orbit_start):
     }
 
     return goes_fluence_data
+
+def read_acis_ace_data():
+    """
+    Pull the ACIS team's calculation for ACE flux, fluence, and attenuation to ACIS.
+
+    :NOTE: Attenuated in this context references the flux and fluence experienced by ACIS for the ACE P3 channel.
+    Therefore, if ACIS is not in the focal plane, then the measurement is attenuated to zero. This calculation is done byt ACIS team.
+    """
+    acis_ace_data = {}
+    with open(ACIS_ACE_FILE) as f:
+        data = [line.strip() for line in f.readlines() if line.strip() != '']
+        _a = data[5].split()
+        acis_ace_data['ace_last_update'] = datetime.strptime(f"{_a[0]}-{_a[1]:>02}-{_a[2]:>02}-{_a[3]:>04}", '%Y-%m-%d-%H%M').strftime("%Y:%j:%H:%M:%S")
+        acis_ace_data['ace_p3_flux'] = float(_a[9])
+        acis_ace_data['ace_p3_fluence'] = float(data[7].split()[9])
+        acis_ace_data['attenuated_ace_p3_flux'] = float(data[13].split()[9])
+        acis_ace_data['attenuated_ace_p3_fluence'] = float(data[15].split()[9])
 
 def json2table(jlink):
     """Extract JSON file and format into Astropy Table
