@@ -4,6 +4,9 @@
 
 :Author: W. Aaron (william.aaron@cfa.harvard.edu)
 :Last Updated: Jul 07, 2025
+
+:TODO: Change customized file format for data sets in summary.
+
 """
 import sys
 import os
@@ -16,11 +19,16 @@ import json
 import argparse
 import getpass
 import traceback
+
 #
 # --- Define Directory Pathing
 #
-EPHEM_FILE = "/data/mta4/Space_Weather/EPHEM/Data/PE.EPH.gsme_spherical"
 ALERTS_DATA_DIR = "/data/mta4/Space_Weather/ALERTS/Data"
+CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
+ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
+COMM_DATA_DIR = "/data/mta4/Space_Weather/Comm_data/Data"
+EPHEM_FILE = "/data/mta4/Space_Weather/EPHEM/Data/PE.EPH.gsme_spherical"
+ACIS_FILE = "/proj/sot/acis/FLU-MON/FPHIST-2001.dat"
 CXONOW = CxoTime()
 
 #
@@ -30,7 +38,31 @@ PLINK = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3
 ELINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-3-day.json'
 
 def create_radiation_summary():
+
+    crm_data = read_crm_summary()
     run_goes_fluence_extract()
+
+
+def read_crm_summary():
+    """
+    Read the CRM summary file
+    
+    :NOTE: Altitude describes the geocentric distance in (km), and the orbit leg (ascending or descending)
+    :TODO: Identify manner of attenuation.
+    """
+
+    crm_data = {}
+    with open(f"{CRM_DATA_DIR}/CRMsummary.dat") as f:
+        data = [line.strip() for line in f.readlines() if line.strip() != '']
+        crm_data['instrument_config'] = data[0].split(":")[1].strip()
+        crm_data['orbit_start'] = data[6].split(" : ")[1].strip()
+        crm_data['altitude'] = data[7].split(":")[1].strip()
+        crm_data['crm_flux'] = float(data[9].split(":")[1].strip())
+        crm_data['attenuated_crm_flux'] = float(data[10].split(":")[1].strip())
+        crm_data['crm_fluence'] = float(data[11].split(":")[1].strip())
+        crm_data['attenuated_crm_fluence'] = float(data[12].split(":")[1].strip())
+        crm_data['crm_last_update'] = data[13].split(": ")[1].strip()
+    return crm_data
 
 def run_goes_fluence_extract():
     """
