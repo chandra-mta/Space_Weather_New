@@ -1,5 +1,3 @@
 cd /data/mta4/Space_Weather/ALERTS/Scripts
 
-/data/mta4/Space_Weather/ALERTS/Scripts/run_goes_fluence_extract.py
-
-/data/mta4/Space_Weather/ALERTS/Scripts/create_radiation_summary_page.py
+/data/mta4/Space_Weather/ALERTS/Scripts/create_radiation_summary.py -m flight

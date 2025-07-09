@@ -1,6 +1,6 @@
 #!/proj/sot/ska3/flight/bin/python
 """
-**run_goes_fluence_extract.py**: Compute GOES fluence of this orbital period
+**create_radiation_summary.py**: Compute GOES fluence of this orbital period
 
 :Author: W. Aaron (william.aaron@cfa.harvard.edu)
 :Last Updated: Jul 07, 2025
@@ -28,6 +28,9 @@ CXONOW = CxoTime()
 #
 PLINK = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json'
 ELINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-3-day.json'
+
+def create_radiation_summary():
+    run_goes_fluence_extract()
 
 def run_goes_fluence_extract():
     """
@@ -181,7 +184,7 @@ if __name__ == "__main__":
             ALERTS_DATA_DIR = args.path
         os.makedirs(ALERTS_DATA_DIR, exist_ok=True)
         try:
-            run_goes_fluence_extract()
+            create_radiation_summary()
         except json.decoder.JSONDecodeError:
             traceback.print_exc()
             #: No cleanup of lock files
@@ -201,7 +204,7 @@ if __name__ == "__main__":
             os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
 
         try:
-            run_goes_fluence_extract()
+            create_radiation_summary()
         except json.decoder.JSONDecodeError:
             traceback.print_exc() #: Record issue with downloaded JSON and finish.
         #
