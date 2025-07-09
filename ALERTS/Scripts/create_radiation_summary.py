@@ -41,11 +41,16 @@ ELINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-3-d
 def create_radiation_summary():
 
     crm_data = read_crm_summary()
-    goes_fluence_data = compute_goes_fluence(cxo_orbit_start = CxoTime(crm_data['orbit_start']))
+    cxo_orbit_start = CxoTime(crm_data['orbit_start'])
+    time_data = {'seconds_in_orbit_period': round((CXONOW - cxo_orbit_start).sec)} #: astropy.time.core.TimeDelta when subtracted
+
+    goes_fluence_data = compute_goes_fluence(cxo_orbit_start)
     acis_ace_data = read_acis_ace_data()
     comm_data = read_comm_data()
 
-    rad_zone_data = {'next_rad_zone_entry': rad_zones.filter(start = CXONOW).table['start'][0].split('.')[0]}
+    next_rad = rad_zones.filter(start = CXONOW).table['start'][0].split('.')[0]
+    time_data['next_rad_zone_entry'] = next_rad
+    time_data['seconds_till_rad_zone'] = round((CxoTime(next_rad) - CXONOW).sec) #: astropy.time.core.TimeDelta when subtracted
 
 
 
@@ -129,6 +134,7 @@ def read_acis_ace_data():
         acis_ace_data['ace_p3_fluence'] = float(data[7].split()[9])
         acis_ace_data['attenuated_ace_p3_flux'] = float(data[13].split()[9])
         acis_ace_data['attenuated_ace_p3_fluence'] = float(data[15].split()[9])
+    return acis_ace_data
 
 def read_comm_data():
     """
@@ -139,8 +145,14 @@ def read_comm_data():
         data = [line.strip().split() for line in f.readlines() if line.strip() != '' and line[0] != "#"]
         for i in range(len(data)-1):
             if float(data[i][5]) < CXONOW.secs and float(data[i+1][5]) > CXONOW.secs:
-                comm_data['next_comm'] = CxoTime(float(data[i+1][5]) +1).date.split('.')[0]
-                comm_data['second_comm'] = CxoTime(float(data[i+2][5]) +1).date.split('.')[0]
+                next_comm = CxoTime(float(data[i+1][5]) +1)
+                second_comm = CxoTime(float(data[i+2][5]) +1)
+                break
+    comm_data['next_comm'] = next_comm.date.split('.')[0]
+    comm_data['second_comm'] = second_comm.date.split('.')[0]
+    comm_data['seconds_till_next_comm'] = round((next_comm - CXONOW).sec) #: astropy.time.core.TimeDelta when subtracted
+    comm_data['seconds_till_second_comm'] = round((second_comm - CXONOW).sec)
+    return comm_data
 
 def json2table(jlink):
     """Extract JSON file and format into Astropy Table
