@@ -14,6 +14,7 @@ from astropy.table import Table
 from datetime import datetime
 import numpy as np
 from cxotime import CxoTime
+from kadi.events import rad_zones
 import urllib.request
 import json
 import argparse
@@ -43,7 +44,9 @@ def create_radiation_summary():
     goes_fluence_data = compute_goes_fluence(cxo_orbit_start = CxoTime(crm_data['orbit_start']))
     acis_ace_data = read_acis_ace_data()
     comm_data = read_comm_data()
-    
+
+    rad_zone_data = {'next_rad_zone_entry': rad_zones.filter(start = CXONOW).table['start'][0].split('.')[0]}
+
 
 
 def read_crm_summary():
