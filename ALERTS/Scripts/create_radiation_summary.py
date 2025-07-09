@@ -24,10 +24,10 @@ import traceback
 # --- Define Directory Pathing
 #
 ALERTS_DATA_DIR = "/data/mta4/Space_Weather/ALERTS/Data"
-CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
-COMM_DATA_DIR = "/data/mta4/Space_Weather/Comm_data/Data"
 
+CRM_DATA_FILE = "/data/mta4/Space_Weather/CRM3/Data/CRMsummary.dat"
 ACIS_ACE_FILE = "/proj/web-cxc/htdocs/acis/Fluence/current.dat"
+COMM_DATA_FILE = "/data/mta4/Space_Weather/Comm_data/Data/comm_data"
 ACIS_FILE = "/proj/sot/acis/FLU-MON/FPHIST-2001.dat"
 CXONOW = CxoTime()
 
@@ -42,6 +42,8 @@ def create_radiation_summary():
     crm_data = read_crm_summary()
     goes_fluence_data = compute_goes_fluence(cxo_orbit_start = CxoTime(crm_data['orbit_start']))
     acis_ace_data = read_acis_ace_data()
+    comm_data = read_comm_data()
+    
 
 
 def read_crm_summary():
@@ -53,7 +55,7 @@ def read_crm_summary():
     """
 
     crm_data = {}
-    with open(f"{CRM_DATA_DIR}/CRMsummary.dat") as f:
+    with open(CRM_DATA_FILE) as f:
         data = [line.strip() for line in f.readlines() if line.strip() != '']
         crm_data['instrument_config'] = data[0].split(":")[1].strip()
         crm_data['orbit_start'] = data[6].split(" : ")[1].strip()
@@ -124,6 +126,18 @@ def read_acis_ace_data():
         acis_ace_data['ace_p3_fluence'] = float(data[7].split()[9])
         acis_ace_data['attenuated_ace_p3_flux'] = float(data[13].split()[9])
         acis_ace_data['attenuated_ace_p3_fluence'] = float(data[15].split()[9])
+
+def read_comm_data():
+    """
+    Comm time listed in GMT.
+    """
+    comm_data = {}
+    with open(COMM_DATA_FILE) as f:
+        data = [line.strip().split() for line in f.readlines() if line.strip() != '' and line[0] != "#"]
+        for i in range(len(data)-1):
+            if float(data[i][5]) < CXONOW.secs and float(data[i+1][5]) > CXONOW.secs:
+                comm_data['next_comm'] = CxoTime(float(data[i+1][5]) +1).date.split('.')[0]
+                comm_data['second_comm'] = CxoTime(float(data[i+2][5]) +1).date.split('.')[0]
 
 def json2table(jlink):
     """Extract JSON file and format into Astropy Table
