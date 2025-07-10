@@ -47,12 +47,15 @@ def create_radiation_summary():
     goes_fluence_data = compute_goes_fluence(cxo_orbit_start)
     acis_ace_data = read_acis_ace_data()
     comm_data = read_comm_data()
+
+    next_rad = CxoTime(rad_zones.filter(start = CXONOW).table['start'][0])
+    time_data['next_rad_zone_entry'] = next_rad.date
+    time_data['seconds_till_rad_zone'] = round((next_rad - CXONOW).sec) #: astropy.time.core.TimeDelta when subtracted
     fp_history_table = read_fp_history_file()
-
-    next_rad = rad_zones.filter(start = CXONOW).table['start'][0].split('.')[0]
-    time_data['next_rad_zone_entry'] = next_rad
-    time_data['seconds_till_rad_zone'] = round((CxoTime(next_rad) - CXONOW).sec) #: astropy.time.core.TimeDelta when subtracted
-
+    
+    time_data['attenuated_rad_duration' : find_acis_attenuated_time(fp_history_table, CXONOW, next_rad)]
+    time_data['attenuated_next_comm_duration' : find_acis_attenuated_time(fp_history_table, CXONOW, CxoTime(comm_data['next_comm']))]
+    time_data['attenuated_second_comm_duration' : find_acis_attenuated_time(fp_history_table, CXONOW, CxoTime(comm_data['second_comm']))]
 
 
 def read_crm_summary():
@@ -149,8 +152,8 @@ def read_comm_data():
                 next_comm = CxoTime(float(data[i+1][5]) +1)
                 second_comm = CxoTime(float(data[i+2][5]) +1)
                 break
-    comm_data['next_comm'] = next_comm.date.split('.')[0]
-    comm_data['second_comm'] = second_comm.date.split('.')[0]
+    comm_data['next_comm'] = next_comm.date
+    comm_data['second_comm'] = second_comm.date
     comm_data['seconds_till_next_comm'] = round((next_comm - CXONOW).sec) #: astropy.time.core.TimeDelta when subtracted
     comm_data['seconds_till_second_comm'] = round((second_comm - CXONOW).sec)
     return comm_data
@@ -165,11 +168,52 @@ def read_fp_history_file():
         for line in data[-30:]:
             #: Start times, instrument, obsid
             _a = line.split()
-            rows.append({'start_cxotime': _a[0], 'instrument': _a[1]})
+            rows.append({'start_cxotime': CxoTime(_a[0]), 'instrument': _a[1]})
     for i in range(len(rows)-1):
         rows[i]['stop_cxotime'] = rows[i+1]['start_cxotime']
+        rows[i]['duration'] = (rows[i]['stop_cxotime'] - rows[i]['start_cxotime']).sec
 
     return Table(rows=rows[:-1])
+
+def find_acis_attenuated_time(fp_history_table, period_start, period_stop):
+    """
+    The selected table will contain time intervals for instrumentation use which are
+    - using ACIS-I or ACIS-S
+    - overlapping with the period_start and period_stop argument time period
+
+    In this overlap, we calculate the subinterval of period_start to first entry stop,
+    then last entry start to period_stop,
+    then add in durations of all periods from in-between entries.
+    """
+    instrument_sel = np.logical_or(fp_history_table['instrument']== 'ACIS-I',fp_history_table['instrument']== 'ACIS-S')
+    time_sel = np.logical_and(fp_history_table['stop_cxotime'] >= period_start, fp_history_table['start_cxotime'] <= period_stop)
+    full_sel = np.logical_and(instrument_sel, time_sel)
+
+    x = fp_history_table[full_sel]
+    if len(x) == 0:
+        attenuated_time = 0
+    elif len(x) == 1:
+        #
+        # --- We have two time intervals with intederminant overlap.
+        # --- Put all four in time order, then two middle time points
+        # --- will be the duration.
+        #
+        _b = sorted([period_start, period_stop, x[0]['start_cxotime'], x[0]['stop_cxotime']])
+        attenuated_time = (_b[2] - _b[1]).sec
+    else:
+        #
+        # --- period_start is indeterminately before or within first entry
+        # --- period_stop is indeterminately within or after last entry
+        #
+        _c = sorted([period_start, x[0]['start_cxotime'], x[0]['stop_cxotime']])
+        _d = sorted([period_stop, x[-1]['start_cxotime'], x[-1]['stop_cxotime']])
+        first_subinterval = (_c[2] - _c[1]).sec
+        second_subinterval = (_d[1] - _d[0]).sec
+        inner_duration = sum(x[1:-1]['duration'])
+        attenuated_time = first_subinterval + second_subinterval + inner_duration
+    
+    return attenuated_time         
+
 
 def json2table(jlink):
     """Extract JSON file and format into Astropy Table
