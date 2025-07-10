@@ -77,6 +77,9 @@ def read_crm_summary():
         crm_data['crm_fluence'] = float(data[11].split(":")[1].strip())
         crm_data['attenuated_crm_fluence'] = float(data[12].split(":")[1].strip())
         crm_data['crm_last_update'] = data[13].split(": ")[1].strip()
+    
+    crm_data['attenuated_flux_factor'] = crm_data['attenuated_crm_flux'] / crm_data['crm_flux']
+    crm_data['attenuated_fluence_factor'] = crm_data['attenuated_crm_fluence'] / crm_data['crm_fluence']
     return crm_data
 
 def compute_goes_fluence(cxo_orbit_start):
