@@ -5,7 +5,7 @@
 :Author: W. Aaron (william.aaron@cfa.harvard.edu)
 :Last Updated: Jul 07, 2025
 
-:TODO: Change customized file format for data sets in summary.
+:TODO: Change customized file format for data sets fetched to generate summary. Should be a commonly used standard.
 
 """
 import sys
@@ -29,7 +29,7 @@ ALERTS_DATA_DIR = "/data/mta4/Space_Weather/ALERTS/Data"
 CRM_DATA_FILE = "/data/mta4/Space_Weather/CRM3/Data/CRMsummary.dat"
 ACIS_ACE_FILE = "/proj/web-cxc/htdocs/acis/Fluence/current.dat"
 COMM_DATA_FILE = "/data/mta4/Space_Weather/Comm_data/Data/comm_data"
-ACIS_FILE = "/proj/sot/acis/FLU-MON/FPHIST-2001.dat"
+FP_HISTORY_FILE = "/proj/sot/acis/FLU-MON/FPHIST-2001.dat"
 CXONOW = CxoTime()
 
 #
@@ -47,6 +47,7 @@ def create_radiation_summary():
     goes_fluence_data = compute_goes_fluence(cxo_orbit_start)
     acis_ace_data = read_acis_ace_data()
     comm_data = read_comm_data()
+    fp_history_table = read_fp_history_file()
 
     next_rad = rad_zones.filter(start = CXONOW).table['start'][0].split('.')[0]
     time_data['next_rad_zone_entry'] = next_rad
@@ -153,6 +154,22 @@ def read_comm_data():
     comm_data['seconds_till_next_comm'] = round((next_comm - CXONOW).sec) #: astropy.time.core.TimeDelta when subtracted
     comm_data['seconds_till_second_comm'] = round((second_comm - CXONOW).sec)
     return comm_data
+
+def read_fp_history_file():
+    """
+    File columns are start time, instrument, obsid
+    """
+    rows = []
+    with open(FP_HISTORY_FILE) as f:
+        data = [line.strip() for line in f.readlines()]
+        for line in data[-30:]:
+            #: Start times, instrument, obsid
+            _a = line.split()
+            rows.append({'start_cxotime': _a[0], 'instrument': _a[1]})
+    for i in range(len(rows)-1):
+        rows[i]['stop_cxotime'] = rows[i+1]['start_cxotime']
+
+    return Table(rows=rows[:-1])
 
 def json2table(jlink):
     """Extract JSON file and format into Astropy Table
