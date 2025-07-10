@@ -24,8 +24,7 @@ import traceback
 #
 # --- Define Directory Pathing
 #
-ALERTS_DATA_DIR = "/data/mta4/Space_Weather/ALERTS/Data"
-
+ALERTS_WEB_DIR = "/data/mta4/www/RADIATION/Alerts"
 CRM_DATA_FILE = "/data/mta4/Space_Weather/CRM3/Data/CRMsummary.dat"
 ACIS_ACE_FILE = "/proj/web-cxc/htdocs/acis/Fluence/current.dat"
 COMM_DATA_FILE = "/data/mta4/Space_Weather/Comm_data/Data/comm_data"
@@ -49,14 +48,23 @@ def create_radiation_summary():
     comm_data = read_comm_data()
 
     next_rad = CxoTime(rad_zones.filter(start = CXONOW).table['start'][0])
-    time_data['next_rad_zone_entry'] = next_rad.date
+    time_data['next_rad_zone_entry'] = next_rad.date.split('.')[0]
     time_data['seconds_till_rad_zone'] = round((next_rad - CXONOW).sec) #: astropy.time.core.TimeDelta when subtracted
     fp_history_table = read_fp_history_file()
     
-    time_data['attenuated_rad_duration' : find_acis_attenuated_time(fp_history_table, CXONOW, next_rad)]
-    time_data['attenuated_next_comm_duration' : find_acis_attenuated_time(fp_history_table, CXONOW, CxoTime(comm_data['next_comm']))]
-    time_data['attenuated_second_comm_duration' : find_acis_attenuated_time(fp_history_table, CXONOW, CxoTime(comm_data['second_comm']))]
+    time_data['attenuated_rad_duration'] = find_acis_attenuated_time(fp_history_table, CXONOW, next_rad)
+    time_data['attenuated_next_comm_duration'] = find_acis_attenuated_time(fp_history_table, CXONOW, CxoTime(comm_data['next_comm']))
+    time_data['attenuated_second_comm_duration'] = find_acis_attenuated_time(fp_history_table, CXONOW, CxoTime(comm_data['second_comm']))
 
+    rad_summ = {}
+    rad_summ.update(crm_data)
+    rad_summ.update(goes_fluence_data)
+    rad_summ.update(acis_ace_data)
+    rad_summ.update(comm_data)
+    rad_summ.update(time_data)
+
+    with open(f'{ALERTS_WEB_DIR}/radiation_summary.json', 'w') as f:
+        json.dump(rad_summ, f, indent = 4)
 
 def read_crm_summary():
     """
@@ -155,8 +163,8 @@ def read_comm_data():
                 next_comm = CxoTime(float(data[i+1][5]) +1)
                 second_comm = CxoTime(float(data[i+2][5]) +1)
                 break
-    comm_data['next_comm'] = next_comm.date
-    comm_data['second_comm'] = second_comm.date
+    comm_data['next_comm'] = next_comm.date.split('.')[0]
+    comm_data['second_comm'] = second_comm.date.split('.')[0]
     comm_data['seconds_till_next_comm'] = round((next_comm - CXONOW).sec) #: astropy.time.core.TimeDelta when subtracted
     comm_data['seconds_till_second_comm'] = round((second_comm - CXONOW).sec)
     return comm_data
@@ -215,8 +223,7 @@ def find_acis_attenuated_time(fp_history_table, period_start, period_stop):
         inner_duration = sum(x[1:-1]['duration'])
         attenuated_time = first_subinterval + second_subinterval + inner_duration
     
-    return attenuated_time         
-
+    return round(attenuated_time)
 
 def json2table(jlink):
     """Extract JSON file and format into Astropy Table
@@ -288,10 +295,10 @@ if __name__ == "__main__":
         #
         # --- Path output to same location as unit tests
         #
-        ALERTS_DATA_DIR = f"{os.getcwd()}/test/_outTest"
+        ALERTS_WEB_DIR = f"{os.getcwd()}/test/_outTest"
         if args.path:
-            ALERTS_DATA_DIR = args.path
-        os.makedirs(ALERTS_DATA_DIR, exist_ok=True)
+            ALERTS_WEB_DIR = args.path
+        os.makedirs(ALERTS_WEB_DIR, exist_ok=True)
         try:
             create_radiation_summary()
         except json.decoder.JSONDecodeError:
