@@ -239,20 +239,21 @@ def calculate_projected_fluence(crm_data, goes_data, acis_ace_data, time_data):
     """
 
     projected_fluence_data = {}
-    for factor in (1,2,10):
-        projected_fluence_data[f"projected_crm_fluence_rad_{factor}"] = (factor * crm_data['attenuated_crm_flux'] * time_data['till_next_rad_zone']) + crm_data['attenuated_crm_fluence']
-        projected_fluence_data[f"projected_ace_fluence_rad_{factor}"] = (factor * acis_ace_data['attenuated_ace_flux'] * time_data['till_next_rad_zone']) + acis_ace_data['attenuated_ace_fluence']
-    
-    for k in ('next', 'second'):
-        projected_fluence_data[f"projected_crm_fluence_{k}_comm"] = crm_data['attenuated_crm_flux'] * time_data[f"till_{k}_comm"] + crm_data['attenuated_crm_fluence']
-        projected_fluence_data[f"projected_ace_fluence_{k}_comm"] = acis_ace_data['attenuated_ace_flux'] * time_data[f"till_{k}_comm"] + acis_ace_data['attenuated_ace_fluence']
-    
-    for channel in ('p4','p7', 'e2'):
-        _e = goes_data[f"attenuated_{channel}_flux"]
-        _f = goes_data[f"attenuated_{channel}_fluence"]
-        projected_fluence_data[f'projected_{channel}_fluence_rad'] = _e * time_data['till_next_rad_zone'] + _f
-        projected_fluence_data[f'projected_{channel}_fluence_next_comm'] = _e * time_data['till_next_comm'] + _f
-        projected_fluence_data[f'projected_{channel}_fluence_second_comm'] = _e * time_data['till_second_comm'] + _f
+    for keyword in ('', 'attenuated_'): #: Loop over regular and attenuated versions
+        for factor in (1,2,10):
+            projected_fluence_data[f"{keyword}projected_crm_fluence_rad_{factor}"] = (factor * crm_data[f'{keyword}crm_flux'] * time_data['till_next_rad_zone']) + crm_data[f'{keyword}crm_fluence']
+            projected_fluence_data[f"{keyword}projected_ace_fluence_rad_{factor}"] = (factor * acis_ace_data[f'{keyword}ace_flux'] * time_data['till_next_rad_zone']) + acis_ace_data[f'{keyword}ace_fluence']
+        
+        for k in ('next', 'second'):
+            projected_fluence_data[f"{keyword}projected_crm_fluence_{k}_comm"] = crm_data[f'{keyword}crm_flux'] * time_data[f"till_{k}_comm"] + crm_data[f'{keyword}crm_fluence']
+            projected_fluence_data[f"{keyword}projected_ace_fluence_{k}_comm"] = acis_ace_data[f'{keyword}ace_flux'] * time_data[f"till_{k}_comm"] + acis_ace_data[f'{keyword}ace_fluence']
+        
+        for channel in ('p4','p7', 'e2'):
+            _e = goes_data[f"{keyword}{channel}_flux"]
+            _f = goes_data[f"{keyword}{channel}_fluence"]
+            projected_fluence_data[f'{keyword}projected_{channel}_fluence_rad'] = _e * time_data['till_next_rad_zone'] + _f
+            projected_fluence_data[f'{keyword}projected_{channel}_fluence_next_comm'] = _e * time_data['till_next_comm'] + _f
+            projected_fluence_data[f'{keyword}projected_{channel}_fluence_second_comm'] = _e * time_data['till_second_comm'] + _f
 
     return projected_fluence_data
 
