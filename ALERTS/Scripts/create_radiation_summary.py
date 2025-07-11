@@ -167,10 +167,12 @@ def read_comm_data():
     with open(COMM_DATA_FILE) as f:
         data = [line.strip().split() for line in f.readlines() if line.strip() != '' and line[0] != "#"]
         for i in range(len(data)-1):
-            if float(data[i][5]) < CXONOW.secs and float(data[i+1][5]) > CXONOW.secs:
-                next_comm = CxoTime(float(data[i+1][5]) +1)
-                second_comm = CxoTime(float(data[i+2][5]) +1)
+            if float(data[i][5]) <= CXONOW.secs and float(data[i+1][5]) > CXONOW.secs:
+                recent_comm = CxoTime(float(data[i][4]) + 1)
+                next_comm = CxoTime(float(data[i+1][4]) +1)
+                second_comm = CxoTime(float(data[i+2][4]) +1)
                 break
+    time_data['recent_comm'] = recent_comm.date.split('.')[0]
     time_data['next_comm'] = next_comm.date.split('.')[0]
     time_data['second_comm'] = second_comm.date.split('.')[0]
     time_data['till_next_comm'] = round((next_comm - CXONOW).sec) #: astropy.time.core.TimeDelta when subtracted
