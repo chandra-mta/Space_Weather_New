@@ -24,6 +24,7 @@ import traceback
 #
 # --- Define Directory Pathing
 #
+ALERTS_DATA_DIR = "/data/mta4/Space_Weather/ALERTS/Data"
 ALERTS_WEB_DIR = "/data/mta4/www/RADIATION/Alerts"
 CRM_DATA_FILE = "/data/mta4/Space_Weather/CRM3/Data/CRMsummary.dat"
 ACIS_ACE_FILE = "/proj/web-cxc/htdocs/acis/Fluence/current.dat"
@@ -65,6 +66,8 @@ def create_radiation_summary():
     rad_summ.update(time_data)
     rad_summ.update(projected_fluence_data)
 
+    with open(f'{ALERTS_DATA_DIR}/radiation_summary.json', 'w') as f:
+        json.dump(rad_summ, f, indent = 4)
     with open(f'{ALERTS_WEB_DIR}/radiation_summary.json', 'w') as f:
         json.dump(rad_summ, f, indent = 4)
 
@@ -329,10 +332,11 @@ if __name__ == "__main__":
         #
         # --- Path output to same location as unit tests
         #
-        ALERTS_WEB_DIR = f"{os.getcwd()}/test/_outTest"
+        ALERTS_DATA_DIR = f"{os.getcwd()}/test/_outTest"
         if args.path:
-            ALERTS_WEB_DIR = args.path
-        os.makedirs(ALERTS_WEB_DIR, exist_ok=True)
+            ALERTS_DATA_DIR = args.path
+        os.makedirs(ALERTS_DATA_DIR, exist_ok=True)
+        ALERTS_WEB_DIR = ALERTS_DATA_DIR
         try:
             create_radiation_summary()
         except json.decoder.JSONDecodeError:
