@@ -50,7 +50,13 @@ def create_radiation_summary():
     acis_ace_data = read_acis_ace_data()
     time_data.update(read_comm_data())
 
-    next_rad = CxoTime(rad_zones.filter(start = CXONOW).table['start'][0])
+    rad_table = rad_zones.filter(start = CXONOW).table
+    if rad_table[0]['start'] < CXONOW:
+        time_data['in_rad_zone'] = True
+        next_rad = CxoTime(rad_table[1]['start'])
+    else:
+        time_data['in_rad_zone'] = False
+        next_rad = CxoTime(rad_table[0]['start'])
     time_data['next_rad_zone'] = next_rad.date.split('.')[0]
     time_data['till_next_rad_zone'] = round((next_rad - CXONOW).sec) #: astropy.time.core.TimeDelta when subtracted
     fp_history_table = read_fp_history_file()

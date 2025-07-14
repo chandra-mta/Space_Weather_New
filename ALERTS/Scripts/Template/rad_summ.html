@@ -33,7 +33,7 @@ See <a href="about_rad_summ.html">about rad_summ</a> for the definition and orig
     <th>Next comm:</th><td><span id="next_comm">--</span> (<span id="till_next_comm">--</span> hours)</td><!--default, float hours-->
 </tr>
 <tr>
-    <th>Next rad zone:</th><td><span id="next_rad_zone">--</span> (<span id="till_next_rad_zone">--</span> hours)</td><!--default, float hours-->
+    <th>Next rad zone:</th><td><span id="next_rad_zone">--</span> (<span id="till_next_rad_zone">--</span> hours) <span id="in_rad_zone"></span></td><!--default, float hours, boolean-->
 </tr>
 <tr>
     <th>Last updated:</th><td id="last_update">--</td> <!--default-->
@@ -252,6 +252,14 @@ The ACE P3 external fluence starts integrating above 10 kkm.
                     } else {
                         // Format floats into e-notation
                         data_element.innerHTML = (value).toExponential(3);
+                    }
+                } else if (key == 'in_rad_zone') {
+                    // Rad Zone Edge case
+                    console.log(value)
+                    if (value) {
+                        data_element.innerHTML = "(Currently in Rad Zone)";
+                    } else {
+                        data_element.innerHTML = "";
                     }
                 } else {
                     data_element.innerHTML = value;
