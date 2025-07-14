@@ -12,10 +12,12 @@ import sys
 import os
 from astropy.table import Table
 from datetime import datetime
+from time import sleep
 import numpy as np
 from cxotime import CxoTime
 from kadi.events import rad_zones
 import urllib.request
+import urllib.error
 import json
 import argparse
 import getpass
@@ -100,9 +102,7 @@ def compute_goes_fluence(cxo_orbit_start, crm_data):
     :param cxo_orbit_start: CxoTime object of the start of this current orbit as read from the CRM summary.
     :type cxo_orbit_start: CxoTime
     """
-
-    proton_table = json2table(PLINK)
-    electron_table = json2table(ELINK)
+    proton_table, electron_table = _fetch_for_goes()
     proton_table = reorient_particle_table(proton_table, gen_column = 'channel', column_list = ['P4', 'P7'])
     electron_table = reorient_particle_table(electron_table)
 
@@ -112,7 +112,7 @@ def compute_goes_fluence(cxo_orbit_start, crm_data):
     proton_table = proton_table[proton_table['cxotime'] >= cxo_orbit_start.secs]
     electron_table = electron_table[electron_table['cxotime'] >= cxo_orbit_start.secs]
 
-    #: Convert proton unit to MEV in line with Electron Unit
+    #: Convert proton unit to MeV in line with Electron Unit
     proton_table['P4'] = proton_table['P4']*1e3
     proton_table['P7'] = proton_table['P7']*1e3
 
@@ -262,6 +262,42 @@ def calculate_projected_fluence(crm_data, goes_data, acis_ace_data, time_data):
 
     return projected_fluence_data
 
+def rerun(func):
+    """
+    Function decorator which sleeps and reruns the provided function upon encountering a set of errors.
+    """
+    _freq = 3
+    _errors = (json.decoder.JSONDecodeError, urllib.error.URLError)
+    def wrapper_func(*args,**kwargs):
+        _last_exception = None
+        for i in range(_freq):
+            try:
+                return func(*args, **kwargs)
+            except _errors as e:
+                _last_exception = e
+                sleep(5)
+        _last_exception.add_note(f'Decorator ran function {_freq} times. Still encountered error.')
+        raise _last_exception
+    return wrapper_func
+
+def _fetch_for_goes():
+    """
+    Internal function for wrapping the fetch functions for GOES data from SWPC servers with separate rerun decorators
+    
+    :NOTE: Tailored for refetching data over internet if encountering error related to SWPC data fetch.
+    """
+    @rerun
+    def _get_proton():
+        return json2table(PLINK)
+    
+    @rerun
+    def _get_electron():
+        return json2table(ELINK)
+    
+    proton_table = _get_proton()
+    electron_table = _get_electron()
+    return proton_table, electron_table
+
 def json2table(jlink):
     """Extract JSON file and format into Astropy Table
 
@@ -275,7 +311,7 @@ def json2table(jlink):
         with open(jlink) as f:
             data = json.load(f)
     else:
-        with urllib.request.urlopen(jlink) as url:
+        with urllib.request.urlopen(jlink, timeout = 10) as url:
             data = json.loads(url.read().decode())
     data = Table(data)
     return data
