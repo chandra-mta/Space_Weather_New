@@ -901,7 +901,6 @@ def rerun(func):
                 return func(*args, **kwargs)
             except _errors as e:
                 _last_exception = e
-                print(e)
                 time.sleep(5)
         _last_exception.add_note(f'Decorator ran function {_freq} times. Still encountered error.')
         raise _last_exception
