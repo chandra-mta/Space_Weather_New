@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chandra Radiation Summary</title>
+<meta http-equiv="refresh" content="300"/>
+</head>
+<body style="width:95%;margin-left:10px; margin-right:10px; background-color:#FAEBD7;">
+
+<div style="float:right;">
+<a href="../../sot.html">Back to the SOT home page</a>
+<br />
+<a href="../index.html">Back to Radiation Main Page</a>
+</div>
+<h2>Chandra Radiation Environment Summary</h2>
+<p>
+See <a href="about_rad_summ.html">about rad_summ</a> for the definition and origin of the values below.
+</p>
+
+<!-- In displaying numeric values, floats are precision 1, scientific notations are precision 3-->
+<!-- All data values, tag identified with id attribute, contain comments to specify possible conversion of fetched value within the javascript-->
+
+<table border=0>
+<tr>
+    <th>Orbit start:</th><td><span id="orbit_start">--</span> (<span id="orbit_duration">--</span> ksec in this period)</td><!--default, float ks-->
+</tr>
+<tr>
+    <th>Current altitude/orbit leg:</th><td><span id="altitude">--</span> (km)</td><!--default-->
+</tr>
+<tr>
+    <th>Current configuration:</th><td id="instrument_config">--</td><!--default-->
+</tr>
+<tr>
+    <th>Next comm:</th><td><span id="next_comm">--</span> (<span id="till_next_comm">--</span> hours) <span id="in_comm"></span></td><!--default, float hours, boolean-->
+</tr>
+<tr>
+    <th>Next rad zone:</th><td><span id="next_rad_zone">--</span> (<span id="till_next_rad_zone">--</span> hours) <span id="in_rad_zone"></span></td><!--default, float hours, boolean-->
+</tr>
+<tr>
+    <th>Last updated:</th><td id="last_update">--</td> <!--default-->
+</tr>
+</table>
+<p>
+(all times on this page are UTC)
+</p>
+
+
+<table border=1>
+<tr>
+    <th>&#160</th><th colspan=6>Attenuated - projects fluences based on upcoming SI and grating configuration
+    <br>ACIS effective exposure times (ks)
+    &#160 &#160 Until next radzone:   <span id="attenuated_rad_duration">--</span><!--float ks-->
+    &#160 &#160 Until next comm:    <span id="attenuated_next_comm_duration">--</span><!--float ks-->
+    </th>
+</tr>
+<tr>
+    <th>&#160</th><th>Current Flux</th><th>Current fluence<br>(total so far in current orbit)</th>
+    <th>Projected fluence<br>until next rad zone</th>
+    <th>Projected fluence</th><th>&#160</th><th>Limits</th>
+
+    <tr><th>&#160</th><th>(p/cm^2-s-sr-MeV)</th><th>(p/cm^2-sr-MeV)</th>
+    <th>at current flux<br />(at 2X flux)<br/>*at 10X flux*</th>
+    <th>until next comm.</th><th>until second comm.</th><th>&#160</th>
+</tr>
+<tr>
+    <th>CRM</th>
+    <td id="attenuated_crm_flux">--</td><!--e-notation-->
+    <td id="attenuated_crm_fluence">--</td><!--e-notation-->
+    <td>
+        <span id="attenuated_projected_crm_fluence_rad_1">--</span><br><!--e-notation-->
+        (<span id="attenuated_projected_crm_fluence_rad_2">--</span>)<br><!--e-notation-->
+        *<span id="attenuated_projected_crm_fluence_rad_10">--</span>*<br><!--e-notation-->
+    </td>
+    <td id="attenuated_projected_crm_fluence_next_comm">--</td><!--e-notation-->
+    <td id="attenuated_projected_crm_fluence_second_comm">--</td><!--e-notation-->
+    <td>Yellow Limit:<br>1.0e+09 (fluence)</td>
+</tr>
+<tr>
+    <th>ACE P3</th>
+    <td id="attenuated_ace_flux">--</td><!--e-notation-->
+    <td id="attenuated_ace_fluence">--</td><!--e-notation-->
+    <td>
+        <span id="attenuated_projected_ace_fluence_rad_1">--</span><br><!--e-notation-->
+        (<span id="attenuated_projected_ace_fluence_rad_2">--</span>)<br><!--e-notation-->
+        *<span id="attenuated_projected_ace_fluence_rad_10">--</span>*<br><!--e-notation-->
+    </td>
+    <td id="attenuated_projected_ace_fluence_next_comm">--</td><!--e-notation-->
+    <td id="attenuated_projected_ace_fluence_second_comm">--</td><!--e-notation-->
+    <td>Alert Trigger:<br>1.0e+09 (fluence)</td>
+</tr>
+<tr>
+    <th>GOES-R (P4)</th>
+    <td id="attenuated_p4_flux">--</td><!--e-notation-->
+    <td id="attenuated_p4_fluence">--</td><!--e-notation-->
+    <td id="attenuated_projected_p4_fluence_rad">--</td><!--e-notation-->
+    <td id="attenuated_projected_p4_fluence_next_comm">--</td><!--e-notation-->
+    <td id="attenuated_projected_p4_fluence_second_comm">--</td><!--e-notation-->
+    <td>&#160</td>
+</tr>
+<tr>
+    <th>GOES-R (P7)</th>
+    <td id="attenuated_p7_flux">--</td><!--e-notation-->
+    <td id="attenuated_p7_fluence">--</td><!--e-notation-->
+    <td id="attenuated_projected_p7_fluence_rad">--</td><!--e-notation-->
+    <td id="attenuated_projected_p7_fluence_next_comm">--</td><!--e-notation-->
+    <td id="attenuated_projected_p7_fluence_second_comm">--</td><!--e-notation-->
+    <td>&#160</td>
+</tr>
+<tr>
+    <th>GOES-R (E>2.0MeV)</th>
+    <td id="attenuated_e2_flux">--</td><!--e-notation-->
+    <td id="attenuated_e2_fluence">--</td><!--e-notation-->
+    <td id="attenuated_projected_e2_fluence_rad">--</td><!--e-notation-->
+    <td id="attenuated_projected_e2_fluence_next_comm">--</td><!--e-notation-->
+    <td id="attenuated_projected_e2_fluence_second_comm">--</td><!--e-notation-->
+    <td>&#160</td>
+</tr>
+<tr>
+    <th colspan=7>&#160</th>
+</tr>
+<tr>
+    <th>&#160</th><th colspan=6>External - does not take the instrument configuration into account</th>
+</tr>
+<tr>
+    <th>&#160</th><th>Current Flux</th><th>Current fluence<br>(total so far in current orbit)</th>
+    <th>Projected fluence</th>
+    <th>Projected fluence</th>
+    <th>&#160</th>
+    <th>Limits</th>
+</tr>
+<tr>
+    <th>&#160</th>
+    <th>(p/cm^2-s-sr-MeV)</th>
+    <th>(p/cm^2-sr-MeV)</th>
+    <th>until next radzone<br>(total for current orbit)</th>
+    <th>until next comm.</th>
+    <th>until second comm.</th>
+    <th>&#160</th>
+</tr>
+<tr>
+    <th>CRM</th>
+    <td id="crm_flux">--</td><!--e-notation-->
+    <td id="crm_fluence">--</td><!--e-notation-->
+    <td>
+        <span id="projected_crm_fluence_rad_1">--</span><br><!--e-notation-->
+        (<span id="projected_crm_fluence_rad_2">--</span>)<br><!--e-notation-->
+        *<span id="projected_crm_fluence_rad_10">--</span>*<br><!--e-notation-->
+    </td>
+    <td id="projected_crm_fluence_next_comm">--</td><!--e-notation-->
+    <td id="projected_crm_fluence_second_comm">--</td><!--e-notation-->
+    <td>&#160</td>
+</tr>
+<tr>
+    <th>ACE P3</th>
+    <td id="ace_flux">--</td><!--e-notation-->
+    <td id="ace_fluence">--</td><!--e-notation-->
+    <td>
+        <span id="projected_ace_fluence_rad_1">--</span><br><!--e-notation-->
+        (<span id="projected_ace_fluence_rad_2">--</span>)<br><!--e-notation-->
+        *<span id="projected_ace_fluence_rad_10">--</span>*<br><!--e-notation-->
+    </td>
+    <td id="projected_ace_fluence_next_comm">--</td><!--e-notation-->
+    <td id="projected_ace_fluence_second_comm">--</td><!--e-notation-->
+    <td>3.6e8 (2 hr fluence, red)</td>
+</tr>
+<tr>
+    <th>GOES-R (P4)</th>
+    <td id="p4_flux">--</td><!--e-notation-->
+    <td id="p4_fluence">--</td><!--e-notation-->
+    <td id="projected_p4_fluence_rad">--</td><!--e-notation-->
+    <td id="projected_p4_fluence_next_comm">--</td><!--e-notation-->
+    <td id="projected_p4_fluence_second_comm">--</td><!--e-notation-->
+    <td>30.0/90.9 (flux, yellow/red)</td>
+</tr>
+<tr>
+    <th>GOES-R (P7)</th>
+    <td id="p7_flux">--</td><!--e-notation-->
+    <td id="p7_fluence">--</td><!--e-notation-->
+    <td id="projected_p7_fluence_rad">--</td><!--e-notation-->
+    <td id="projected_p7_fluence_next_comm">--</td><!--e-notation-->
+    <td id="projected_p7_fluence_second_comm">--</td><!--e-notation-->
+    <td>0.25/0.70 (flux, yellow/red)</td>
+</tr>
+<tr>
+    <th>GOES-R (E>2.0MeV)</th>
+    <td id="e2_flux">--</td><!--e-notation-->
+    <td id="e2_fluence">--</td><!--e-notation-->
+    <td id="projected_e2_fluence_rad">--</td><!--e-notation-->
+    <td id="projected_e2_fluence_next_comm">--</td><!--e-notation-->
+    <td id="projected_e2_fluence_second_comm">--</td><!--e-notation-->
+    <td>&#160</td>
+</tr>
+</table>
+<br>The current fluence is calculated from the beginning on the current orbit. 
+The ACE P3 external fluence starts integrating above 10 kkm.
+
+<br>* EPHIN "fluxes" are raw counts as of the last support [<span id="recent_comm">--</span>], not averaged.
+<br><br>
+<div style="text-align:center;">
+<h4>Attenuated CRM Proton Fluence</h4>
+    <img src="../Orbit/Plots/crmplatt.png" style="width:60%;"> 
+    <p>
+     <span style='color:lime;'><b>Green lines</b></span> indicates fluence estimates 
+     based on the current KP value.
+    </p>
+
+</div>
+<div style="padding-bottom:30px;"></div>
+
+<script>
+    
+    // Since we are working with setInterval to periodically run an asynchronous fetch of data, we work with Javascript Promises and the async and await keywords.
+    const radsummURL = "radiation_summary.json";
+    const refreshInterval = 300 * 1000;
+
+    const ks_keys = ['orbit_duration',
+        'thing',
+        'attenuated_rad_duration',
+        'attenuated_next_comm_duration',
+    ];
+    const hour_keys = ['till_next_comm',
+        'till_next_rad_zone',
+    ];
+    // Every other fetched key, with a matching id uses e-notation
+
+    async function updateData() {
+        return fetch(radsummURL, {cache: 'no-cache'}) // Fetch needs to have 'no-cache' so that the browser actually fetches a new copy of the summary data set.
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => updateHTML(data))
+            .catch(error => console.error(`Failed to fetch data: ${error}`));
+    }
+
+    function updateHTML(data) {
+        for (let key in data) {
+            // Check if this key is included in the document
+            const data_element = document.getElementById(key);
+            if (data_element != null) {
+                // Present in document, check data value
+                // Format Edge-case first, otherwise e-notation if number
+                const value = data[key];
+                if (typeof(value) == "number") {
+                    if (ks_keys.includes(key)) {
+                        // Format into kilo-seconds
+                        data_element.innerHTML = (value / 1000).toFixed(1);
+                    } else if (hour_keys.includes(key)) {
+                        // Format into hours
+                        data_element.innerHTML = (value / 3600).toFixed(1);
+                    } else {
+                        // Format floats into e-notation
+                        data_element.innerHTML = (value).toExponential(3);
+                    }
+                } else if (key == 'in_rad_zone') {
+                    // Rad Zone Edge case
+                    if (value) {
+                        data_element.innerHTML = "(Currently in Rad Zone)";
+                    } else {
+                        data_element.innerHTML = "";
+                    }
+                } else if (key == 'in_comm') {
+                    // Comm Edge case
+                    if (value) {
+                        data_element.innerHTML = "(Currently in Comm)";
+                    } else {
+                        data_element.innerHTML = "";
+                    }
+                } else {
+                    data_element.innerHTML = value;
+                }
+            }
+        }
+    }
+
+    updateData();
+    setInterval(updateData, refreshInterval);
+
+    // so the function is running in terms of reading the json file and updating the html upon first run. but in subsuquent intervals it's not editing the display.
+
+</script>
+
+</body>
+</html>
+
