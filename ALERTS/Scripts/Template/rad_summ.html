@@ -30,7 +30,7 @@ See <a href="about_rad_summ.html">about rad_summ</a> for the definition and orig
     <th>Current configuration:</th><td id="instrument_config">--</td><!--default-->
 </tr>
 <tr>
-    <th>Next comm:</th><td><span id="next_comm">--</span> (<span id="till_next_comm">--</span> hours)</td><!--default, float hours-->
+    <th>Next comm:</th><td><span id="next_comm">--</span> (<span id="till_next_comm">--</span> hours) <span id="in_comm"></span></td><!--default, float hours, boolean-->
 </tr>
 <tr>
     <th>Next rad zone:</th><td><span id="next_rad_zone">--</span> (<span id="till_next_rad_zone">--</span> hours) <span id="in_rad_zone"></span></td><!--default, float hours, boolean-->
@@ -255,9 +255,15 @@ The ACE P3 external fluence starts integrating above 10 kkm.
                     }
                 } else if (key == 'in_rad_zone') {
                     // Rad Zone Edge case
-                    console.log(value)
                     if (value) {
                         data_element.innerHTML = "(Currently in Rad Zone)";
+                    } else {
+                        data_element.innerHTML = "";
+                    }
+                } else if (key == 'in_comm') {
+                    // Comm Edge case
+                    if (value) {
+                        data_element.innerHTML = "(Currently in Comm)";
                     } else {
                         data_element.innerHTML = "";
                     }
