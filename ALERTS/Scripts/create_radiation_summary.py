@@ -51,17 +51,22 @@ def create_radiation_summary():
     time_data.update(read_comm_data())
 
     rad_table = rad_zones.filter(start = CXONOW).table
+    #: parse the radiation table to find start, and stop periods of the next time in-between radiation zones.
     if rad_table[0]['start'] < CXONOW:
+        #: Currently in the rad zone
         time_data['in_rad_zone'] = True
-        next_rad = CxoTime(rad_table[1]['start'])
+        leave_rad = CxoTime(rad_table[0]['stop'])
+        enter_rad = CxoTime(rad_table[1]['start'])
     else:
+        #: If we are currently in-between rad zones, then use current time for the start of this in-between period
         time_data['in_rad_zone'] = False
-        next_rad = CxoTime(rad_table[0]['start'])
-    time_data['next_rad_zone'] = next_rad.date.split('.')[0]
-    time_data['till_next_rad_zone'] = round((next_rad - CXONOW).sec) #: astropy.time.core.TimeDelta when subtracted
+        leave_rad = CXONOW
+        enter_rad = CxoTime(rad_table[0]['start'])
+    time_data['next_rad_zone'] = enter_rad.date.split('.')[0]
+    time_data['till_next_rad_zone'] = round((enter_rad - leave_rad).sec) #: astropy.time.core.TimeDelta when subtracted
     fp_history_table = read_fp_history_file()
     
-    time_data['attenuated_rad_duration'] = find_acis_attenuated_time(fp_history_table, CXONOW, next_rad)
+    time_data['attenuated_rad_duration'] = find_acis_attenuated_time(fp_history_table, leave_rad, enter_rad)
     time_data['attenuated_next_comm_duration'] = find_acis_attenuated_time(fp_history_table, CXONOW, CxoTime(time_data['next_comm']))
     time_data['attenuated_second_comm_duration'] = find_acis_attenuated_time(fp_history_table, CXONOW, CxoTime(time_data['second_comm']))
 
