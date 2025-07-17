@@ -110,17 +110,18 @@ def extract_goes_data(dlink, energy_list):
     :type dlink: str
     :param energy_list: A list of energy designation
     :type energy_list: list
-    :return: _description_
-    :rtype: _type_
+    :return: a list of lists, the first tier of lists consist of each energy band, and the second tier of lists mark time points and corresponding fluxes
+    :rtype: list(list)
     """
-    """
-    
-    input: dlink        --- json web address
-            energy_list --- a list of energy designation
-    output: <data_dir>/<out file>
-    """
-    with urllib.request.urlopen(dlink) as url:
-        data = json.loads(url.read().decode())  #: Read json file from the web
+    @rerun
+    def _goes_swpc_fetch():
+        """
+        Internal function for wrapping the internet data fetch in a rerun decorator in case of download errors.
+        """
+        with urllib.request.urlopen(dlink, timeout=10) as url:
+            data = json.loads(url.read().decode())  #: Read json file from the web
+        return data
+    data = _goes_swpc_fetch()
     #
     # --- go through all energy ranges
     #
@@ -212,6 +213,23 @@ def compute_hrc(data):
 
     return hrc
 
+def rerun(func):
+    """
+    Function decorator which sleeps and reruns the provided function upon encountering a set of errors.
+    """
+    _freq = 3
+    _errors = (json.decoder.JSONDecodeError, urllib.error.URLError)
+    def wrapper_func(*args,**kwargs):
+        _last_exception = None
+        for i in range(_freq):
+            try:
+                return func(*args, **kwargs)
+            except _errors as e:
+                _last_exception = e
+                time.sleep(5)
+        _last_exception.add_note(f'Decorator ran function {_freq} times. Still encountered error.')
+        raise _last_exception
+    return wrapper_func
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -1,15 +1,12 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**update_ace_data_files.py**: update ace related data files
 
-#####################################################################################
-#                                                                                   #
-#           update_ace_data_files.py: update ace related data files                 #
-#                                                                                   #
-#               author: t. isobe (tisobe@cfa.harvard.edu)                           #
-#                                                                                   #
-#               last updae: Mar 16, 2021                                            #
-#                                                                                   #
-#####################################################################################
+:Author: t. isobe  (tisobe@cfa.harvard.edu)
+:Maintainer: w. aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Jul 15, 2025
 
+"""
 import os
 import sys
 import re
@@ -19,6 +16,7 @@ import Chandra.Time
 import copy 
 import subprocess
 import urllib.request
+import urllib.error
 import argparse
 #
 #--- Define Directory Pathing
@@ -135,10 +133,16 @@ def read_current_ace_data():
     """
 #
 #--- read the current data file
-#
-    with urllib.request.urlopen(NOAA_LINK) as url:
-        filestring = url.read().decode()
-        data = [line.strip() for line in filestring.split("\n") if line != '']
+    @rerun
+    def _ace_swpc_fetch():
+        """
+        Apply rerun decorator for data fetch over internet.
+        """
+        with urllib.request.urlopen(NOAA_LINK, timeout = 10) as url:
+            filestring = url.read().decode()
+            data = [line.strip() for line in filestring.split("\n") if line != '']
+        return data
+    data = _ace_swpc_fetch()
 #
 #--- [atime, jtime, echk, ech1, ech2, pchk, pch1, pch2, pch3, pch4, pch5, anis, fluen, head]
 #
@@ -883,6 +887,24 @@ def update_kp_data_file():
 
     with open(ofile, 'w') as fo:
         fo.write(line)
+
+def rerun(func):
+    """
+    Function decorator which sleeps and reruns the provided function upon encountering a set of errors.
+    """
+    _freq = 3
+    _errors = (urllib.error.URLError)
+    def wrapper_func(*args,**kwargs):
+        _last_exception = None
+        for i in range(_freq):
+            try:
+                return func(*args, **kwargs)
+            except _errors as e:
+                _last_exception = e
+                time.sleep(5)
+        _last_exception.add_note(f'Decorator ran function {_freq} times. Still encountered error.')
+        raise _last_exception
+    return wrapper_func
 
 #-----------------------------------------------------------------------------
 

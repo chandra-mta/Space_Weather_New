@@ -9,6 +9,7 @@
 import sys
 import os
 import json
+from time import sleep
 import urllib.request
 from astropy.table import Table
 from datetime import datetime
@@ -170,6 +171,25 @@ def plot_goes_data(dlink=DLINK, clink=CLINK, choice=["diff", "intg"]):
         intg_data_dict["limits"] = {"y_min": 1e-2, "y_max": 1e4}
         plot_data(intg_data_dict)
 
+def rerun(func):
+    """
+    Function decorator which sleeps and reruns the provided function upon encountering a set of errors.
+    """
+    _freq = 3
+    _errors = (json.decoder.JSONDecodeError, urllib.error.URLError)
+    def wrapper_func(*args,**kwargs):
+        _last_exception = None
+        for i in range(_freq):
+            try:
+                return func(*args, **kwargs)
+            except _errors as e:
+                _last_exception = e
+                sleep(5)
+        _last_exception.add_note(f'Decorator ran function {_freq} times. Still encountered error.')
+        raise _last_exception
+    return wrapper_func
+
+@rerun
 def json2table(jlink):
     """Extract JSON file and format into Astropy Table
 
@@ -183,7 +203,7 @@ def json2table(jlink):
         with open(jlink) as f:
             data = json.load(f)
     else:
-        with urllib.request.urlopen(jlink) as url:
+        with urllib.request.urlopen(jlink, timeout = 10) as url:
             data = json.loads(url.read().decode())
     data = Table(data)
     return data
