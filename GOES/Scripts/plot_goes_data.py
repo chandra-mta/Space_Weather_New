@@ -203,7 +203,7 @@ def json2table(jlink):
         with open(jlink) as f:
             data = json.load(f)
     else:
-        with urllib.request.urlopen(jlink) as url:
+        with urllib.request.urlopen(jlink, timeout = 10) as url:
             data = json.loads(url.read().decode())
     data = Table(data)
     return data
