@@ -9,6 +9,7 @@
 import os
 import signal
 from datetime import datetime, timedelta
+from time import sleep
 import urllib.request
 import json
 import numpy as np
@@ -403,6 +404,25 @@ def make_xray_table(xlink, eventlink):
         table += "</table>"
     return table
 
+def rerun(func):
+    """
+    Function decorator which sleeps and reruns the provided function upon encountering a set of errors.
+    """
+    _freq = 3
+    _errors = (json.decoder.JSONDecodeError, urllib.error.URLError)
+    def wrapper_func(*args,**kwargs):
+        _last_exception = None
+        for i in range(_freq):
+            try:
+                return func(*args, **kwargs)
+            except _errors as e:
+                _last_exception = e
+                sleep(5)
+        _last_exception.add_note(f'Decorator ran function {_freq} times. Still encountered error.')
+        raise _last_exception
+    return wrapper_func
+
+@rerun
 def _read_json(link):
     """Generalized json file reader
 
@@ -413,7 +433,7 @@ def _read_json(link):
         with open(link) as f:
             data = json.load(f)
     else:
-        with urllib.request.urlopen(link) as url:
+        with urllib.request.urlopen(link, timemout = 10) as url:
             data = json.loads(url.read().decode())
     return data
 
