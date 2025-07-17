@@ -433,7 +433,7 @@ def _read_json(link):
         with open(link) as f:
             data = json.load(f)
     else:
-        with urllib.request.urlopen(link, timemout = 10) as url:
+        with urllib.request.urlopen(link, timeout = 10) as url:
             data = json.loads(url.read().decode())
     return data
 
