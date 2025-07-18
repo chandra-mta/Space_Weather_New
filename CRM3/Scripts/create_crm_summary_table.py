@@ -1,25 +1,16 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**create_crm_summary_table.py**: update the CRMsummary.dat data summary table
 
-#############################################################################################
-#                                                                                           #
-#       create_crm_summary_table.py: update CRMsummary.dat data summary table               #
-#                                                                                           #
-#               author: t. isobe (tiosbe@cfa.harvard.edu)                                   #
-#                                                                                           #
-#               last update: Oct 07, 2021                                                   #
-#                                                                                           #
-#############################################################################################
+:Author: w. aaron (William.aaron@cfa.harvard.edu)
+:Last Updated: Jul 18, 2025
 
+"""
 import os
 import sys
 import re
-import string
-import math
 import time
-import datetime
 import Chandra.Time
-import random
-import numpy
 
 path = '/data/mta4/Space_Weather/house_keeping/dir_list'
 with open(path, 'r') as f:
@@ -33,34 +24,17 @@ for ent in data:
 
 sys.path.append('/data/mta4/Script/Python3.10/MTA/')
 import mta_common_functions     as mcf
+
 #
-#--- set a temporary file name
+# --- Define Directory Pathing
 #
-rtail  = int(time.time()*random.random())
-zspace = '/tmp/zspace' + str(rtail)
-#
-#--- setting dir path
-#
-root_dir    = '/data/mta4/proj/rac/ops/'
-web_dir     = html_dir  + 'CRM/'
-crmdat_root = crm3_dir  + '/Data/CRM3_p.dat'
-sumdat      = crm3_dir  + '/Data/CRMsummary.dat'
-arcdat      = crm3_dir  + '/Data/CRMarchive.dat'
-ephdat      = ephem_dir + '/Data/gephem.dat'
-kpdat       = ace_dir   + '/Data/kp.dat'
-acedat      = ace_dir   + '/Data/fluace.dat'
-gp_dat      = goes_dir  + '/Data/Gp_pchan_5m.txt'
-#gs_dat      = goes_dir  + '/Data/Gs_pchan_5m.txt'
-gpe_dat     = goes_dir  + '/Data/Gp_part_5m.txt'
-#
-#--- data files
-#
-sim_file = "/proj/sot/acis/FLU-MON/FPHIST-2001.dat"
-otg_file = "/proj/sot/acis/FLU-MON/GRATHIST-2001.dat"
-#for writing out files in test directory
-if (os.getenv('TEST') == 'TEST'):
-    os.system('mkdir -p TestOut')
-    test_out = os.getcwd() + '/TestOut'
+CRM_WEB_DIR = "/data/mta4/www/RADIATION/CRM"
+CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
+EPHEM_DATA_DIR = "/data/mta4/Space_Weather/EPHEM/Data"
+ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
+GOES_DATA_DIR = "/data/mta4/Space_Weather/GOES/Data"
+ACIS_FLUENCE_DATA_DIR = "/proj/sot/acis/FLU-MON"
+
 #
 #--- other settings
 #
@@ -75,7 +49,7 @@ crm_n_list = ['00', '03', '07', '10', '13', '17', '20', '23', '27','30', '33', '
               '80', '83', '87', '90']
 
 gp_p4_c_factor = 3.4            #---- factor to correct p2 to p4gm 
-gp_p7_c_factor = 12.0           #---- facotr to correct p5 to p41gm
+gp_p7_c_factor = 12.0           #---- factor to correct p5 to p41gm
 #
 #--- satellite location regarded to the solar wind environment
 #
@@ -100,9 +74,9 @@ def create_crm_summary_table():
 #
 #--- read all needed data
 #
-    [gp_p4, gp_p7]  = read_goes_p_data(gp_dat)
+    [gp_p4, gp_p7]  = read_goes_p_data(f"{GOES_DATA_DIR}/Gp_pchan_5m.txt")
    #[gs_p2, gs_p5]  = read_goes_p_data(gs_dat)
-    gp_e2           = read_goes_e_data(gpe_dat)
+    gp_e2           = read_goes_e_data(f"{GOES_DATA_DIR}/Gp_part_5m.txt")
     [alt, leg]      = read_ephem_data()
     [kp, kpi]       = read_kp_data() 
     ace             = read_ace_data()
@@ -124,12 +98,7 @@ def create_crm_summary_table():
 #
     if leg == 'A' and summary[-6] == 'D':
         oend = time.strftime("%Y:%j:%H:%M:%S", time.gmtime())
-        outfile = arcdat
-        #for writing out files in test directory
-        if (os.getenv('TEST') == 'TEST'):
-            outfile = test_out + "/" + os.path.basename(arcdat)
-            os.system(f"touch {outfile}")
-        with open(outfile, 'a') as fo:
+        with open(f"{CRM_DATA_DIR}/CRMarchive.dat", 'a') as fo:
             line = str(ostart) + '  ' +   oend   + '  ' + str(fluence) + '  ' + str(afluence) + '\n'
             fo.write(line)
             ostart = oend
@@ -165,32 +134,17 @@ def create_crm_summary_table():
     #line = line + 'and what used to be P5 is now P7 This message will dissappear\n'
     #line = line + 'in 01/31/2021'
 
-    outfile = sumdat
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        outfile = test_out + "/" + os.path.basename(sumdat)
-    with open(outfile, 'w') as fo:
+    with open(f"{CRM_DATA_DIR}/CRMsummary.dat", 'w') as fo:
         fo.write(line)
 #
 #--- back up the data files
 #
-    cmd = 'cp -f ' + sumdat + ' ' + web_dir + 'CRMsummary.dat'
-    os.system(cmd)
-    cmd = 'cp -f ' + arcdat + ' ' + web_dir + 'CRMarchive.dat'
-    os.system(cmd)
+    os.system(f"cp -f {CRM_DATA_DIR}/CRMsummary.dat {CRM_WEB_DIR}/CRMsummary.dat")
+    os.system(f"cp -f {CRM_DATA_DIR}/CRMarchive.dat {CRM_WEB_DIR}/CRMarchive.dat")
 #
 #--- update web page
 #
     update_crm_html()
-#
-#--- plot data (moved to plot_crm_flux_data.py Mar 05, 2020)
-#
-#    cmd = '/usr/local/bin/idl  ' + crm3_dir + '/Scripts/CRM_plots.idl > /dev/null 2>&1'
-#    os.system(cmd)
-
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
 
 def check_val(val):
     try:
@@ -259,11 +213,11 @@ def read_goes_e_data(ifile):
 def read_ephem_data():
     """
     read the current ephem data
-    input:  none but read from <ephdata>
+    input:  none but read from <ephem_data_dir>gephem.dat
     output: alt --- altitude
             leg --- A (acending) or D (decending)
     """
-    data = mcf.read_data_file(ephdat)
+    data = mcf.read_data_file(f"{EPHEM_DATA_DIR}/gephem.dat")
     alt  = []
     leg  = []
     for ent in data:
@@ -280,22 +234,22 @@ def read_ephem_data():
 def read_kp_data():
     """
     read the current kp value
-    input:  none, but read from <kpdat>
+    input:  none, but read from <ace_data_dir>/kp.dat
     ouput:  kp  --- kp value
             kpi --- indicator of wihc CRM file to be used
     """
     kp     = -1.0
     kpi    = '00'
-    kpgood = kpdat + '.good'
+    kpfile = f"{ACE_DATA_DIR}/kp.dat"
+    kpgood = f"{ACE_DATA_DIR}/kp.dat.good"
     try:
-        data = mcf.read_data_file(kpdat)
+        data = mcf.read_data_file(kpfile)
         atemp = re.split('\s+', data[-1])
         kp    = float(atemp[-2])
 #
 #--- if the data is good, copy it to kp.dat.good for future use
 #
-        cmd   = 'cp -f ' +  kpdat + ' ' + kpgood
-        os.system(cmd)
+        os.system(f"cp -f {kpfile} {kpgood}")
     except:
 #
 #--- the data is bad. use the last good data
@@ -316,13 +270,14 @@ def read_kp_data():
 def read_ace_data():
     """
     read current ace value
-    input:  none, but read from <acedata>
+    input:  none, but read from <ace_data_dir>/fluace.dat
     output: ace --- ace value
     """
     ace     = 0
-    acegood = acedat + '.good'
+    acefile = f"{ACE_DATA_DIR}/fluace.dat"
+    acegood = f"{ACE_DATA_DIR}/fluace.dat.good"
     try:
-        data = mcf.read_data_file(acedat)
+        data = mcf.read_data_file(acefile)
         atemp = re.split('\s+', data[-3])
         ace_n = float(atemp[11])
         if ace_n != ace:
@@ -330,8 +285,7 @@ def read_ace_data():
 #
 #--- if the data is good, copy it to kp.dat.good for future use
 #
-            cmd   = 'cp -f ' + acedat + ' ' + acegood
-            os.system(cmd)
+            os.system(f"cp -f {acefile} {acegood}")
         else:
             data = mcf.read_data_file(acegood)
             atemp = re.split('\s+', data[-3])
@@ -359,7 +313,7 @@ def read_crm_fluence(kpi, ace):
     read the last CRMsummary data and compute flux
     input:  kpi --- crm file indicator
             ace --- ace vluae
-            it also reads  data from <sumdat>= CRMsummary.dat
+            it also reads  data from CRMsummary.dat
     output: flux
             summary --- a list of values of:
                 Currently scheduled FPSI, OTG
@@ -379,7 +333,7 @@ def read_crm_fluence(kpi, ace):
                 Attenuated Proton Orbital Fluence (p/cm^2-sr-MeV)
     """
 
-    data    = mcf.read_data_file(sumdat)
+    data    = mcf.read_data_file(f"{CRM_DATA_DIR}/CRMsummary.dat")
     summary = []
     for ent in data:
         mc = re.search(':', ent)
@@ -391,13 +345,13 @@ def read_crm_fluence(kpi, ace):
 
         atemp = re.split('\s+', ent)
         try:
-            val = flat(atemp[-1])
+            val = float(atemp[-1])
         except:
             val = atemp[-1].strip()
 
         summary.append(val)
 
-    ifile = crmdat_root + kpi
+    ifile = f"{CRM_DATA_DIR}/CRM3_p.dat{kpi}"
     data  = mcf.read_data_file(ifile)
 
     chk = 0
@@ -436,12 +390,12 @@ def read_crm_fluence(kpi, ace):
 def read_sim():
     """
     find the current instrument
-    input: none but read from <sim_file>
+    input: none but read from <acis_fluence_data_dir>/FPHIST-2001.dat
     output: si
     """
     si   = 'NA'
 
-    data = mcf.read_data_file(sim_file)
+    data = mcf.read_data_file(f"{ACIS_FLUENCE_DATA_DIR}/FPHIST-2001.dat")
     for ent in data:
         atemp = re.split('\s+', ent)
         btemp = re.split('\.',  atemp[0])
@@ -462,11 +416,11 @@ def read_sim():
 def read_otg():
     """
     find which grating is used
-    input: nont but read from <otg_file>
+    input: none but read from <acis_fluence_data_dir>/GRATHIST-2001.dat
     output: otg --- HETG/LETG/NONE/BAD
     """
     convert_grathist_format()
-    data = mcf.read_data_file(otg_file)
+    data = mcf.read_data_file(f"{ACIS_FLUENCE_DATA_DIR}/GRATHIST-2001.dat")
     hetg = ''
     letg = ''
     for ent in data:
@@ -574,12 +528,11 @@ def update_crm_html():
 def convert_grathist_format():
     """
     convert GRATHIST format
-    input: none but read from: /proj/sot/acis/FLU-MON/GRATHIST-2001.dat
+    input: none but read from: <acis_fluence_data_dir>/GRATHIST-2001.dat
     output: <crm3_dir>/Data/grathist.dat
     """
 
-    ifile = '/proj/sot/acis/FLU-MON/GRATHIST-2001.dat'
-    data  = mcf.read_data_file(ifile)
+    data  = mcf.read_data_file(f"{ACIS_FLUENCE_DATA_DIR}/GRATHIST-2001.dat")
     line  = ''
     for ent in data:
         atemp = re.split('\s+', ent)
@@ -594,11 +547,7 @@ def convert_grathist_format():
             line = line + '0' + '  '
         line = line + atemp[3] + '\n'
 
-    ofile = crm3_dir + 'Data/grathist.dat'
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        ofile = test_out + "/grathist.dat"
-    with open(ofile, 'w') as fo:
+    with open(f"{CRM_DATA_DIR}/grathist.dat", 'w') as fo:
         fo.write(line)
 
 #-------------------------------------------------------------------------------
