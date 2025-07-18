@@ -7,23 +7,9 @@
 
 """
 import os
-import sys
 import re
 import time
 import Chandra.Time
-
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
-with open(path, 'r') as f:
-    data = [line.strip() for line in f.readlines()]
-
-for ent in data:
-    atemp = re.split(':', ent)
-    var   = atemp[1].strip()
-    line  = atemp[0].strip()
-    exec("%s = %s" %(var, line))
-
-sys.path.append('/data/mta4/Script/Python3.10/MTA/')
-import mta_common_functions     as mcf
 
 #
 # --- Define Directory Pathing
@@ -166,7 +152,8 @@ def read_goes_p_data(ifile):
             pg_p7   --- p7 flux
                 note: p2 p5 definition may be different from a satellite to another
     """
-    data  = mcf.read_data_file(ifile)
+    with open(ifile) as f:
+        data = [line.strip() for line in f.readlines()]
     gp_p4 = ''
     gp_p7 = ''
     if len(data) > 0:
@@ -192,7 +179,8 @@ def read_goes_e_data(ifile):
     """
 
     gp_e2 = ''
-    data  = mcf.read_data_file(ifile)
+    with open(ifile) as f:
+        data = [line.strip() for line in f.readlines()]
     for ent in data:
         if ent[0] == '#':
             continue
@@ -217,7 +205,8 @@ def read_ephem_data():
     output: alt --- altitude
             leg --- A (acending) or D (decending)
     """
-    data = mcf.read_data_file(f"{EPHEM_DATA_DIR}/gephem.dat")
+    with open(f"{EPHEM_DATA_DIR}/gephem.dat") as f:
+        data = [line.strip() for line in f.readlines()]
     alt  = []
     leg  = []
     for ent in data:
@@ -243,7 +232,8 @@ def read_kp_data():
     kpfile = f"{ACE_DATA_DIR}/kp.dat"
     kpgood = f"{ACE_DATA_DIR}/kp.dat.good"
     try:
-        data = mcf.read_data_file(kpfile)
+        with open(kpfile) as f:
+            data = [line.strip() for line in f.readlines()]
         atemp = re.split('\s+', data[-1])
         kp    = float(atemp[-2])
 #
@@ -254,7 +244,8 @@ def read_kp_data():
 #
 #--- the data is bad. use the last good data
 #
-        data = mcf.read_data_file(kpgood)
+        with open(kpgood) as f:
+            data = [line.strip() for line in f.readlines()]
         atemp = re.split('\s+', data[-1])
         kp    = float(atemp[-2])
 
@@ -277,7 +268,8 @@ def read_ace_data():
     acefile = f"{ACE_DATA_DIR}/fluace.dat"
     acegood = f"{ACE_DATA_DIR}/fluace.dat.good"
     try:
-        data = mcf.read_data_file(acefile)
+        with open(acefile) as f:
+            data = [line.strip() for line in f.readlines()]
         atemp = re.split('\s+', data[-3])
         ace_n = float(atemp[11])
         if ace_n != ace:
@@ -287,7 +279,8 @@ def read_ace_data():
 #
             os.system(f"cp -f {acefile} {acegood}")
         else:
-            data = mcf.read_data_file(acegood)
+            with open(acegood) as f:
+                data = [line.strip() for line in f.readlines()]
             atemp = re.split('\s+', data[-3])
             ace_n = float(atemp[11])
             if ace_n != ace:
@@ -296,7 +289,8 @@ def read_ace_data():
 #
 #--- the data is bad. use the last good data
 #
-        data = mcf.read_data_file(acegood)
+        with open(acegood) as f:
+            data = [line.strip() for line in f.readlines()]
         atemp = re.split('\s+', data[-3])
         ace_n = float(atemp[11])
         if ace_n != ace:
@@ -332,8 +326,8 @@ def read_crm_fluence(kpi, ace):
                 External Proton Orbital Fluence (p/cm^2-sr-MeV)
                 Attenuated Proton Orbital Fluence (p/cm^2-sr-MeV)
     """
-
-    data    = mcf.read_data_file(f"{CRM_DATA_DIR}/CRMsummary.dat")
+    with open(f"{CRM_DATA_DIR}/CRMsummary.dat") as f:
+        data = [line.strip() for line in f.readlines()]
     summary = []
     for ent in data:
         mc = re.search(':', ent)
@@ -351,8 +345,8 @@ def read_crm_fluence(kpi, ace):
 
         summary.append(val)
 
-    ifile = f"{CRM_DATA_DIR}/CRM3_p.dat{kpi}"
-    data  = mcf.read_data_file(ifile)
+    with open(f"{CRM_DATA_DIR}/CRM3_p.dat{kpi}") as f:
+        data = [line.strip() for line in f.readlines()]
 
     chk = 0
     for ent in data:
@@ -394,8 +388,8 @@ def read_sim():
     output: si
     """
     si   = 'NA'
-
-    data = mcf.read_data_file(f"{ACIS_FLUENCE_DATA_DIR}/FPHIST-2001.dat")
+    with open(f"{ACIS_FLUENCE_DATA_DIR}/FPHIST-2001.dat") as f:
+        data = [line.strip() for line in f.readlines()]
     for ent in data:
         atemp = re.split('\s+', ent)
         btemp = re.split('\.',  atemp[0])
@@ -420,7 +414,8 @@ def read_otg():
     output: otg --- HETG/LETG/NONE/BAD
     """
     convert_grathist_format()
-    data = mcf.read_data_file(f"{ACIS_FLUENCE_DATA_DIR}/GRATHIST-2001.dat")
+    with open(f"{ACIS_FLUENCE_DATA_DIR}/GRATHIST-2001.dat") as f:
+        data = [line.strip() for line in f.readlines()]
     hetg = ''
     letg = ''
     for ent in data:
@@ -532,7 +527,8 @@ def convert_grathist_format():
     output: <crm3_dir>/Data/grathist.dat
     """
 
-    data  = mcf.read_data_file(f"{ACIS_FLUENCE_DATA_DIR}/GRATHIST-2001.dat")
+    with open(f"{ACIS_FLUENCE_DATA_DIR}/GRATHIST-2001.dat") as f:
+        data = [line.strip() for line in f.readlines()]
     line  = ''
     for ent in data:
         atemp = re.split('\s+', ent)
