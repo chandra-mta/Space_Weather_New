@@ -9,7 +9,7 @@
 import os
 import re
 import time
-import Chandra.Time
+from cxotime import CxoTime
 
 #
 # --- Define Directory Pathing
@@ -44,7 +44,7 @@ sol_region     = ['NULL', 'Solar_Wind', 'Magnetosheath', 'Magnetosphere']
 #--- current time  in <yyyy>:<ddd>:<hh>:<mm>:<ss> and in seconds from 1998.1.1
 #
 cl_time      = time.strftime('%Y:%j:%H:%M:%S', time.gmtime())
-current_time = Chandra.Time.DateTime(cl_time).secs
+CXONOW = CxoTime()
 
 #-------------------------------------------------------------------------------
 #-- create_crm_summary_table: update CRMsummary.dat data summary table        --
@@ -352,7 +352,7 @@ def read_crm_fluence(kpi, ace):
     for ent in data:
         atemp = re.split('\s+', ent)
         time  = float(atemp[0])
-        if time > current_time:
+        if time > CXONOW:
             comp = atemp
             chk =1
             break
@@ -365,7 +365,7 @@ def read_crm_fluence(kpi, ace):
     if chk == 0:
         crm = save
     else:
-        if abs(time - current_time) > abs(current_time - stime):
+        if abs(time - CXONOW) > abs(CXONOW - stime):
             crm = save
         else:
             crm = comp
@@ -394,10 +394,10 @@ def read_sim():
         atemp = re.split('\s+', ent)
         btemp = re.split('\.',  atemp[0])
         try:
-            ctime = Chandra.Time.DateTime(btemp[0]).secs
+            ctime = CxoTime(btemp[0])
         except:
             continue
-        if ctime > current_time:
+        if ctime > CXONOW:
             break
         si    = atemp[1]
 
@@ -422,10 +422,10 @@ def read_otg():
         cols  = re.split('\s+', ent)
         btemp = re.split('\.', cols[0])
         try:
-            ctime = Chandra.Time.DateTime(btemp[0]).secs
+            ctime = CxoTime(btemp[0])
         except:
             continue
-        if ctime > current_time:
+        if ctime > CXONOW:
             break
         else:
             hetg  = cols[1]
