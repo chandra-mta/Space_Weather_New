@@ -601,27 +601,6 @@ def convert_grathist_format():
     with open(ofile, 'w') as fo:
         fo.write(line)
 
-
-#-------------------------------------------------------------------------------
-#---THIS IS NOT USED....                                                     ---
-#-------------------------------------------------------------------------------
-
-def read_crm_data():
-    file1 = crmdat_root + '87'
-    file2 = crmdat_root + '90'
-    if os.path.isfile(file2):
-        if os.stat(file1).st_size == os.stat(file2).st_size:
-            new_crm = []
-            for ent in crm_n_list:
-                ifile = crmdat_root + ent
-                data  = mcf.read_data_file(ifile)
-                new_crm.append(data)
-
-        return new_crm
-    else:
-        return False
-
-
 #-------------------------------------------------------------------------------
 
 if __name__ == "__main__":
