@@ -490,33 +490,6 @@ def current_yday():
     return ydoy
 
 #-------------------------------------------------------------------------------
-#-- update_crm_html: update crm web site----------------------------------------
-#-------------------------------------------------------------------------------
-
-def update_crm_html():
-    """
-    update crm web site
-    input none but read from <data_dir>/CRMsummary.dat
-    output: <html_dir>/CRMsummary.html
-    """
-    ifile = crm3_dir + '/Data/CRMsummary.dat'
-    with  open(ifile, 'r') as f:
-        line = f.read()
-    
-    ifile = house_keeping + 'top_page_template'
-    with open(ifile, 'r') as f:
-        html = f.read()
-    
-    html = html.replace("#TEXT#", line)
-    
-    ofile = html_dir + 'index.html'
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        ofile = test_out + "/index.html"
-    with open(ofile, 'w') as fo: 
-        fo.write(html)
-
-#-------------------------------------------------------------------------------
 #-- convert_grathist_format: convert GRATHIST format                          --
 #-------------------------------------------------------------------------------
 
