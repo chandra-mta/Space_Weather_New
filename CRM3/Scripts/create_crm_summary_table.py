@@ -10,6 +10,7 @@ import os
 import re
 import time
 from cxotime import CxoTime
+from jinja2 import Environment, FileSystemLoader
 
 #
 # --- Define Directory Pathing
@@ -20,6 +21,11 @@ EPHEM_DATA_DIR = "/data/mta4/Space_Weather/EPHEM/Data"
 ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
 GOES_DATA_DIR = "/data/mta4/Space_Weather/GOES/Data"
 ACIS_FLUENCE_DATA_DIR = "/proj/sot/acis/FLU-MON"
+#
+# --- Template Globals
+#
+_JINJA_ENV = Environment(loader = FileSystemLoader('Template', followlinks = True))
+_JINJA_ENV.filters['e_format'] = lambda v, p: f"{v:.{p}e}" #: Custom filter to format to scientific notation
 
 #
 #--- other settings
@@ -127,10 +133,6 @@ def create_crm_summary_table():
 #
     os.system(f"cp -f {CRM_DATA_DIR}/CRMsummary.dat {CRM_WEB_DIR}/CRMsummary.dat")
     os.system(f"cp -f {CRM_DATA_DIR}/CRMarchive.dat {CRM_WEB_DIR}/CRMarchive.dat")
-#
-#--- update web page
-#
-    update_crm_html()
 
 def check_val(val):
     try:
