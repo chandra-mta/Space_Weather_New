@@ -82,6 +82,9 @@ def alert_ace():
     sel = np.logical_and(
         no_outlier["cxotime"].data >= two_hours_ago, no_outlier[_P3_CHANNEL] > 0
     )
+    sel = np.logical_and(
+        sel, no_outlier['proton_status'] == 0
+    )
     data_select = no_outlier[sel]
     if len(data_select) > 0:
         p130f = (
