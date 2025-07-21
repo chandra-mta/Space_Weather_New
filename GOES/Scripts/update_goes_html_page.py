@@ -341,7 +341,7 @@ def make_intg_table():
     bline = bline + '\t' + '-'*150 +'\n'
     bline = bline + aline
 
-    with open(f"{GOES_DATA_DIR}/Gp_part_5min.txt", 'w') as fo:
+    with open(f"{GOES_DATA_DIR}/Gp_part_5m.txt", 'w') as fo:
         fo.write(bline)
 
     return line
