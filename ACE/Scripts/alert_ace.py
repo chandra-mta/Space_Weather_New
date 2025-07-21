@@ -24,7 +24,7 @@ import signal
 #
 # --- Define Directory Pathing and Globals
 #
-ACE_URL = "https://cxc.cfa.harvard.edu/mta/RADIATION_new/ACE/ace.html"
+ACE_URL = "https://cxc.cfa.harvard.edu/mta/RADIATION/ACE/ace.html"
 ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
 CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
 COMM_DATA_DIR = "/data/mta4/Space_Weather/Comm_data/Data"

@@ -28,7 +28,7 @@ import matplotlib.font_manager as font_manager
 #--- Define Directory Pathing
 #
 ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
-ACE_PLOT_DIR = "/data/mta4/www/RADIATION_new/ACE/Plots"
+ACE_PLOT_DIR = "/data/mta4/www/RADIATION/ACE/Plots"
 
 #
 #--- other setting

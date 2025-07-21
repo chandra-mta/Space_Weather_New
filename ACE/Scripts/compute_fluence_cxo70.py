@@ -22,8 +22,8 @@ import argparse
 #
 EPHEM_DIR = "/data/mta4/Space_Weather/EPHEM"
 ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
-ACE_HTML_DIR = "/data/mta4/www/RADIATION_new/ACE"
-WEB_LINK = "cxc.cfa.harvard.edu/mta/RADIATION_new"
+ACE_HTML_DIR = "/data/mta4/www/RADIATION/ACE"
+WEB_LINK = "cxc.cfa.harvard.edu/mta/RADIATION"
 
 #
 #--- current time

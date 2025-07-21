@@ -66,7 +66,7 @@ output:	Admin Email
 
 Web Address
 ===========
-http://cxc.cfa.harvard.edu/mta/RADIATION_new/ACE/ace.html
+http://cxc.cfa.harvard.edu/mta/RADIATION/ACE/ace.html
 
 Cron Jobs
 =========
