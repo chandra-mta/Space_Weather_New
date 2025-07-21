@@ -83,7 +83,6 @@ def alert_ace():
         no_outlier["cxotime"].data >= two_hours_ago, no_outlier[_P3_CHANNEL] > 0
     )
     data_select = no_outlier[sel]
-    print(data_select)
     if len(data_select) > 0:
         p130f = (
             np.mean(data_select[_P3_CHANNEL].data) * 7200
