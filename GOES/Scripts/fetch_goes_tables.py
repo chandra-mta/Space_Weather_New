@@ -22,6 +22,20 @@ DIFF_PROTONS_LINK = 'https://services.swpc.noaa.gov/json/goes/primary/differenti
 INTG_PROTONS_LINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json'
 INTG_ELECTRONS_LINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-1-day.json'
 
+DIFF_COLS = ('time_tag', 'P1', 'P2A', 'P2B', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8A', 'P8B', 'P8C', 'P9', 'P10')
+INTG_COLS = ('time_tag', '>=1 MeV', '>=5 MeV', '>=10 MeV', '>=30 MeV', '>=50 MeV', '>=60 MeV', '>=100 MeV', '>=500 MeV')
+
+def fetch_goes_tables():
+
+    diff_proton_table = json2table(DIFF_PROTONS_LINK)
+    intg_proton_table = json2table(INTG_PROTONS_LINK)
+    intg_electron_table = json2table(INTG_ELECTRONS_LINK)
+
+    x = reorient_particle_table(diff_proton_table, gen_column='channel') #: Reoriented table does not order columns by energy by default
+    x = x[DIFF_COLS]
+    y = reorient_particle_table(intg_proton_table)
+    y = y[INTG_COLS]
+    z = reorient_particle_table(intg_electron_table)
 
 def rerun(func):
     """
