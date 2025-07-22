@@ -12,7 +12,7 @@ import os
 from email.mime.text import MIMEText
 from subprocess import Popen, PIPE
 from astropy.io import ascii
-from astropy.table import Column, unique
+from astropy.table import Column, unique, Table
 import argparse
 from cxotime import CxoTime
 from datetime import datetime, timedelta
@@ -24,7 +24,7 @@ import signal
 #
 # --- Define Directory Pathing and Globals
 #
-ACE_URL = "https://cxc.cfa.harvard.edu/mta/RADIATION_new/ACE/ace.html"
+ACE_URL = "https://cxc.cfa.harvard.edu/mta/RADIATION/ACE/ace.html"
 ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
 CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
 COMM_DATA_DIR = "/data/mta4/Space_Weather/Comm_data/Data"
@@ -54,7 +54,7 @@ _DEFAULT_VIOLATION = {
     "ace_p3": {"cxotime": 0, "val": 0}
 }  #: If cannot find file of previous violations, then assume issue involving them not being sent and rebuild file. Built for multiple alert types
 _TESTMAIL = False
-
+_BOGUS_P3 = 500000
 
 def alert_ace():
     """
@@ -72,11 +72,20 @@ def alert_ace():
         name="cxotime",
     )
     ace_table.add_column(cxotime_col)
-    two_hours_ago = ace_table["cxotime"][-1] - timedelta(hours=2)
+    no_outlier = Table(names = ace_table.colnames, dtype=ace_table.dtype)
+    no_outlier.add_row(ace_table[0])
+    for i in range(1,len(ace_table)):
+        if ace_table[i][_P3_CHANNEL] - no_outlier[i-1][_P3_CHANNEL] < _BOGUS_P3:
+            no_outlier.add_row(ace_table[i])
+    
+    two_hours_ago = no_outlier["cxotime"][-1] - timedelta(hours=2)
     sel = np.logical_and(
-        ace_table["cxotime"].data >= two_hours_ago, ace_table[_P3_CHANNEL] > 0
+        no_outlier["cxotime"].data >= two_hours_ago, no_outlier[_P3_CHANNEL] > 0
     )
-    data_select = ace_table[sel]
+    sel = np.logical_and(
+        sel, no_outlier['proton_status'] == 0
+    )
+    data_select = no_outlier[sel]
     if len(data_select) > 0:
         p130f = (
             np.mean(data_select[_P3_CHANNEL].data) * 7200
