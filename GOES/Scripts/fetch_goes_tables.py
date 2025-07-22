@@ -7,10 +7,9 @@
 
 """
 import os
-import sys
 import json
 import urllib
-from astropy.io import ascii
+import argparse
 from astropy.table import Table
 import numpy as np
 from time import sleep
@@ -26,16 +25,28 @@ DIFF_COLS = ('time_tag', 'P1', 'P2A', 'P2B', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8A'
 INTG_COLS = ('time_tag', '>=1 MeV', '>=5 MeV', '>=10 MeV', '>=30 MeV', '>=50 MeV', '>=60 MeV', '>=100 MeV', '>=500 MeV')
 
 def fetch_goes_tables():
+    """
+    Fetch the relevant GOES data from the SWPC then format into a time-domain table with additional metadata.
+    """
 
     diff_proton_table = json2table(DIFF_PROTONS_LINK)
     intg_proton_table = json2table(INTG_PROTONS_LINK)
     intg_electron_table = json2table(INTG_ELECTRONS_LINK)
-
-    x = reorient_particle_table(diff_proton_table, gen_column='channel') #: Reoriented table does not order columns by energy by default
+#
+# --- Reorient to energy or channel columns.
+#
+    x = reorient_particle_table(diff_proton_table, gen_column='channel') #: Reoriented table does not order columns by lowest energy by default
     x = x[DIFF_COLS]
     y = reorient_particle_table(intg_proton_table)
     y = y[INTG_COLS]
     z = reorient_particle_table(intg_electron_table)
+#
+# --- Include additional metadata as allowable in the ecsv format.
+#
+
+    x.write(f"{GOES_DATA_DIR}/goes_differential_protons.ecsv", overwrite = True, format='ascii.ecsv', delimiter=',')
+    y.write(f"{GOES_DATA_DIR}/goes_integral_protons.ecsv", overwrite = True, format='ascii.ecsv', delimiter=',')
+    z.write(f"{GOES_DATA_DIR}/goes_integral_electrons.ecsv", overwrite = True, format='ascii.ecsv', delimiter=',')
 
 def rerun(func):
     """
@@ -98,3 +109,21 @@ def reorient_particle_table(table, gen_column = 'energy', column_list = None):
         new_rows.append(row)
     
     return Table(rows = new_rows)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    parser.add_argument("-p", "--path", help = "Determine data output file path")
+    args = parser.parse_args()
+
+    if args.mode == 'test':
+        if args.path:
+            GOES_DATA_DIR = args.path
+        else:
+            GOES_DATA_DIR = f"{os.getcwd()}/test/_outTest"
+        os.makedirs(GOES_DATA_DIR, exist_ok=True)
+
+        fetch_goes_tables()
+
+    elif args.mode == "flight":
+        fetch_goes_tables()
