@@ -17,12 +17,16 @@ from time import sleep
 # --- Define Directory Pathing
 #
 GOES_DATA_DIR = '/data/mta4/Space_Weather/GOES/Data'
-DIFF_PROTONS_LINK = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-1-day.json'
-INTG_PROTONS_LINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json'
-INTG_ELECTRONS_LINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-1-day.json'
+DIFF_PROTONS_LINK = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json'
+INTG_PROTONS_LINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-protons-3-day.json'
+INTG_ELECTRONS_LINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-3-day.json'
 
-DIFF_COLS = ('time_tag', 'P1', 'P2A', 'P2B', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8A', 'P8B', 'P8C', 'P9', 'P10')
-INTG_COLS = ('time_tag', '>=1 MeV', '>=5 MeV', '>=10 MeV', '>=30 MeV', '>=50 MeV', '>=60 MeV', '>=100 MeV', '>=500 MeV')
+DIFF_COLS = ['P1', 'P2A', 'P2B', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8A', 'P8B', 'P8C', 'P9', 'P10']
+INTG_COLS = ['>=1 MeV', '>=5 MeV', '>=10 MeV', '>=30 MeV', '>=50 MeV', '>=60 MeV', '>=100 MeV', '>=500 MeV']
+
+DIFF_PROTON_UNIT = "protons/(cm^2*s*sr*keV)"
+INTG_PROTON_UNIT = "protons/(cm^2*s*sr)"
+INTG_ELECTRON_UNIT = "protons/(cm^2*s*sr)"
 
 def fetch_goes_tables():
     """
@@ -36,13 +40,25 @@ def fetch_goes_tables():
 # --- Reorient to energy or channel columns.
 #
     x = reorient_particle_table(diff_proton_table, gen_column='channel') #: Reoriented table does not order columns by lowest energy by default
-    x = x[DIFF_COLS]
+    x = x[['time_tag'] + DIFF_COLS]
     y = reorient_particle_table(intg_proton_table)
-    y = y[INTG_COLS]
+    y = y[['time_tag'] + INTG_COLS]
     z = reorient_particle_table(intg_electron_table)
 #
-# --- Include additional metadata as allowable in the ecsv format.
+# --- Include formatting and additional metadata as allowable in the ecsv format.
 #
+    for col in DIFF_COLS:
+        x[col].unit = DIFF_PROTON_UNIT
+        x[col].format = ".5e"
+    for col in INTG_COLS:
+        y[col].unit = INTG_PROTON_UNIT
+        y[col].format = ".5e"
+    z['>=2 MeV'].unit = INTG_ELECTRON_UNIT
+    z['>=2 MeV'].format = ".5e"
+
+    x.meta['source'] = DIFF_PROTONS_LINK
+    y.meta['source'] = INTG_PROTONS_LINK
+    z.meta['source'] = INTG_ELECTRONS_LINK
 
     x.write(f"{GOES_DATA_DIR}/goes_differential_protons.ecsv", overwrite = True, format='ascii.ecsv', delimiter=',')
     y.write(f"{GOES_DATA_DIR}/goes_integral_protons.ecsv", overwrite = True, format='ascii.ecsv', delimiter=',')
