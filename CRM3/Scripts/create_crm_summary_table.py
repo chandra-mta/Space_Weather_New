@@ -9,6 +9,8 @@
 import os
 import re
 import time
+from numpy.ma import masked #: Marker for missing data in reading astropy tables
+from astropy.io import ascii
 from cxotime import CxoTime
 from jinja2 import Environment, FileSystemLoader
 
@@ -26,6 +28,11 @@ ACIS_FLUENCE_DATA_DIR = "/proj/sot/acis/FLU-MON"
 #
 _JINJA_ENV = Environment(loader = FileSystemLoader('Template', followlinks = True))
 _JINJA_ENV.filters['e_format'] = lambda v, p: f"{v:.{p}e}" #: Custom filter to format to scientific notation
+#
+# --- Globals
+#
+GOES_P4_RADMON_FACTOR = 3.4 #: This factor converts the GOES-R P4 channel flux (already recorded in MeV) into the RADMON P4GM units.
+GOES_P7_RADMON_FACTOR = 12 #: This factor converts the GOES-R P7 channel flux (already recorded in MeV) into the RADMON P41GM units.
 
 #
 #--- other settings
@@ -39,9 +46,6 @@ crm_factor = [0, 0, 1, 1]
 crm_n_list = ['00', '03', '07', '10', '13', '17', '20', '23', '27','30', '33', '37',\
               '40', '43', '47', '50', '53', '57', '60', '63', '67','70', '73', '77',\
               '80', '83', '87', '90']
-
-gp_p4_c_factor = 3.4            #---- factor to correct p2 to p4gm 
-gp_p7_c_factor = 12.0           #---- factor to correct p5 to p41gm
 #
 #--- satellite location regarded to the solar wind environment
 #
@@ -66,9 +70,8 @@ def create_crm_summary_table():
 #
 #--- read all needed data
 #
-    [gp_p4, gp_p7]  = read_goes_p_data(f"{GOES_DATA_DIR}/Gp_pchan_5m.txt")
-   #[gs_p2, gs_p5]  = read_goes_p_data(gs_dat)
-    gp_e2           = read_goes_e_data(f"{GOES_DATA_DIR}/Gp_part_5m.txt")
+    goes_data = read_goes()
+
     [alt, leg]      = read_ephem_data()
     [kp, kpi]       = read_kp_data() 
     ace             = read_ace_data()
@@ -79,8 +82,6 @@ def create_crm_summary_table():
 #
 #--- supply missing data
 #
-    if gp_p4 == '': gp_p4 = float(summary[-11])
-    if gp_p7 == '': pg_p5 = float(summary[-9])
     ostart   = summary[-7]
     fluence  = float(summary[-2])
     afluence = float(summary[-1])
@@ -142,59 +143,40 @@ def check_val(val):
 
     return val
 
-#-------------------------------------------------------------------------------
-#-- read_goes_p_data: read the current GOES proton fluxes                     --
-#-------------------------------------------------------------------------------
-
-def read_goes_p_data(ifile):
+def read_goes():
     """
-    read the current GOES proton fluxes
-    input:  ifile   --- file name
-    output: gp_p4   --- p4 flux
-            pg_p7   --- p7 flux
-                note: p2 p5 definition may be different from a satellite to another
+    Read the most recent GOES flux data for P4, P7, and >= E2 
     """
-    with open(ifile) as f:
-        data = [line.strip() for line in f.readlines()]
-    gp_p4 = ''
-    gp_p7 = ''
-    if len(data) > 0:
-        if data[-2][0] != '#':
-            atemp = re.split('\s+', data[-2])
-            try:
-                gp_p4 = float(atemp[5]) * gp_p4_c_factor
-                gp_p7 = float(atemp[8]) * gp_p7_c_factor
-            except:
-                pass
+    goes_data = {'goes_p4': None,
+                 'goes_p7': None,
+                 'goes_e2': None,}
+    diff_proton_table = ascii.read(f"{GOES_DATA_DIR}/goes_differential_protons.ecsv")
+    intg_electron_table = ascii.read(f"{GOES_DATA_DIR}/goes_integral_electrons.ecsv")
+    
+    #: In case the most recent flux for the target channel is missing, record the last known values by iterating backwards.
+    idx = -1
+    while goes_data['goes_p4'] is None:
+        a = diff_proton_table['P4'][idx]
+        if a == masked:
+            idx -= 1
+        else:
+            goes_data['goes_p4'] = a * GOES_P4_RADMON_FACTOR
+    idx = -1
+    while goes_data['goes_p7'] is None:
+        b = diff_proton_table['P7'][idx]
+        if b == masked:
+            idx -= 1
+        else:
+            goes_data['goes_p7'] = b * GOES_P7_RADMON_FACTOR
+    idx = -1
+    while goes_data['goes_e2'] is None:
+        c = intg_electron_table['>=2 MeV'][idx]
+        if c == masked:
+            idx -= 1
+        else:
+            goes_data['goes_e2'] = c
 
-    return [gp_p4, gp_p7]
-
-#-------------------------------------------------------------------------------
-#-- read_goes_e_data: read the current GOES electron data                     --
-#-------------------------------------------------------------------------------
-
-def read_goes_e_data(ifile):
-    """
-    read the current GOES electron data
-    input:  ifile   --- file name
-    output: gp_e2   --- flux > 2kev
-    """
-
-    gp_e2 = ''
-    with open(ifile) as f:
-        data = [line.strip() for line in f.readlines()]
-    for ent in data:
-        if ent[0] == '#':
-            continue
-        atemp = re.split('\s+', ent)
-        try:
-            val = float(atemp[14])
-            if val > 4.0:   #--- it seems 4.0 is the 'null' value
-                gp_e2 = val
-        except:
-            pass
-
-    return gp_e2
+    return goes_data
 
 #-------------------------------------------------------------------------------
 #-- read_ephem_data: read the current ephem data                              --
