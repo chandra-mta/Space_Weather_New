@@ -184,15 +184,18 @@ def read_comm_data():
             if CxoTime(data[i][2]) <= CXONOW and CXONOW <= CxoTime(data[i][3]):
                 #: Identified line while in the middle of Comm
                 time_data['in_comm'] = True
+                recent_comm = CxoTime(data[i][2])
                 next_comm = CxoTime(data[i+1][2])
                 second_comm = CxoTime(data[i+2][2])
                 break
             elif CxoTime(data[i][3]) <= CXONOW and CXONOW <= CxoTime(data[i+1][2]):
                 #: Identified most recent Comm while in-between Comms
                 time_data['in_comm'] = False
+                recent_comm = CxoTime(data[i][2])
                 next_comm = CxoTime(data[i+1][2])
                 second_comm = CxoTime(data[i+2][2])
                 break
+    time_data['recent_comm'] = recent_comm.date.split('.')[0]
     time_data['next_comm'] = next_comm.date.split('.')[0]
     time_data['second_comm'] = second_comm.date.split('.')[0]
     time_data['till_next_comm'] = round((next_comm - CXONOW).sec) #: astropy.time.core.TimeDelta when subtracted
