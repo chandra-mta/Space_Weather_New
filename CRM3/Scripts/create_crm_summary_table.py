@@ -9,6 +9,7 @@
 import os
 import re
 import time
+import json
 from numpy.ma import masked #: Marker for missing data in reading astropy tables
 from astropy.io import ascii
 from cxotime import CxoTime
@@ -68,10 +69,22 @@ def create_crm_summary_table():
             <html_dir>/GOES/Data/CRMarchive.dat
     """
 #
+# --- Read old summary for certain uses.
+#
+    with open(f"{CRM_DATA_DIR}/CRMsummary.json") as f:
+        old_summary = json.load(f)
+
+#
 #--- read all needed data
 #
-    goes_data = read_goes()
-    ephem_data = read_ephem()
+    crm_summary = read_goes()
+    crm_summary.update(read_ephem())
+
+#
+# --- Once all data is gathered. Write the new summary data sets.
+#
+    with open(f"{CRM_DATA_DIR}/CRMsummary.json", 'w') as f:
+        json.dump(crm_summary, f, indent = 4)
 
     [kp, kpi]       = read_kp_data() 
     ace             = read_ace_data()
