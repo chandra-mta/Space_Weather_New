@@ -71,8 +71,8 @@ def create_crm_summary_table():
 #--- read all needed data
 #
     goes_data = read_goes()
+    ephem_data = read_ephem()
 
-    [alt, leg]      = read_ephem_data()
     [kp, kpi]       = read_kp_data() 
     ace             = read_ace_data()
     [region, flux, summary] = read_crm_fluence(kpi, ace)
@@ -86,7 +86,7 @@ def create_crm_summary_table():
     fluence  = float(summary[-2])
     afluence = float(summary[-1])
 #
-#--- when the orbit changes from decending to acending, write the data into an archive
+#--- when the orbit changes from descending to ascending, write the data into an archive
 #--- and reset orbit starting time (ostart) fluence and afluence
 #
     if leg == 'A' and summary[-6] == 'D':
@@ -178,27 +178,17 @@ def read_goes():
 
     return goes_data
 
-#-------------------------------------------------------------------------------
-#-- read_ephem_data: read the current ephem data                              --
-#-------------------------------------------------------------------------------
-
-def read_ephem_data():
+def read_ephem():
     """
-    read the current ephem data
-    input:  none but read from <ephem_data_dir>gephem.dat
-    output: alt --- altitude
-            leg --- A (acending) or D (decending)
+    Read the EPHEM file to determine orbit altitude and leg
+    
+    The EPHEM file records altitude in meter. This fetch returns in km.
     """
     with open(f"{EPHEM_DATA_DIR}/gephem.dat") as f:
-        data = [line.strip() for line in f.readlines()]
-    alt  = []
-    leg  = []
-    for ent in data:
-        atemp = re.split('\s+', ent)
-        alt = int(float(atemp[0])/1000.)
-        leg = atemp[1]
-
-    return [alt, leg]
+        data = f.read().split() #: Located on the first and only line.
+        alt = int(float(data[0]) / 1000)
+        leg = data[1]
+    return {'orbit_altitude': alt, 'orbit_leg': leg}
 
 #-------------------------------------------------------------------------------
 #-- read_kp_data: read the current kp value                                   --
