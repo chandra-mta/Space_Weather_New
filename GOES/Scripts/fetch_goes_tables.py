@@ -24,7 +24,7 @@ INTG_ELECTRONS_LINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral
 DIFF_COLS = ['P1', 'P2A', 'P2B', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8A', 'P8B', 'P8C', 'P9', 'P10']
 INTG_COLS = ['>=1 MeV', '>=5 MeV', '>=10 MeV', '>=30 MeV', '>=50 MeV', '>=60 MeV', '>=100 MeV', '>=500 MeV']
 
-DIFF_PROTON_UNIT = "protons/(cm^2*s*sr*keV)"
+DIFF_PROTON_UNIT = "protons/(cm^2*s*sr*MeV)"
 INTG_PROTON_UNIT = "protons/(cm^2*s*sr)"
 INTG_ELECTRON_UNIT = "protons/(cm^2*s*sr)"
 
@@ -48,6 +48,7 @@ def fetch_goes_tables():
 # --- Include formatting and additional metadata as allowable in the ecsv format.
 #
     for col in DIFF_COLS:
+        x[col] *= 1000 #: This is a unit conversion from the SWPC differential unit in KeV to the Chandra usage of GOES in proxies in MeV units.
         x[col].unit = DIFF_PROTON_UNIT
         x[col].format = ".5e"
     for col in INTG_COLS:
