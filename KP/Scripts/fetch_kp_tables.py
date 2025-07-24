@@ -19,6 +19,7 @@ import json
 from time import sleep
 import urllib
 from astropy.table import Table
+import argparse
 import getpass
 import signal
 #
@@ -93,3 +94,41 @@ def reorient_forecast(forecast):
     
     kp_forecast_table = Table(rows=rows)
     return kp_forecast_table
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    parser.add_argument("-p", "--path", help = "Determine data output file path")
+    args = parser.parse_args()
+
+    if args.mode == 'test':
+        if args.path:
+            KP_DATA_DIR = args.path
+        else:
+            KP_DATA_DIR = f"{os.getcwd()}/test/_outTest"
+        os.makedirs(KP_DATA_DIR, exist_ok=True)
+
+        fetch_kp_tables()
+
+    elif args.mode == "flight":
+#
+#--- Create a lock file and exit strategy in case of race conditions
+#
+        name = os.path.basename(__file__).split(".")[0]
+        user = getpass.getuser()
+        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
+            with open(f"/tmp/{user}/{name}.lock") as f:
+                pid = int(f.readlines()[-1].strip())
+                #Kill old stalling process and remove corresponding lock file.
+                os.remove(f"/tmp/{user}/{name}.lock")
+                try:
+                    os.kill(pid,signal.SIGTERM)
+                except ProcessLookupError:
+                    pass
+                #Generate lock file for the current corresponding process
+                os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
+        else:
+            #Previous script run must have completed successfully. Prepare lock file for this script run.
+            os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
+
+        fetch_kp_tables()
