@@ -62,3 +62,22 @@ def read_json(link):
         with urllib.request.urlopen(link, timeout = 10) as url:
             data = json.loads(url.read().decode())
     return data
+
+def reorient_forecast(forecast):
+    """
+    Reorient the KP SWPC forecast into an astropy table format
+    """
+    rows = []
+    #:First list is the column headers
+    for i in range(1,len(forecast)):
+        new_row = {}
+        #: We don't need the NOAA scale for radio blackouts,
+        #: and we want to store time values in ISO 8601 format.
+        a = forecast[i][0].split()
+        new_row['time_tag'] = f"{a[0]}T{a[1]}Z"
+        new_row['kp'] = float(forecast[i][1])
+        new_row['observed'] = forecast[i][2]
+        rows.append(new_row)
+    
+    kp_forecast_table = Table(rows=rows)
+    return kp_forecast_table
