@@ -30,6 +30,18 @@ KP_DATA_DIR = "/data/mta4/Space_Weather/KP/Data"
 #
 KP_FORECAST_LINK = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json"
 
+def fetch_kp_tables():
+    """
+    Fetch the KP forecast data from SWPC and orient into a workable astropy table with metadata
+    """
+    forecast = read_json(KP_FORECAST_LINK)
+    kp_forecast_table = reorient_forecast(forecast)
+
+    kp_forecast_table.meta['source'] = KP_FORECAST_LINK
+    kp_forecast_table.meta['script'] = os.path.abspath(__file__)
+
+    kp_forecast_table.write(f"{KP_DATA_DIR}/kp_forecast.ecsv", overwrite=True, format='ascii.ecsv', delimiter=',')
+
 def rerun(func):
     """
     Function decorator which sleeps and reruns the provided function upon encountering a set of errors.
