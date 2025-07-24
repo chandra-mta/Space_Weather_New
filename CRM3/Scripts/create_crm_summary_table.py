@@ -23,6 +23,7 @@ CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
 EPHEM_DATA_DIR = "/data/mta4/Space_Weather/EPHEM/Data"
 ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
 GOES_DATA_DIR = "/data/mta4/Space_Weather/GOES/Data"
+KP_DATA_DIR = "/data/mta4/Space_Weather/KP/Data"
 ACIS_FLUENCE_DATA_DIR = "/proj/sot/acis/FLU-MON"
 #
 # --- Template Globals
@@ -56,6 +57,7 @@ sol_region     = ['NULL', 'Solar_Wind', 'Magnetosheath', 'Magnetosphere']
 #
 cl_time      = time.strftime('%Y:%j:%H:%M:%S', time.gmtime())
 CXONOW = CxoTime()
+ISONOW = CXONOW.isot.split('.')[0] + "Z"
 
 #-------------------------------------------------------------------------------
 #-- create_crm_summary_table: update CRMsummary.dat data summary table        --
@@ -79,6 +81,7 @@ def create_crm_summary_table():
 #
     crm_summary = read_goes()
     crm_summary.update(read_ephem())
+    crm_summary.update(read_kp())
 
 #
 # --- Once all data is gathered. Write the new summary data sets.
@@ -86,7 +89,6 @@ def create_crm_summary_table():
     with open(f"{CRM_DATA_DIR}/CRMsummary.json", 'w') as f:
         json.dump(crm_summary, f, indent = 4)
 
-    [kp, kpi]       = read_kp_data() 
     ace             = read_ace_data()
     [region, flux, summary] = read_crm_fluence(kpi, ace)
     si              = read_sim()
@@ -203,43 +205,15 @@ def read_ephem():
         leg = data[1]
     return {'orbit_altitude': alt, 'orbit_leg': leg}
 
-#-------------------------------------------------------------------------------
-#-- read_kp_data: read the current kp value                                   --
-#-------------------------------------------------------------------------------
-
-def read_kp_data():
+def read_kp():
     """
-    read the current kp value
-    input:  none, but read from <ace_data_dir>/kp.dat
-    ouput:  kp  --- kp value
-            kpi --- indicator of wihc CRM file to be used
+    Read the most recent observed / estimated value for the KP index.
     """
-    kp     = -1.0
-    kpi    = '00'
-    kpfile = f"{ACE_DATA_DIR}/kp.dat"
-    kpgood = f"{ACE_DATA_DIR}/kp.dat.good"
-    try:
-        with open(kpfile) as f:
-            data = [line.strip() for line in f.readlines()]
-        atemp = re.split('\s+', data[-1])
-        kp    = float(atemp[-2])
-#
-#--- if the data is good, copy it to kp.dat.good for future use
-#
-        os.system(f"cp -f {kpfile} {kpgood}")
-    except:
-#
-#--- the data is bad. use the last good data
-#
-        with open(kpgood) as f:
-            data = [line.strip() for line in f.readlines()]
-        atemp = re.split('\s+', data[-1])
-        kp    = float(atemp[-2])
-
-    kpi = "%3.1f" % kp
-    kpi = kpi.replace('.', '')
-
-    return [kp, kpi]
+    kp_forecast_table = ascii.read(f"{KP_DATA_DIR}/kp_forecast.ecsv")
+    #: Note that the kp_forecast_table is fetched every 3 hours, so sometimes the estimates are outdated.
+    subset = kp_forecast_table[kp_forecast_table['time_tag'] <= ISONOW]
+    kp_data = {'kp': subset['kp'][-1].data, 'kp_update_time': subset['time_tag'][-1].data}
+    return kp_data
 
 #-------------------------------------------------------------------------------
 #-- read_ace_data: read current ace value                                     --
