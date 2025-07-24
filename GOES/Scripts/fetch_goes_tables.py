@@ -60,6 +60,8 @@ def fetch_goes_tables():
     x.meta['source'] = DIFF_PROTONS_LINK
     y.meta['source'] = INTG_PROTONS_LINK
     z.meta['source'] = INTG_ELECTRONS_LINK
+    for _ in (x,y,z):
+        _.meta['script'] = f"{os.path.abspath(__file__)}"
 
     x.write(f"{GOES_DATA_DIR}/goes_differential_protons.ecsv", overwrite = True, format='ascii.ecsv', delimiter=',')
     y.write(f"{GOES_DATA_DIR}/goes_integral_protons.ecsv", overwrite = True, format='ascii.ecsv', delimiter=',')
