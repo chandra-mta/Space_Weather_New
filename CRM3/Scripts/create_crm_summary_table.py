@@ -203,7 +203,9 @@ def read_ephem():
         data = f.read().split() #: Located on the first and only line.
         alt = int(float(data[0]) / 1000)
         leg = data[1]
-    return {'orbit_altitude': alt, 'orbit_leg': leg}
+    stats = os.stat(f"{EPHEM_DATA_DIR}/gephem.dat")
+    time = CxoTime(stats.st_mtime,format='unix').isot.split('.')[0] + "Z"
+    return {'orbit_altitude': alt, 'orbit_leg': leg, 'orbit_update_time': time}
 
 def read_kp():
     """
