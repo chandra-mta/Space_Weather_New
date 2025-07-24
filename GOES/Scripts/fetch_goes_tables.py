@@ -13,6 +13,8 @@ import argparse
 from astropy.table import Table
 import numpy as np
 from time import sleep
+import getpass
+import signal
 #
 # --- Define Directory Pathing
 #
@@ -145,4 +147,24 @@ if __name__ == "__main__":
         fetch_goes_tables()
 
     elif args.mode == "flight":
+#
+#--- Create a lock file and exit strategy in case of race conditions
+#
+        name = os.path.basename(__file__).split(".")[0]
+        user = getpass.getuser()
+        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
+            with open(f"/tmp/{user}/{name}.lock") as f:
+                pid = int(f.readlines()[-1].strip())
+                #Kill old stalling process and remove corresponding lock file.
+                os.remove(f"/tmp/{user}/{name}.lock")
+                try:
+                    os.kill(pid,signal.SIGTERM)
+                except ProcessLookupError:
+                    pass
+                #Generate lock file for the current corresponding process
+                os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
+        else:
+            #Previous script run must have completed successfully. Prepare lock file for this script run.
+            os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
+        
         fetch_goes_tables()
