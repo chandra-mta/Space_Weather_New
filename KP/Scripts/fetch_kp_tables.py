@@ -11,6 +11,7 @@
     - https://kp.gfz.de/en/
     - https://kp.gfz.de/en/data
     - https://www.gfz.de/en/section/geomagnetism/data-products-services/geomagnetic-kp-index
+    - https://spaceweather.gfz.de/products-data/forecasts/forecast-kp-index
     - https://www.swpc.noaa.gov/products/planetary-k-index
     - https://www.swpc.noaa.gov/sites/default/files/images/u2/TheK-index.pdf
 """
