@@ -176,6 +176,7 @@ def read_goes():
             idx -= 1
         else:
             goes_data['goes_p4'] = a * GOES_P4_RADMON_FACTOR
+            goes_data['goes_p4_update_time'] = diff_proton_table['time_tag'][idx]
     idx = -1
     while goes_data['goes_p7'] is None:
         b = diff_proton_table['P7'][idx]
@@ -183,6 +184,7 @@ def read_goes():
             idx -= 1
         else:
             goes_data['goes_p7'] = b * GOES_P7_RADMON_FACTOR
+            goes_data['goes_p7_update_time'] = diff_proton_table['time_tag'][idx]
     idx = -1
     while goes_data['goes_e2'] is None:
         c = intg_electron_table['>=2 MeV'][idx]
@@ -190,6 +192,7 @@ def read_goes():
             idx -= 1
         else:
             goes_data['goes_e2'] = c
+            goes_data['goes_e2_update_time'] = intg_electron_table['time_tag'][idx]
 
     return goes_data
 
