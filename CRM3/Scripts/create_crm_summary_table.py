@@ -82,6 +82,8 @@ def create_crm_summary_table():
     crm_summary = read_goes()
     crm_summary.update(read_ephem())
     crm_summary.update(read_kp())
+    ace = read_ace_data() #: Kept as legacy version since ACE will be replaced with SWFO-L1 in September 2025.
+    crm_summary['ace_p3'] = ace
 
 #
 # --- Once all data is gathered. Write the new summary data sets.
@@ -89,7 +91,6 @@ def create_crm_summary_table():
     with open(f"{CRM_DATA_DIR}/CRMsummary.json", 'w') as f:
         json.dump(crm_summary, f, indent = 4)
 
-    ace             = read_ace_data()
     [region, flux, summary] = read_crm_fluence(kpi, ace)
     si              = read_sim()
     otg             = read_otg()
@@ -219,10 +220,6 @@ def read_kp():
     subset = kp_forecast_table[kp_forecast_table['time_tag'] <= ISONOW]
     kp_data = {'kp': subset['kp'][-1].data, 'kp_update_time': subset['time_tag'][-1].data}
     return kp_data
-
-#-------------------------------------------------------------------------------
-#-- read_ace_data: read current ace value                                     --
-#-------------------------------------------------------------------------------
 
 def read_ace_data():
     """
