@@ -8,9 +8,9 @@
               Geocentric Distance (km), Orbit Leg : {{data['orbit_altitude']}} {{data['orbit_leg']}}
                                        CRM Region : {{data['sol_region_idx']}}({{data['sol_region']}})
            External Proton Flux (p/cm^2-s-sr-MeV) : {{data['crm_flux'] | e_format(4)}}
-         Attenuated Proton Flux (p/cm^2-s-sr-MeV) : {{data['attenuated_flux'] | e_format(4)}}
-  External Proton Orbital Fluence (p/cm^2-sr-MeV) : {{data['fluence'] | e_format(4)}}
-Attenuated Proton Orbital Fluence (p/cm^2-sr-MeV) : {{data['attenuated_fluence'] | e_format(4)}}
+         Attenuated Proton Flux (p/cm^2-s-sr-MeV) : {{data['attenuated_crm_flux'] | e_format(4)}}
+  External Proton Orbital Fluence (p/cm^2-sr-MeV) : {{data['crm_fluence'] | e_format(4)}}
+Attenuated Proton Orbital Fluence (p/cm^2-sr-MeV) : {{data['attenuated_crm_fluence'] | e_format(4)}}
 
 
 Last Data Update: {{data['cxonow']}} (UT)

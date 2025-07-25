@@ -78,6 +78,7 @@ def create_crm_summary_table():
     crm_summary['ace_p3'] = ace
     crm_summary.update(read_crm_dat(kp,ace))
     crm_summary.update(read_inst_config())
+    crm_summary['attenuated_crm_flux'] = crm_summary['attenuation_factor'] * crm_summary['crm_flux']
 
 #
 # --- Once all data is gathered. Write the new summary data sets.
@@ -85,7 +86,6 @@ def create_crm_summary_table():
     with open(f"{CRM_DATA_DIR}/CRMsummary.json", 'w') as f:
         json.dump(crm_summary, f, indent = 4)
 
-    aflux           = find_attenuate_flux(flux, si, otg)
 #
 #--- supply missing data
 #
@@ -306,45 +306,30 @@ def read_inst_config():
     hetg, letg = current_grat_row['hetg'], current_grat_row['letg']
     
     otg = "NONE"
-    if hetg == 'HETG-IN'  and letg == 'LETG-OUT':
+    if hetg == 'HETG-IN' and letg == 'LETG-OUT':
         otg = 'HETG'
     elif hetg == 'HETG-OUT' and letg == 'LETG-IN':
         otg = 'LETG'
-    elif hetg == 'HETG-IN'  and letg == 'LETG-IN':
+    elif hetg == 'HETG-IN' and letg == 'LETG-IN':
         otg = 'BAD'
     else:
         otg = 'NONE'
     
+    attenuation_factor = 0
+
+    if inst in ('ACIS-I', 'ACIS-S'):
+        if otg == 'LETG':
+            attenuation_factor = 0.5
+        elif otg == 'HETG':
+            attenuation_factor = 0.2
+
     inst_config_data = {
         'isntrument_update_time': time.isot.split('.')[0] + "Z",
         'instrument': inst,
-        'grating': otg
+        'grating': otg,
+        'attenuation_factor': attenuation_factor
     }
     return inst_config_data
-
-#-------------------------------------------------------------------------------
-#-- find_attenuate_flux: compute attenuated flux                              --
-#-------------------------------------------------------------------------------
-
-def find_attenuate_flux(flux, si, otg):
-    """
-    compute attenuated flux
-    input:  flux    --- flax
-            si      --- instrument
-            otg     --- grating 
-    output: aflux   --- attenudated flux
-    """
-
-    aflux = flux
-    mc = re.search('HRC', si)
-    if mc is not None:
-        aflux = 0.0
-    elif otg == 'LETG':
-        aflux *= 0.5
-    elif otg == 'HETG':
-        aflux *= 0.2
-
-    return aflux
     
 #-------------------------------------------------------------------------------
 #-- current_yday: get the current tim in day of the year with year           ---
