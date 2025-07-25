@@ -38,15 +38,11 @@ GOES_P4_RADMON_FACTOR = 3.4 #: This factor converts the GOES-R P4 channel flux (
 GOES_P7_RADMON_FACTOR = 12 #: This factor converts the GOES-R P7 channel flux (already recorded in MeV) into the RADMON P41GM units
 SW_FACTOR  = [0, 1, 2, 0.5] #: Indexed according to the CRM solar region index marker
 CRM_FACTOR = [0, 0, 1, 1] #: Indexed according to the CRM solar region index marker
+TDELTA = 300
 
 CXONOW = CxoTime()
 ISONOW = CXONOW.isot.split('.')[0] + "Z"
 SOL_REGION = ['NULL', 'Solar_Wind', 'Magnetosheath', 'Magnetosphere'] #: Indexed according to the CRM solar region index marker
-
-#
-#--- other settings
-#
-delta      = 300
 
 
 #-------------------------------------------------------------------------------
@@ -81,32 +77,35 @@ def create_crm_summary_table():
     crm_summary['attenuated_crm_flux'] = crm_summary['attenuation_factor'] * crm_summary['crm_flux']
 
 #
+# --- Determine orbit specific values
+#
+    old_fluence = old_summary['crm_fluence']
+    old_attenuated_fluence = old_summary['attenuated_crm_fluence']
+    fluence = old_fluence + crm_summary['crm_flux'] * TDELTA
+    attenuated_fluence = old_attenuated_fluence + crm_summary['attenuated_crm_flux'] * TDELTA
+    orbit_start = old_summary['orbit_start']
+
+    if old_summary['orbit_leg'] == 'D' and crm_summary['orbit_leg'] == 'A':
+        #: When the orbit changes from descending to ascending, 
+        #: write the data into an archive and reset orbit starting time (ostart) fluence and afluence
+        orbit_end = CXONOW.date.split('.')[0]
+        #: old archive write of fluence
+        with open(f"{CRM_DATA_DIR}/CRMarchive.dat", 'a') as fo:
+            fo.write(f"{orbit_start}   {orbit_end}   {fluence}   {attenuated_fluence}\n")
+        orbit_start = orbit_end
+        fluence = 0
+        attenuated_fluence = 0
+    
+    crm_summary['orbit_start'] = orbit_start
+    crm_summary['crm_fluence'] = fluence
+    crm_summary['attenuated_fluence'] = attenuated_fluence
+#
 # --- Once all data is gathered. Write the new summary data sets.
 #
     with open(f"{CRM_DATA_DIR}/CRMsummary.json", 'w') as f:
         json.dump(crm_summary, f, indent = 4)
 
-#
-#--- supply missing data
-#
-    ostart   = summary[-7]
-    fluence  = float(summary[-2])
-    afluence = float(summary[-1])
-#
-#--- when the orbit changes from descending to ascending, write the data into an archive
-#--- and reset orbit starting time (ostart) fluence and afluence
-#
-    if leg == 'A' and summary[-6] == 'D':
-        oend = time.strftime("%Y:%j:%H:%M:%S", time.gmtime())
-        with open(f"{CRM_DATA_DIR}/CRMarchive.dat", 'a') as fo:
-            line = str(ostart) + '  ' +   oend   + '  ' + str(fluence) + '  ' + str(afluence) + '\n'
-            fo.write(line)
-            ostart = oend
-            fluence  = 0.0
-            afluence = 0.0
-
-    fluence  += (flux  * delta)
-    afluence += (aflux * delta)
+    
 #
 #--- print out the data
 #
