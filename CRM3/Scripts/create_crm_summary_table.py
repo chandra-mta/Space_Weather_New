@@ -77,6 +77,7 @@ def create_crm_summary_table():
     ace = read_ace_data() #: Kept as legacy version since ACE will be replaced with SWFO-L1 in September 2025.
     crm_summary['ace_p3'] = ace
     crm_summary.update(read_crm_dat(kp,ace))
+    crm_summary.update(read_inst_config())
 
 #
 # --- Once all data is gathered. Write the new summary data sets.
@@ -84,8 +85,6 @@ def create_crm_summary_table():
     with open(f"{CRM_DATA_DIR}/CRMsummary.json", 'w') as f:
         json.dump(crm_summary, f, indent = 4)
 
-    si              = read_sim()
-    otg             = read_otg()
     aflux           = find_attenuate_flux(flux, si, otg)
 #
 #--- supply missing data
@@ -277,7 +276,7 @@ def read_crm_dat(kp, ace):
     crm_flux = CRM_FACTOR[sol_region_idx] * current_row['proton_flux'] + SW_FACTOR[sol_region_idx] * ace
     
     crm_data = {
-        'crm_data_last_updated': CxoTime(current_row['cxosecs']).isot.split('.')[0] + 'Z',
+        'crm_data_update_time': CxoTime(current_row['cxosecs']).isot.split('.')[0] + 'Z',
         'sol_region_idx': sol_region_idx,
         'sol_region': SOL_REGION[sol_region_idx],
         'crm_flux': crm_flux
@@ -285,62 +284,29 @@ def read_crm_dat(kp, ace):
     return crm_data
     
 
-#-------------------------------------------------------------------------------
-#-- read_sim: find the current instrument                                     --
-#-------------------------------------------------------------------------------
-
-def read_sim():
+def read_inst_config():
     """
-    find the current instrument
-    input: none but read from <acis_fluence_data_dir>/FPHIST-2001.dat
-    output: si
+    Read the Science Instrument Configuration (SIM and OTG)
     """
-    si   = 'NA'
-    with open(f"{ACIS_FLUENCE_DATA_DIR}/FPHIST-2001.dat") as f:
-        data = [line.strip() for line in f.readlines()]
-    for ent in data:
-        atemp = re.split('\s+', ent)
-        btemp = re.split('\.',  atemp[0])
-        try:
-            ctime = CxoTime(btemp[0])
-        except:
-            continue
-        if ctime > CXONOW:
-            break
-        si    = atemp[1]
-
-    return si
-
-#-------------------------------------------------------------------------------
-#-- read_otg: find which grating is used                                     ---
-#-------------------------------------------------------------------------------
-
-def read_otg():
-    """
-    find which grating is used
-    input: none but read from <acis_fluence_data_dir>/GRATHIST-2001.dat
-    output: otg --- HETG/LETG/NONE/BAD
-    """
-    convert_grathist_format()
-    with open(f"{ACIS_FLUENCE_DATA_DIR}/GRATHIST-2001.dat") as f:
-        data = [line.strip() for line in f.readlines()]
-    hetg = ''
-    letg = ''
-    for ent in data:
-        cols  = re.split('\s+', ent)
-        btemp = re.split('\.', cols[0])
-        try:
-            ctime = CxoTime(btemp[0])
-        except:
-            continue
-        if ctime > CXONOW:
-            break
-        else:
-            hetg  = cols[1]
-            letg  = cols[2]
-
-    otg = 'NONE'
-    if   hetg == 'HETG-IN'  and letg == 'LETG-OUT':
+    
+    fp_table = ascii.read(f"{ACIS_FLUENCE_DATA_DIR}/FPHIST-2001.dat",
+                          names = ('cxcdate', 'inst', 'obsid'),
+                          data_start = -50)
+    grat_table = ascii.read(f"{ACIS_FLUENCE_DATA_DIR}/GRATHIST-2001.dat",
+                          names = ('cxcdate', 'hetg', 'letg', 'obsid'),
+                          data_start = -50)
+    
+    sel_fp = fp_table['cxcdate'] < CXONOW
+    sel_grat = grat_table['cxcdate'] < CXONOW
+    current_fp_row = fp_table[sel_fp][-1]
+    current_grat_row = grat_table[sel_grat][-1]
+    
+    time = max(CxoTime(current_fp_row['cxcdate']), CxoTime(current_grat_row['cxcdate']))
+    inst = current_fp_row['inst']
+    hetg, letg = current_grat_row['hetg'], current_grat_row['letg']
+    
+    otg = "NONE"
+    if hetg == 'HETG-IN'  and letg == 'LETG-OUT':
         otg = 'HETG'
     elif hetg == 'HETG-OUT' and letg == 'LETG-IN':
         otg = 'LETG'
@@ -348,8 +314,13 @@ def read_otg():
         otg = 'BAD'
     else:
         otg = 'NONE'
-
-    return otg
+    
+    inst_config_data = {
+        'isntrument_update_time': time.isot.split('.')[0] + "Z",
+        'instrument': inst,
+        'grating': otg
+    }
+    return inst_config_data
 
 #-------------------------------------------------------------------------------
 #-- find_attenuate_flux: compute attenuated flux                              --
