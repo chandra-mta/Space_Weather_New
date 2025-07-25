@@ -218,7 +218,7 @@ def read_kp():
     kp_forecast_table = ascii.read(f"{KP_DATA_DIR}/kp_forecast.ecsv")
     #: Note that the kp_forecast_table is fetched every 3 hours, so sometimes the estimates are outdated.
     subset = kp_forecast_table[kp_forecast_table['time_tag'] <= ISONOW]
-    kp_data = {'kp': subset['kp'][-1].data, 'kp_update_time': subset['time_tag'][-1].data}
+    kp_data = {'kp': subset['kp'][-1], 'kp_update_time': subset['time_tag'][-1]}
     return kp_data
 
 def read_ace_data():
