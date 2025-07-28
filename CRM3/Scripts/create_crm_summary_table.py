@@ -8,8 +8,10 @@
 """
 import os
 import re
-import time
 import json
+import argparse
+import getpass
+import signal
 from numpy.ma import masked #: Marker for missing data in reading astropy tables
 from astropy.io import ascii
 from cxotime import CxoTime
@@ -20,6 +22,8 @@ from jinja2 import Environment, FileSystemLoader
 #
 CRM_WEB_DIR = "/data/mta4/www/RADIATION/CRM"
 CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
+OUT_CRM_WEB_DIR = "/data/mta4/www/RADIATION/CRM"
+OUT_CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
 EPHEM_DATA_DIR = "/data/mta4/Space_Weather/EPHEM/Data"
 ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
 GOES_DATA_DIR = "/data/mta4/Space_Weather/GOES/Data"
@@ -28,7 +32,7 @@ ACIS_FLUENCE_DATA_DIR = "/proj/sot/acis/FLU-MON"
 #
 # --- Template Globals
 #
-_JINJA_ENV = Environment(loader = FileSystemLoader('Template', followlinks = True))
+_JINJA_ENV = Environment(loader = FileSystemLoader('Template', followlinks = True), keep_trailing_newline=True) #: Old format has an additional newline character
 _JINJA_ENV.filters['e_format'] = lambda v, p: f"{v:.{p}e}" #: Custom filter to format to scientific notation
 CRM_DATA_COL_NAMES = ('cxosecs', 'sol_region_idx', 'proton_flux', 'x', 'y', 'z') #: Column names possibly inaccurate
 #
@@ -44,11 +48,6 @@ CXONOW = CxoTime()
 ISONOW = CXONOW.isot.split('.')[0] + "Z"
 SOL_REGION = ['NULL', 'Solar_Wind', 'Magnetosheath', 'Magnetosphere'] #: Indexed according to the CRM solar region index marker
 
-
-#-------------------------------------------------------------------------------
-#-- create_crm_summary_table: update CRMsummary.dat data summary table        --
-#-------------------------------------------------------------------------------
-
 def create_crm_summary_table():
     """
     update CRMsummary.dat data summary table
@@ -59,9 +58,8 @@ def create_crm_summary_table():
 #
 # --- Read old summary for certain uses.
 #
-    with open(f"{CRM_DATA_DIR}/CRMsummary.json") as f:
+    with open(f"{OUT_CRM_DATA_DIR}/CRMsummary.json") as f:
         old_summary = json.load(f)
-
 #
 #--- read all needed data
 #
@@ -98,56 +96,23 @@ def create_crm_summary_table():
     
     crm_summary['orbit_start'] = orbit_start
     crm_summary['crm_fluence'] = fluence
-    crm_summary['attenuated_fluence'] = attenuated_fluence
+    crm_summary['attenuated_crm_fluence'] = attenuated_fluence
+    crm_summary['cxonow'] = CXONOW.date.split('.')[0]
 #
 # --- Once all data is gathered. Write the new summary data sets.
 #
-    with open(f"{CRM_DATA_DIR}/CRMsummary.json", 'w') as f:
+    crm_summary = coerce_json_serialize(crm_summary)
+    with open(f"{OUT_CRM_DATA_DIR}/CRMsummary.json", 'w') as f:
+        json.dump(crm_summary, f, indent = 4)
+    with open(f"{OUT_CRM_WEB_DIR}/CRMsummary.json", 'w') as f:
         json.dump(crm_summary, f, indent = 4)
 
-    
-#
-#--- print out the data
-#
-    line = ''
-    line = line + "                    Currently scheduled FPSI, OTG : " + si + ' ' + otg + '\n'
-    line = line + "                                     Estimated Kp : " + str(kp) + '\n'
-    line = line + "        ACE EPAM P3 Proton Flux (p/cm^2-s-sr-MeV) : %.2e\n" % (check_val(ace))
-    line = line + "            GOES-R P4 flux, in RADMON P4GM  units : %.2e\n" % (check_val(gp_p4))
-   #line = line + "            GOES-S P2 flux, in RADMON P4GM  units : %.2f\n" % (check_val(ps_p2))
-    line = line + "            GOES-R P7 flux, in RADMON P41GM units : %.2e\n" % (check_val(gp_p7))
-   #line = line + "            GOES-S P5 flux, in RADMON P41GM units : %.2f\n" % (gp_p7)
-    line = line + "            GOES-R E > 2.0 MeV flux (p/cm^2-s-sr) : %.2e\n" % (check_val(gp_e2))
-    line = line + "                                 Orbit Start Time : " + ostart + '\n'
-    line = line + "              Geocentric Distance (km), Orbit Leg : " + str(alt) + ' ' + leg + '\n'
-    line = line + "                                       CRM Region : " + str(region) 
-    line = line + "(" + sol_region[region] + ")\n"
-    line = line + "           External Proton Flux (p/cm^2-s-sr-MeV) : %.4e\n" % (flux)
-    line = line + "         Attenuated Proton Flux (p/cm^2-s-sr-MeV) : %.4e\n" % (aflux)
-    line = line + "  External Proton Orbital Fluence (p/cm^2-sr-MeV) : %.4e\n" % (fluence)
-    line = line + "Attenuated Proton Orbital Fluence (p/cm^2-sr-MeV) : %.4e\n" % (afluence)
-    line = line + '\n\n'
-    line = line + 'Last Data Update: ' + cl_time + ' (UT)'
-    line = line + '\n\n'
-    #line = line + 'Due to transition to GOES-16, what used to be P2 is now P4\n'
-    #line = line + 'and what used to be P5 is now P7 This message will dissappear\n'
-    #line = line + 'in 01/31/2021'
-
-    with open(f"{CRM_DATA_DIR}/CRMsummary.dat", 'w') as fo:
-        fo.write(line)
-#
-#--- back up the data files
-#
-    os.system(f"cp -f {CRM_DATA_DIR}/CRMsummary.dat {CRM_WEB_DIR}/CRMsummary.dat")
-    os.system(f"cp -f {CRM_DATA_DIR}/CRMarchive.dat {CRM_WEB_DIR}/CRMarchive.dat")
-
-def check_val(val):
-    try:
-        val = float(val)
-    except:
-        val = 0.0
-
-    return val
+    crm_template = _JINJA_ENV.get_template('CRMsummary.jinja')
+    crm_render = crm_template.render(data = crm_summary)
+    with open(f"{OUT_CRM_DATA_DIR}/CRMsummary.dat", 'w') as fo:
+        fo.write(crm_render)
+    with open(f"{OUT_CRM_WEB_DIR}/CRMsummary.dat", 'w') as fo:
+        fo.write(crm_render)
 
 def read_goes():
     """
@@ -223,7 +188,7 @@ def read_ace_data():
     try:
         with open(acefile) as f:
             data = [line.strip() for line in f.readlines()]
-        atemp = re.split('\s+', data[-3])
+        atemp = re.split(r'\s+', data[-3])
         ace_n = float(atemp[11])
         if ace_n != ace:
             ace = ace_n
@@ -234,7 +199,7 @@ def read_ace_data():
         else:
             with open(acegood) as f:
                 data = [line.strip() for line in f.readlines()]
-            atemp = re.split('\s+', data[-3])
+            atemp = re.split(r'\s+', data[-3])
             ace_n = float(atemp[11])
             if ace_n != ace:
                 ace = ace_n
@@ -244,7 +209,7 @@ def read_ace_data():
 #
         with open(acegood) as f:
             data = [line.strip() for line in f.readlines()]
-        atemp = re.split('\s+', data[-3])
+        atemp = re.split(r'\s+', data[-3])
         ace_n = float(atemp[11])
         if ace_n != ace:
             ace = ace_n
@@ -329,62 +294,73 @@ def read_inst_config():
         'attenuation_factor': attenuation_factor
     }
     return inst_config_data
-    
-#-------------------------------------------------------------------------------
-#-- current_yday: get the current tim in day of the year with year           ---
-#-------------------------------------------------------------------------------
 
-def current_yday():
-    """
-    get the current tim in day of the year with year: ex: 2020001.12343
-    input: none
-    output: ydoy ---- year date with year at the front
-    """
-
-    out   = time.strftime('%Y:%j:%H:%M:%S', time.gmtime())
-    atemp = re.split(':', out)
-    year  = float(atemp[0])
-    yday  = float(atemp[1])
-    hh    = float(atemp[2])
-    mm    = float(atemp[3])
-    ss    = float(atemp[4])
-    ydoy  = 1000 * year + yday + hh / 24.0 + mm /1400.0 + ss / 86400.0
-
-    return ydoy
-
-#-------------------------------------------------------------------------------
-#-- convert_grathist_format: convert GRATHIST format                          --
-#-------------------------------------------------------------------------------
-
-def convert_grathist_format():
-    """
-    convert GRATHIST format
-    input: none but read from: <acis_fluence_data_dir>/GRATHIST-2001.dat
-    output: <crm3_dir>/Data/grathist.dat
-    """
-
-    with open(f"{ACIS_FLUENCE_DATA_DIR}/GRATHIST-2001.dat") as f:
-        data = [line.strip() for line in f.readlines()]
-    line  = ''
-    for ent in data:
-        atemp = re.split('\s+', ent)
-        line  = line + atemp[0].replace(':', ' ') + '  '
-        if atemp[1] == 'HETG-IN':
-            line = line + '1' + '  '
+def coerce_json_serialize(obj):
+    def _coerce(x):
+        if x.__class__.__module__ == 'numpy':
+            return x.tolist()
         else:
-            line = line + '0' + '  '
-        if atemp[2] == 'LETG-IN':
-            line = line + '1' + '  '
-        else:
-            line = line + '0' + '  '
-        line = line + atemp[3] + '\n'
-
-    with open(f"{CRM_DATA_DIR}/grathist.dat", 'w') as fo:
-        fo.write(line)
-
-#-------------------------------------------------------------------------------
+            return x
+    if isinstance(obj,dict):
+        return {key:_coerce(obj[key]) for key in obj.keys()}
+    elif isinstance(obj,list):
+        return [_coerce(i) for i in obj]
+    else:
+        return _coerce(obj)
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
 
-    create_crm_summary_table()
-    
+    parser.add_argument(
+        "-m",
+        "--mode",
+        choices=["flight", "test"],
+        required=True,
+        help="Determine running mode.",
+    )
+    parser.add_argument(
+        "-p",
+        "--path",
+        required=False,
+        help="Directory path to determine output location of plot.",
+    )
+    args = parser.parse_args()
+    #
+    # --- Determine if running in test mode and change pathing if so
+    #
+    if args.mode == "test":
+        #
+        # --- Path output to same location as unit tests
+        #
+        OUT_CRM_DATA_DIR = f"{os.getcwd()}/test/_outTest"
+        if args.path:
+            OUT_CRM_DATA_DIR = args.path
+        os.makedirs(OUT_CRM_DATA_DIR, exist_ok=True)
+        OUT_CRM_WEB_DIR = OUT_CRM_DATA_DIR
+        
+        create_crm_summary_table()
+
+    elif args.mode == "flight":
+        #
+        # --- Create a lock file and exit strategy in case of race conditions
+        #
+
+        name = os.path.basename(__file__).split(".")[0]
+        user = getpass.getuser()
+        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
+            with open(f"/tmp/{user}/{name}.lock") as f:
+                pid = int(f.readlines()[-1].strip())
+            #: Kill old process if stalling
+            try:
+                os.kill(pid,signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+            os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
+        else:
+            os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
+
+        create_crm_summary_table()
+        #
+        # --- Remove lock file once process is completed
+        #
+        os.system(f"rm /tmp/{user}/{name}.lock")
