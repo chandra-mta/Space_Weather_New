@@ -120,12 +120,20 @@ def compute_goes_fluence(cxo_orbit_start, crm_data):
     #: Keep only entires which are after the start of this orbit.
     proton_table.add_column(CxoTime(proton_table['time_tag']).secs, name='cxotime')
     electron_table.add_column(CxoTime(electron_table['time_tag']).secs, name='cxotime')
-    proton_table = proton_table[proton_table['cxotime'] >= cxo_orbit_start.secs]
-    electron_table = electron_table[electron_table['cxotime'] >= cxo_orbit_start.secs]
-
     #: Convert proton unit to MeV in line with Electron Unit
     proton_table['P4'] = proton_table['P4']*1e3
     proton_table['P7'] = proton_table['P7']*1e3
+    #: Record the most recent fluxes
+    goes_data = {
+        "p4_flux": proton_table['P4'][-1],
+        "p7_flux": proton_table['P7'][-1],
+        "e2_flux": electron_table['>=2 MeV'][-1],
+        'goes_last_update': CxoTime(proton_table['cxotime'][-1]).date.split('.')[0]
+    }
+    #: Find the fluence based on date after start of current orbit.
+    proton_table = proton_table[proton_table['cxotime'] >= cxo_orbit_start.secs]
+    electron_table = electron_table[electron_table['cxotime'] >= cxo_orbit_start.secs]
+    #: At the start of a new orbit, these fluences could be zero if there is not recorded flux data points after the orbit start
 
     #: Compute fluence for each energy distinction. Multiply by 300 seconds for sum of 5-min segment table entries
     #: Ignore invalid values. Invalid proton marker is -1e5, invalid electron marker is 4.
@@ -134,15 +142,9 @@ def compute_goes_fluence(cxo_orbit_start, crm_data):
     e2_fluence = sum(electron_table[electron_table['>=2 MeV'] > 4]['>=2 MeV']) * 300
 
     #: Also record the final flux value for each channel.
-
-    goes_data = {
-        "p4_fluence": p4_fluence,
-        "p7_fluence": p7_fluence,
-        "e2_fluence": e2_fluence,
-        "p4_flux": proton_table['P4'][-1],
-        "p7_flux": proton_table['P7'][-1],
-        "e2_flux": electron_table['>=2 MeV'][-1]
-    }
+    goes_data['p4_fluence'] = p4_fluence
+    goes_data['p7_fluence'] = p7_fluence
+    goes_data['e2_fluence'] = e2_fluence
     
     #: Calculate what the attenuated flux and fluence would be for GOES based on ACIS attenuation factors from CRM.
     flux_factor = crm_data['attenuated_crm_flux'] / crm_data['crm_flux']
@@ -152,7 +154,6 @@ def compute_goes_fluence(cxo_orbit_start, crm_data):
         goes_data[f"attenuated_{k}_flux"] = flux_factor * goes_data[f"{k}_flux"]
         goes_data[f"attenuated_{k}_fluence"] = fluence_factor * goes_data[f"{k}_fluence"]
 
-    goes_data["goes_last_update"] = CxoTime(proton_table['cxotime'][-1]).date.split('.')[0]
     return goes_data
 
 def read_acis_ace_data():
