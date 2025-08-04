@@ -514,6 +514,31 @@ def extract_goes_data(link, energy_list, TO_MEV):
 
 def compute_hrc(data):
     """
+    New HRC Proxy as determined with the GOES-R energy channel distribution.
+
+    Derivation available at https://nbviewer.org/url/cxc.harvard.edu/mta/mta-ipynb/hrc-proxies.ipynb
+    """
+    c5  = data[5][1]
+    c6  = data[6][1]
+    c7  = data[7][1]
+
+    hrc = []
+
+    for k in range(0, len(c5)):
+        try:
+            val = 143.0 * c5[k] + 64738.0 * c6[k] + 162505.0 * c7[k] + 4127 #: After 2021:125:06:05:00 
+            if c5[k] < 0 or c6[k] < 0 or c7[k] < 0:
+                val = -1e5 #: Missing a channel value
+
+        except:
+            val = -1e5 #: Missing a channel value
+
+        hrc.append(val)
+
+    return hrc
+
+def compute_pre2020_hrc(data):
+    """
     compute hrc proxy value
 
     HRC_PROXY = 6000 x P4 + 270000 x P5 + 100000 x P6
@@ -537,26 +562,6 @@ def compute_hrc(data):
     input:  data    --- a list of lists of data: [[<time>, <data1>], [<time>, <data2>],...]
     output: hrc     --- hrc proxy list
     """
-    c5  = data[5][1]
-    c6  = data[6][1]
-    c7  = data[7][1]
-
-    hrc = []
-
-    for k in range(0, len(c5)):
-        try:
-            val = 143.0 * c5[k] + 64738.0 * c6[k] + 162505.0 * c7[k] + 4127 #: After 2021:125:06:05:00 
-            if c5[k] < 0 or c6[k] < 0 or c7[k] < 0:
-                val = -1e5 #: Missing a channel value
-
-        except:
-            val = -1e5 #: Missing a channel value
-
-        hrc.append(val)
-
-    return hrc
-
-def compute_pre2020_hrc(data):
     p5 = data[5][1]
     p6 = data[6][1]
     p7 = data[7][1]
