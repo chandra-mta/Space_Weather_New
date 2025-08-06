@@ -20,6 +20,7 @@ import json
 from time import sleep
 import urllib
 from astropy.table import Table
+from cxotime import CxoTime
 import argparse
 import getpass
 import signal
@@ -31,6 +32,7 @@ KP_DATA_DIR = "/data/mta4/Space_Weather/KP/Data"
 # --- Globals
 #
 KP_FORECAST_LINK = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json"
+CXONOW = CxoTime()
 
 def fetch_kp_tables():
     """
@@ -41,6 +43,7 @@ def fetch_kp_tables():
 
     kp_forecast_table.meta['source'] = KP_FORECAST_LINK
     kp_forecast_table.meta['script'] = os.path.abspath(__file__)
+    kp_forecast_table.meta['update_time'] = CXONOW.date
 
     kp_forecast_table.write(f"{KP_DATA_DIR}/kp_forecast.ecsv", overwrite=True, format='ascii.ecsv', delimiter=',')
 
