@@ -18,7 +18,7 @@ from cxotime import CxoTime
 from kadi.events import rad_zones
 import urllib
 import json
-import django.db.utils
+from django.db import close_old_connections, utils
 import argparse
 import getpass
 import traceback
@@ -45,7 +45,7 @@ def rerun(func):
     Function decorator which sleeps and reruns the provided function upon encountering a set of errors.
     """
     _freq = 3
-    _errors = (json.decoder.JSONDecodeError, urllib.error.URLError, django.db.utils.OperationalError)
+    _errors = (json.decoder.JSONDecodeError, urllib.error.URLError)
     def wrapper_func(*args,**kwargs):
         _last_exception = None
         for i in range(_freq):
@@ -54,7 +54,25 @@ def rerun(func):
             except _errors as e:
                 _last_exception = e
                 sleep(5)
-        _last_exception.add_note(f'Decorator ran function {_freq} times. Still encountered error.')
+        _last_exception.add_note(f'@rerun ran function {_freq} times. Still encountered error.')
+        raise _last_exception
+    return wrapper_func
+
+def reconnect(func):
+    """
+    Function decorator which runs the django.db close connections method if we encounter a disk I/O error
+    """
+    _freq = 2
+    _errors = (utils.OperationalError)
+    def wrapper_func(*args,**kwargs):
+        _last_exception = None
+        for i in range(_freq):
+            try:
+                return func(*args, **kwargs)
+            except _errors as e:
+                _last_exception = e
+                close_old_connections()
+        _last_exception.add_note(f'@reconnect ran function {_freq} times. Still encountered error.')
         raise _last_exception
     return wrapper_func
 
@@ -221,7 +239,7 @@ def read_comm_data():
     time_data['till_second_comm'] = round((second_comm - CXONOW).sec)
     return time_data
 
-@rerun
+@reconnect
 def read_rad_zone():
     """
     Function to fetch the current and upcoming radiation zones from kadi.events
