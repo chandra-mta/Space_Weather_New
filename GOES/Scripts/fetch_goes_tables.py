@@ -13,6 +13,7 @@ import argparse
 from astropy.table import Table
 import numpy as np
 from time import sleep
+from cxotime import CxoTime
 import getpass
 import signal
 #
@@ -29,6 +30,7 @@ INTG_COLS = ['>=1 MeV', '>=5 MeV', '>=10 MeV', '>=30 MeV', '>=50 MeV', '>=60 MeV
 DIFF_PROTON_UNIT = "protons/(cm^2*s*sr*MeV)"
 INTG_PROTON_UNIT = "protons/(cm^2*s*sr)"
 INTG_ELECTRON_UNIT = "protons/(cm^2*s*sr)"
+CXONOW = CxoTime()
 
 def fetch_goes_tables():
     """
@@ -64,6 +66,7 @@ def fetch_goes_tables():
     z.meta['source'] = INTG_ELECTRONS_LINK
     for _ in (x,y,z):
         _.meta['script'] = f"{os.path.abspath(__file__)}"
+        _.meta['update_time'] = CXONOW.date
 
     x.write(f"{GOES_DATA_DIR}/goes_differential_protons.ecsv", overwrite = True, format='ascii.ecsv', delimiter=',')
     y.write(f"{GOES_DATA_DIR}/goes_integral_protons.ecsv", overwrite = True, format='ascii.ecsv', delimiter=',')
