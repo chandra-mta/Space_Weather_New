@@ -16,9 +16,9 @@ from time import sleep
 import numpy as np
 from cxotime import CxoTime
 from kadi.events import rad_zones
-import urllib.request
-import urllib.error
+import urllib
 import json
+import django.db.utils
 import argparse
 import getpass
 import traceback
@@ -40,6 +40,24 @@ CXONOW = CxoTime()
 PLINK = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json'
 ELINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-3-day.json'
 
+def rerun(func):
+    """
+    Function decorator which sleeps and reruns the provided function upon encountering a set of errors.
+    """
+    _freq = 3
+    _errors = (json.decoder.JSONDecodeError, urllib.error.URLError, django.db.utils.OperationalError)
+    def wrapper_func(*args,**kwargs):
+        _last_exception = None
+        for i in range(_freq):
+            try:
+                return func(*args, **kwargs)
+            except _errors as e:
+                _last_exception = e
+                sleep(5)
+        _last_exception.add_note(f'Decorator ran function {_freq} times. Still encountered error.')
+        raise _last_exception
+    return wrapper_func
+
 def create_radiation_summary():
 
     crm_data = read_crm_summary()
@@ -50,7 +68,7 @@ def create_radiation_summary():
     acis_ace_data = read_acis_ace_data()
     time_data.update(read_comm_data())
 
-    rad_table = rad_zones.filter(start = CXONOW).table
+    rad_table = read_rad_zone()
     #: parse the radiation table to find start, and stop periods of the next time in-between radiation zones.
     if rad_table[0]['start'] < CXONOW:
         #: Currently in the rad zone
@@ -203,6 +221,14 @@ def read_comm_data():
     time_data['till_second_comm'] = round((second_comm - CXONOW).sec)
     return time_data
 
+@rerun
+def read_rad_zone():
+    """
+    Function to fetch the current and upcoming radiation zones from kadi.events
+    """
+    rad_table = rad_zones.filter(start = CXONOW).table
+    return rad_table
+
 def read_fp_history_file():
     """
     File columns are start time, instrument, obsid
@@ -282,24 +308,6 @@ def calculate_projected_fluence(crm_data, goes_data, acis_ace_data, time_data):
             projected_fluence_data[f'{keyword}projected_{channel}_fluence_second_comm'] = _e * time_data['till_second_comm'] + _f
 
     return projected_fluence_data
-
-def rerun(func):
-    """
-    Function decorator which sleeps and reruns the provided function upon encountering a set of errors.
-    """
-    _freq = 3
-    _errors = (json.decoder.JSONDecodeError, urllib.error.URLError)
-    def wrapper_func(*args,**kwargs):
-        _last_exception = None
-        for i in range(_freq):
-            try:
-                return func(*args, **kwargs)
-            except _errors as e:
-                _last_exception = e
-                sleep(5)
-        _last_exception.add_note(f'Decorator ran function {_freq} times. Still encountered error.')
-        raise _last_exception
-    return wrapper_func
 
 def _fetch_for_goes():
     """
