@@ -69,8 +69,9 @@ def create_crm_flux_table():
     """
     Create the CRM flux table
     """
-    orbit_data, orbit_meta = fetch_orbit()
+    orbit_data = fetch_orbit()
     current_table = None
+    current_metadata = None
     if os.path.isfile(f"{OUT_CRM_DATA_DIR}/crm_flux_table.ecsv"):
         current_table = ascii.read(f"{OUT_CRM_DATA_DIR}/crm_flux_table.ecsv")
         start_fetch = CxoTime(current_table['cxosecs'][-1])
@@ -86,7 +87,16 @@ def create_crm_flux_table():
     crm_flux_table = add_ace_flux_column(crm_flux_table, ace_table)
 
     if current_table is not None:
-        crm_flux_table = vstack(current_table, crm_flux_table, join_type='exact')
+        current_metadata = current_table.meta
+        crm_flux_table = vstack([current_table, crm_flux_table], join_type='exact')
+        crm_flux_table = unique(crm_flux_table,keys='cxosecs')
+    
+    #: Update the meta data
+    crm_flux_table.meta.update(_coerce_date(orbit_data))
+    for k,v in kp_table.meta.items():
+        crm_flux_table.meta[f"kp_{k}"] = v
+    for k,v in ace_table.meta.items():
+        crm_flux_table.meta[f"ace_{k}"] = v
     
     crm_flux_table.write(f"{OUT_CRM_DATA_DIR}/crm_flux_table.ecsv", overwrite=True, delimiter=',')
 
@@ -117,9 +127,10 @@ def fetch_orbit():
     
     orbit_data = {'orbit_start': CxoTime(orbit_table['start'][0]),
      'orbit_stop': CxoTime(orbit_table['stop'][0]),
-     'orbit_num': orbit_table['orbit_num'][0]
+     'orbit_num': orbit_table['orbit_num'][0],
+     'orbit_last_update': CXONOW
     }
-    return orbit_data, {'orbit_last_update': CXONOW}
+    return orbit_data
 
 @reconnect
 def fetch_moves(start_fetch):
@@ -134,12 +145,15 @@ def read_kp(start_fetch):
     """
     Read the most recent observed / estimated value for the KP index.
     """
-    kp_forecast_table = ascii.read(f"{KP_DATA_DIR}/kp_forecast.ecsv")
+    kp_table = ascii.read(f"{KP_DATA_DIR}/kp_forecast.ecsv")
     #: Note that the kp_forecast_table is fetched every 3 hours, so sometimes the estimates are outdated.
-    start_sel = kp_forecast_table['time_tag'] >= _z(start_fetch - timedelta(hours = 3))
-    stop_sel = kp_forecast_table['time_tag'] <= _z(CXONOW)
+    start_sel = kp_table['time_tag'] >= _z(start_fetch - timedelta(hours = 3))
+    stop_sel = kp_table['time_tag'] <= _z(CXONOW)
     sel = np.logical_and(start_sel, stop_sel)
-    return kp_forecast_table[sel]
+    kp_table = kp_table[sel]
+    #: The original table writes the source of the data which created the file. Update to reflect file name in this script.
+    kp_table.meta[f"kp_source"] = f"{KP_DATA_DIR}/kp_forecast.ecsv"
+    return kp_table
 
 def read_ace(start_fetch):
     """
@@ -153,7 +167,9 @@ def read_ace(start_fetch):
                                       )
     ace_table.add_column(cxotime_col, name='cxosecs')
     start_sel = ace_table['cxosecs'] >= start_fetch
-    return ace_table[start_sel]
+    ace_table = ace_table[start_sel]
+    ace_table.meta[f"ace_source"] = f"{ACE_DATA_DIR}/ace_7day_archive"
+    return ace_table
 
 def intake_crm_table(kp):
     kpi = f"{kp:.1f}".replace('.', '')
@@ -241,7 +257,20 @@ def _z(arg):
         return arg.isot.split('.')[0] + "Z"
     elif isinstance(arg,datetime):
         return arg.isoformat().split('.')[0] + "Z"
-    
+
+def _coerce_date(arg):
+    """
+    Corrective internal function to coerce CxoTime into date
+    """
+    if isinstance(arg, CxoTime):
+        return arg.date
+    elif isinstance(arg,dict):
+        return {k: _coerce_date(arg[k]) for k in arg.keys()}
+    elif isinstance(arg,list):
+        return [_coerce_date(i) for i in arg]
+    else:
+        return arg
+
 @np.vectorize
 def _convert_time_format(year, month, day, hhmm):
     """Converts separated ``numpy.ndarray`` containing date information into an array of ``CxoTime`` objects.
