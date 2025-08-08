@@ -88,7 +88,7 @@ def create_crm_flux_table():
     if current_table is not None:
         crm_flux_table = vstack(current_table, crm_flux_table, join_type='exact')
     
-
+    crm_flux_table.write(f"{OUT_CRM_DATA_DIR}/crm_flux_table.ecsv", overwrite=True, delimiter=',')
 
 def reconnect(func):
     """
@@ -169,7 +169,7 @@ def format_crm_flux_table(start_fetch, kp_table):
     cxosecs = []
     kp = []
     sol_region_idx = []
-    proton_flux = []
+    crm_proton_flux = []
 
     start_interval_marker = start_fetch
     for row in kp_table:
@@ -182,18 +182,18 @@ def format_crm_flux_table(start_fetch, kp_table):
         _table = _table[sel]
         include_cxosecs = _table['cxosecs'].tolist()
         include_region = _table['sol_region_idx'].tolist()
-        include_flux = _table['proton_flux'].tolist()
+        include_flux = _table['crm_proton_flux'].tolist()
         include_kp = [row['kp'] for _ in include_region]
 
         cxosecs += include_cxosecs
         sol_region_idx += include_region
-        proton_flux += include_flux
+        crm_proton_flux += include_flux
         kp += include_kp
 
         #: Setup the start_interval_marker for the next run.
         start_interval_marker = CxoTime(row['time_tag']) + timedelta(hours=3)
 
-    crm_flux_table = Table([cxosecs, kp, sol_region_idx, proton_flux], names=('cxosecs', 'kp', 'sol_region_idx', 'proton_flux'))
+    crm_flux_table = Table([cxosecs, kp, sol_region_idx, crm_proton_flux], names=('cxosecs', 'kp', 'sol_region_idx', 'crm_proton_flux'))
     return crm_flux_table
 
 def add_instrument_config(crm_flux_table, start_fetch):
@@ -264,3 +264,46 @@ def _convert_time_format(year, month, day, hhmm):
         f"{year:04}:{month:02}:{day:02}:{hh:02}:{mm:02}", "%Y:%m:%d:%H:%M"
     )
     return CxoTime(time, format="datetime").secs
+
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    parser.add_argument("-p", "--path", help = "Determine data output file path")
+    args = parser.parse_args()
+
+    if args.mode == 'test':
+        if args.path:
+            OUT_CRM_DATA_DIR = args.path
+        else:
+            OUT_CRM_DATA_DIR = f"{os.getcwd()}/test/_outTest"
+        os.makedirs(OUT_CRM_DATA_DIR, exist_ok=True)
+
+        create_crm_flux_table()
+
+    elif args.mode == "flight":
+#
+#--- Create a lock file and exit strategy in case of race conditions
+#
+        name = os.path.basename(__file__).split(".")[0]
+        user = getpass.getuser()
+        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
+            with open(f"/tmp/{user}/{name}.lock") as f:
+                pid = int(f.readlines()[-1].strip())
+                #Kill old stalling process and remove corresponding lock file.
+                os.remove(f"/tmp/{user}/{name}.lock")
+                try:
+                    os.kill(pid,signal.SIGTERM)
+                except ProcessLookupError:
+                    pass
+                #Generate lock file for the current corresponding process
+                os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
+        else:
+            #Previous script run must have completed successfully. Prepare lock file for this script run.
+            os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
+        
+        create_crm_flux_table()
+#
+#--- Remove lock file once process is completed
+#
+        os.system(f"rm /tmp/{user}/{name}.lock")
