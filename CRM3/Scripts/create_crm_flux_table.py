@@ -71,7 +71,7 @@ def create_crm_flux_table():
     """
     orbit_data = fetch_orbit()
     current_table = None
-    current_metadata = None
+    current_metadata = {}
     if os.path.isfile(f"{OUT_CRM_DATA_DIR}/crm_flux_table.ecsv"):
         current_table = ascii.read(f"{OUT_CRM_DATA_DIR}/crm_flux_table.ecsv")
         start_fetch = CxoTime(current_table['cxosecs'][-1])
@@ -91,16 +91,19 @@ def create_crm_flux_table():
         crm_flux_table = vstack([current_table, crm_flux_table], join_type='exact')
         crm_flux_table = unique(crm_flux_table,keys='cxosecs')
     
-    #: If orbit has changed, check and create new table if necessary
-    if current_metadata['orbit_num'] != orbit_data['orbit_num']:
-        previous_table = crm_flux_table[crm_flux_table['cxosecs'] <= orbit_data['orbit_stop'].secs]
-        new_table = crm_flux_table[crm_flux_table['cxosecs'] > orbit_data['orbit_start'].secs]
-        #: Even if there is a new orbit, we might not have flux for the latest orbit yet. Only record once we have flux.
-        if len(new_table) > 0:
-            previous_table.meta = current_metadata
-            previous_table.write(f"{OUT_CRM_DATA_DIR}/previous_crm_flux_table.ecsv", overwrite=True, delimiter=',')
-            crm_flux_table = new_table
-            crm_flux_table.meta.update(_coerce_date(orbit_data))
+        #: If orbit has changed, check and create new table if necessary
+        if current_metadata.get('orbit_num') != orbit_data['orbit_num']:
+            previous_table = crm_flux_table[crm_flux_table['cxosecs'] <= orbit_data['orbit_stop'].secs]
+            new_table = crm_flux_table[crm_flux_table['cxosecs'] > orbit_data['orbit_start'].secs]
+            #: Even if there is a new orbit, we might not have flux for the latest orbit yet. Only record once we have flux.
+            if len(new_table) > 0:
+                previous_table.meta = current_metadata
+                previous_table.write(f"{OUT_CRM_DATA_DIR}/previous_crm_flux_table.ecsv", overwrite=True, delimiter=',')
+                crm_flux_table = new_table
+                crm_flux_table.meta.update(_coerce_date(orbit_data))
+    else:
+        #: No previous table, record orbit of brand new table
+        crm_flux_table.meta.update(_coerce_date(orbit_data))
 
     #: Update the rest of the meta data
     for k,v in kp_table.meta.items():
@@ -162,7 +165,7 @@ def read_kp(start_fetch):
     sel = np.logical_and(start_sel, stop_sel)
     kp_table = kp_table[sel]
     #: The original table writes the source of the data which created the file. Update to reflect file name in this script.
-    kp_table.meta[f"kp_source"] = f"{KP_DATA_DIR}/kp_forecast.ecsv"
+    kp_table.meta[f"source"] = f"{KP_DATA_DIR}/kp_forecast.ecsv"
     return kp_table
 
 def read_ace(start_fetch):
@@ -178,7 +181,7 @@ def read_ace(start_fetch):
     ace_table.add_column(cxotime_col, name='cxosecs')
     start_sel = ace_table['cxosecs'] >= start_fetch
     ace_table = ace_table[start_sel]
-    ace_table.meta[f"ace_source"] = f"{ACE_DATA_DIR}/ace_7day_archive"
+    ace_table.meta[f"source"] = f"{ACE_DATA_DIR}/ace_7day_archive"
     return ace_table
 
 def intake_crm_table(kp):
