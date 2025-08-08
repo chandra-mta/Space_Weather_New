@@ -91,8 +91,18 @@ def create_crm_flux_table():
         crm_flux_table = vstack([current_table, crm_flux_table], join_type='exact')
         crm_flux_table = unique(crm_flux_table,keys='cxosecs')
     
-    #: Update the meta data
-    crm_flux_table.meta.update(_coerce_date(orbit_data))
+    #: If orbit has changed, check and create new table if necessary
+    if current_metadata['orbit_num'] != orbit_data['orbit_num']:
+        previous_table = crm_flux_table[crm_flux_table['cxosecs'] <= orbit_data['orbit_stop'].secs]
+        new_table = crm_flux_table[crm_flux_table['cxosecs'] > orbit_data['orbit_start'].secs]
+        #: Even if there is a new orbit, we might not have flux for the latest orbit yet. Only record once we have flux.
+        if len(new_table) > 0:
+            previous_table.meta = current_metadata
+            previous_table.write(f"{OUT_CRM_DATA_DIR}/previous_crm_flux_table.ecsv", overwrite=True, delimiter=',')
+            crm_flux_table = new_table
+            crm_flux_table.meta.update(_coerce_date(orbit_data))
+
+    #: Update the rest of the meta data
     for k,v in kp_table.meta.items():
         crm_flux_table.meta[f"kp_{k}"] = v
     for k,v in ace_table.meta.items():
