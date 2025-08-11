@@ -35,7 +35,6 @@ ACIS_FLUENCE_DATA_DIR = "/proj/sot/acis/FLU-MON"
 #
 # --- Globals
 #
-CRM_DATA_COL_NAMES = ('cxosecs', 'sol_region_idx', 'crm_proton_flux', 'x', 'y', 'z') #: Column names possibly inaccurate
 GOES_P4_RADMON_FACTOR = 3.4 #: This factor converts the GOES-R P4 channel flux (already recorded in MeV) into the RADMON P4GM units.
 GOES_P7_RADMON_FACTOR = 12 #: This factor converts the GOES-R P7 channel flux (already recorded in MeV) into the RADMON P41GM units
 SW_FACTOR  = [0, 1, 2, 0.5] #: Indexed according to the CRM solar region index marker
@@ -45,6 +44,10 @@ TDELTA = 300
 CXONOW = CxoTime()
 ISONOW = CXONOW.isot.split('.')[0] + "Z"
 SOL_REGION = ['NULL', 'Solar_Wind', 'Magnetosheath', 'Magnetosphere'] #: Indexed according to the CRM solar region index marker
+#
+# --- Column Globals
+#
+_CRM_DATA_COL_NAMES = ('cxosecs', 'sol_region_idx', 'crm_proton_flux', 'x', 'y', 'z') #: Column names possibly inaccurate
 _INPUT_ACE_COLUMNS = [
     "year",
     "month",
@@ -64,6 +67,17 @@ _INPUT_ACE_COLUMNS = [
     "aniso",
 ]  #: For reading in ACE data file.
 _P3_CHANNEL = "proton115-195"  #: Channel selection for P3 alert.
+
+COLUMN_DESCRIPTIONS = {
+    'cxosecs': "Seconds since 1998-01-01T00:00:00 (TT)",
+    'kp': "KP Index",
+    'sol_region_idx': "Index of Solar Region of Chandra. ['NULL', 'Solar_Wind', 'Magnetosheath', 'Magnetosphere']",
+    'crm_proton_flux': "CRM (runcrm fortran) estimate of proton flux",
+    'instrument': "Latest instrument at time point in FP",
+    'grating': "Latest grating at time point in FP",
+    'ace_p3_flux': "Flux of the ACE p3 Channel 115-195 KeV"
+    
+}
 
 def create_crm_flux_table():
     """
@@ -187,7 +201,7 @@ def read_ace(start_fetch):
 def intake_crm_table(kp):
     kpi = f"{kp:.1f}".replace('.', '')
     file = f"{CRM_DATA_DIR}/CRM3_p.dat{kpi}"
-    crm_data_table = ascii.read(file, names = CRM_DATA_COL_NAMES)
+    crm_data_table = ascii.read(file, names = _CRM_DATA_COL_NAMES)
     return crm_data_table
 
 def format_crm_flux_table(start_fetch, kp_table):
