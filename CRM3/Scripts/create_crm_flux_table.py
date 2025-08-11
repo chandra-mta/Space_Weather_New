@@ -75,8 +75,17 @@ COLUMN_DESCRIPTIONS = {
     'crm_proton_flux': "CRM (runcrm fortran) estimate of proton flux",
     'instrument': "Latest instrument at time point in FP",
     'grating': "Latest grating at time point in FP",
-    'ace_p3_flux': "Flux of the ACE p3 Channel 115-195 KeV"
-    
+    'ace_p3_flux': "Flux of the ACE p3 Channel 115-195 KeV",
+    'corrected_crm_flux': "Linear combination of crm_proton_flux and ace_p3_flux according to solar region",
+    'attenuated_crm_flux': "Corrected CRM flux with scaling factor dependent on instrument and grating configuration."
+}
+
+COLUMN_UNITS = {
+    'cxosecs': "s",
+    'crm_proton_flux':"protons/(cm^2*s*sr*MeV)",
+    'ace_p3_flux':"protons/(cm^2*s*sr*MeV)",
+    'corrected_crm_flux':"protons/(cm^2*s*sr*MeV)",
+    'attenuated_crm_flux':"protons/(cm^2*s*sr*MeV)"
 }
 
 def create_crm_flux_table():
@@ -99,6 +108,7 @@ def create_crm_flux_table():
     crm_flux_table = format_crm_flux_table(start_fetch, kp_table)
     crm_flux_table = add_instrument_config(crm_flux_table, start_fetch)
     crm_flux_table = add_ace_flux_column(crm_flux_table, ace_table)
+    crm_flux_table = add_flux_attenuation(crm_flux_table)
 
     if current_table is not None:
         current_metadata = current_table.meta
@@ -118,6 +128,10 @@ def create_crm_flux_table():
     else:
         #: No previous table, record orbit of brand new table
         crm_flux_table.meta.update(_coerce_date(orbit_data))
+        for k,v in COLUMN_DESCRIPTIONS.items():
+            crm_flux_table[k].description = v
+        for k,v in COLUMN_UNITS.items():
+            crm_flux_table[k].unit = v
 
     #: Update the rest of the meta data
     for k,v in kp_table.meta.items():
@@ -273,7 +287,7 @@ def add_instrument_config(crm_flux_table, start_fetch):
         #: Bisect finds the index to insert a value into an array, therefore stepping back by one is the most recent state
         tsc_idx = bisect.bisect_left(tsc_moves['tstop'],entry['cxosecs']) - 1
         si = tsc_moves[tsc_idx]['stop_det']
-        instrument.append(si)
+        instrument.append(si.strip())
 
         grat_idx = bisect.bisect_left(grating_moves['tstop'],entry['cxosecs']) - 1
         if grating_moves[grat_idx]['direction'] == 'RETR':
@@ -295,6 +309,20 @@ def add_ace_flux_column(crm_flux_table, ace_table):
     ace_table = ace_table[:len(crm_flux_table)]
     
     crm_flux_table.add_column(ace_table[_P3_CHANNEL], name='ace_p3_flux')
+    return crm_flux_table
+
+def add_flux_attenuation(crm_flux_table):
+    """
+    Use solar region, instrument, and grating to calculate two additional flux columns.
+    """
+    crm_factors = [CRM_FACTOR[i] for i in crm_flux_table['sol_region_idx']]
+    sw_factors = [SW_FACTOR[i] for i in crm_flux_table['sol_region_idx']]
+    att_factors = _att_factor(crm_flux_table['instrument'], crm_flux_table['grating'])
+
+    corrected =  crm_factors * crm_flux_table['crm_proton_flux'].data + sw_factors * crm_flux_table['ace_p3_flux'].data
+    attenuated = att_factors * corrected
+    crm_flux_table.add_column(corrected, name='corrected_crm_flux')
+    crm_flux_table.add_column(attenuated, name='attenuated_crm_flux')
     return crm_flux_table
 
 def _z(arg):
@@ -341,6 +369,20 @@ def _convert_time_format(year, month, day, hhmm):
         f"{year:04}:{month:02}:{day:02}:{hh:02}:{mm:02}", "%Y:%m:%d:%H:%M"
     )
     return CxoTime(time, format="datetime").secs
+
+@np.vectorize
+def _att_factor(si, otg):
+    """
+    Determine instrument attenuation factor
+    """
+    att = 1
+    if si in ("HRC-I","HRC-S"):
+        att = 0
+    elif otg == "LETG":
+        att = 0.5
+    elif otg == "HETG":
+        att = 0.2
+    return att
 
 if __name__ == "__main__":
 
