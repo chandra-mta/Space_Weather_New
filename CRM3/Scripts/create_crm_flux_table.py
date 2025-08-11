@@ -195,6 +195,27 @@ def read_ace(start_fetch):
     ace_table.add_column(cxotime_col, name='cxosecs')
     start_sel = ace_table['cxosecs'] >= start_fetch
     ace_table = ace_table[start_sel]
+
+    corrected_p3 = np.zeros(len(ace_table)) #: Correct / ignore missing and low values
+    _valid = None
+    _count = 0
+    while _valid is None:
+        if ace_table[_P3_CHANNEL][_count] >= 0:
+            _valid = ace_table[_P3_CHANNEL][_count]
+            if _valid < 1e-6:
+                _valid = 0
+        else:
+            _count += 1
+    for i, val in enumerate(ace_table[_P3_CHANNEL]):
+        if val < 0: #: Missing value
+            corrected_p3[i] = _valid
+        elif 0 <= val < 1e-6: #: Valid but nominally zero
+            corrected_p3[i] == 0
+            _valid = 0
+        else:
+            corrected_p3[i] = val
+            _valid = val
+    ace_table[_P3_CHANNEL] = corrected_p3
     ace_table.meta[f"source"] = f"{ACE_DATA_DIR}/ace_7day_archive"
     return ace_table
 
