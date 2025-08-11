@@ -122,7 +122,7 @@ def create_crm_flux_table():
             #: Even if there is a new orbit, we might not have flux for the latest orbit yet. Only record once we have flux.
             if len(new_table) > 0:
                 previous_table.meta = current_metadata
-                previous_table.write(f"{OUT_CRM_DATA_DIR}/previous_crm_flux_table.ecsv", overwrite=True, delimiter=',')
+                archive(previous_table)
                 crm_flux_table = new_table
                 crm_flux_table.meta.update(_coerce_date(orbit_data))
     else:
@@ -140,6 +140,24 @@ def create_crm_flux_table():
         crm_flux_table.meta[f"ace_{k}"] = v
     
     crm_flux_table.write(f"{OUT_CRM_DATA_DIR}/crm_flux_table.ecsv", overwrite=True, delimiter=',')
+
+def archive(previous_table):
+    """
+    Write previous orbit's information to the CRM archive.
+    """
+    corrected_crm_fluence = sum(previous_table['corrected_crm_flux'] * TDELTA)
+    attenuated_crm_fluence = sum(previous_table['attenuated_crm_flux'] * TDELTA)
+
+    archive_table = ascii.read(f"{CRM_DATA_DIR}/CRMarchive.ecsv")
+    archive_table.add_row([
+        previous_table.meta['orbit_start'],
+        previous_table.meta['orbit_stop'],
+        previous_table.meta['orbit_num'],
+        corrected_crm_fluence,
+        attenuated_crm_fluence
+    ])
+    archive_table.write(f"{CRM_DATA_DIR}/CRMarchive.ecsv", overwrite=True, delimiter=',')
+    previous_table.write(f"{OUT_CRM_DATA_DIR}/previous_crm_flux_table.ecsv", overwrite=True, delimiter=',')
 
 def reconnect(func):
     """
