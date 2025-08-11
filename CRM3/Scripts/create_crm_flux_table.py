@@ -147,7 +147,7 @@ def archive(previous_table):
         corrected_crm_fluence,
         attenuated_crm_fluence
     ])
-    archive_table.write(f"{CRM_DATA_DIR}/CRMarchive.ecsv", overwrite=True, delimiter=',')
+    archive_table.write(f"{OUT_CRM_DATA_DIR}/CRMarchive.ecsv", overwrite=True, delimiter=',')
     previous_table.write(f"{OUT_CRM_DATA_DIR}/previous_crm_flux_table.ecsv", overwrite=True, delimiter=',')
 
 def reconnect(func):
