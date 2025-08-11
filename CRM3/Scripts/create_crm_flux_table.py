@@ -7,8 +7,6 @@
 
 """
 import os
-import sys
-import json
 import bisect
 from astropy.io import ascii
 from astropy.table import Table, unique, vstack
@@ -27,22 +25,15 @@ CRM_WEB_DIR = "/data/mta4/www/RADIATION/CRM"
 CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
 OUT_CRM_WEB_DIR = "/data/mta4/www/RADIATION/CRM"
 OUT_CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
-EPHEM_DATA_DIR = "/data/mta4/Space_Weather/EPHEM/Data"
 ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
-GOES_DATA_DIR = "/data/mta4/Space_Weather/GOES/Data"
 KP_DATA_DIR = "/data/mta4/Space_Weather/KP/Data"
-ACIS_FLUENCE_DATA_DIR = "/proj/sot/acis/FLU-MON"
 #
 # --- Globals
 #
-GOES_P4_RADMON_FACTOR = 3.4 #: This factor converts the GOES-R P4 channel flux (already recorded in MeV) into the RADMON P4GM units.
-GOES_P7_RADMON_FACTOR = 12 #: This factor converts the GOES-R P7 channel flux (already recorded in MeV) into the RADMON P41GM units
 SW_FACTOR  = [0, 1, 2, 0.5] #: Indexed according to the CRM solar region index marker
 CRM_FACTOR = [0, 0, 1, 1] #: Indexed according to the CRM solar region index marker
-TDELTA = 300
-
 CXONOW = CxoTime()
-ISONOW = CXONOW.isot.split('.')[0] + "Z"
+TDELTA = 300
 SOL_REGION = ['NULL', 'Solar_Wind', 'Magnetosheath', 'Magnetosphere'] #: Indexed according to the CRM solar region index marker
 #
 # --- Column Globals
@@ -187,7 +178,7 @@ def fetch_orbit():
     orbit_data = {'orbit_start': CxoTime(orbit_table['start'][0]),
      'orbit_stop': CxoTime(orbit_table['stop'][0]),
      'orbit_num': orbit_table['orbit_num'][0],
-     'orbit_last_update': CXONOW
+     'orbit_update_time': CXONOW
     }
     return orbit_data
 
@@ -440,6 +431,8 @@ if __name__ == "__main__":
             os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
         
         create_crm_flux_table()
+        #: Make available on the web
+        os.system(f"cp {OUT_CRM_DATA_DIR}/crm_flux_table.ecsv {OUT_CRM_WEB_DIR}/crm_flux_table.ecsv")
 #
 #--- Remove lock file once process is completed
 #
