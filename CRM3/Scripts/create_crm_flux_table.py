@@ -27,6 +27,8 @@ OUT_CRM_WEB_DIR = "/data/mta4/www/RADIATION/CRM"
 OUT_CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
 ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
 KP_DATA_DIR = "/data/mta4/Space_Weather/KP/Data"
+FP_FILE = "/proj/sot/acis/FLU-MON/FPHIST-2001.dat"
+GRAT_FILE = "/proj/sot/acis/FLU-MON/GRATHIST-2001.dat"
 #
 # --- Globals
 #
@@ -97,7 +99,7 @@ def create_crm_flux_table():
     ace_table = read_ace(start_fetch)
 
     crm_flux_table = format_crm_flux_table(start_fetch, kp_table)
-    crm_flux_table = add_instrument_config(crm_flux_table, start_fetch)
+    crm_flux_table = add_instrument_config_kadi(crm_flux_table, start_fetch)
     crm_flux_table = add_ace_flux_column(crm_flux_table, ace_table)
     crm_flux_table = add_flux_attenuation(crm_flux_table)
 
@@ -191,6 +193,22 @@ def fetch_moves(start_fetch):
     grating_moves = events.grating_moves.filter(start=start_fetch - timedelta(days=4)).table
     return tsc_moves, grating_moves
 
+def read_instrument_files(start_fetch):
+    """
+    Read the ACIS focal plane and grating history files to find planned instrument configuration up to now.
+
+    :WARNING: This file contains the planned instrument configuration, therefore it is not perfectly consistent to 
+    actual times of when instrument or grating is in place as confirmed by command history, nor does it factor in radiation interruptions.
+    """
+    fp_table = ascii.read(FP_FILE, data_start=19000, names = ('cxotime', 'instrument', 'obsid')) #: History spans to 2001, start later then select.
+    sel_fp = fp_table['cxotime'] >= start_fetch - timedelta(days=4)
+    fp_table = fp_table[sel_fp]
+
+    grat_table = ascii.read(GRAT_FILE, data_start=7050, names = ('cxotime', 'hetg', 'letg', 'obsid')) #: History spans to 2001, start later then select.
+    sel_grat = grat_table['cxotime'] >= start_fetch - timedelta(days=4)
+    grat_table = grat_table[sel_grat]
+    return fp_table, grat_table
+
 def read_kp(start_fetch):
     """
     Read the most recent observed / estimated value for the KP index.
@@ -283,9 +301,12 @@ def format_crm_flux_table(start_fetch, kp_table):
     crm_flux_table = Table([cxosecs, kp, sol_region_idx, crm_proton_flux], names=('cxosecs', 'kp', 'sol_region_idx', 'crm_proton_flux'))
     return crm_flux_table
 
-def add_instrument_config(crm_flux_table, start_fetch):
+def add_instrument_config_kadi(crm_flux_table, start_fetch):
     """
     Use kadi events to fetch TSC and grating moves to determine instrument and grating for attenuating the flux
+
+    :WARNING: This source provides instrument configuration based on known commands in the kadi archive. As such, this function only adds
+    instrument configuration based on data since the last comm, and does not list the most up to date instrument configurations.
     """
     tsc_moves, grating_moves = fetch_moves(start_fetch)
     
