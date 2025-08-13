@@ -347,7 +347,7 @@ def add_flux_attenuation(crm_flux_table):
     """
     crm_factors = [CRM_FACTOR[i] for i in crm_flux_table['sol_region_idx']]
     sw_factors = [SW_FACTOR[i] for i in crm_flux_table['sol_region_idx']]
-    att_factors = _att_factor(crm_flux_table['instrument'], crm_flux_table['grating'])
+    att_factors = _att_factor(crm_flux_table['instrument'].data, crm_flux_table['grating'].data)
 
     corrected =  crm_factors * crm_flux_table['crm_proton_flux'].data + sw_factors * crm_flux_table['ace_p3_flux'].data
     attenuated = att_factors * corrected
@@ -400,7 +400,7 @@ def _convert_time_format(year, month, day, hhmm):
     )
     return CxoTime(time, format="datetime").secs
 
-@np.vectorize
+@np.vectorize(otypes=[float])
 def _att_factor(si, otg):
     """
     Determine instrument attenuation factor
