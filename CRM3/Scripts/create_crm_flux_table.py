@@ -99,7 +99,7 @@ def create_crm_flux_table():
     ace_table = read_ace(start_fetch)
 
     crm_flux_table = format_crm_flux_table(start_fetch, kp_table)
-    crm_flux_table = add_instrument_config_kadi(crm_flux_table, start_fetch)
+    crm_flux_table = add_instrument_config_file(crm_flux_table, start_fetch)
     crm_flux_table = add_ace_flux_column(crm_flux_table, ace_table)
     crm_flux_table = add_flux_attenuation(crm_flux_table)
 
@@ -299,6 +299,38 @@ def format_crm_flux_table(start_fetch, kp_table):
         start_interval_marker = CxoTime(row['time_tag']) + timedelta(hours=3)
 
     crm_flux_table = Table([cxosecs, kp, sol_region_idx, crm_proton_flux], names=('cxosecs', 'kp', 'sol_region_idx', 'crm_proton_flux'))
+    return crm_flux_table
+
+def add_instrument_config_file(crm_flux_table, start_fetch):
+    """
+    Use the ACIS instrument configuration files to determine the attenuation for the crm flux.
+    """
+    fp_table, grat_table = read_instrument_files(start_fetch)
+    
+    instrument = []
+    grating = []
+    for entry in crm_flux_table:
+        entry_date = CxoTime(entry['cxosecs']).date
+        #: Bisect finds the index to insert a value into an array, therefore stepping back by one is the most recent state
+        inst_idx = bisect.bisect_left(fp_table['cxotime'], entry_date) - 1
+        si = fp_table[inst_idx]['instrument']
+        instrument.append(si)
+
+        grat_idx = bisect.bisect_left(grat_table['cxotime'], entry_date) - 1
+        hetg = grat_table[grat_idx]['hetg']
+        letg = grat_table[grat_idx]['letg']
+        if hetg == 'HETG-OUT' and letg == 'LETG-OUT':
+            otg = 'NONE'
+        elif hetg == 'HETG-IN' and letg == 'LETG-OUT':
+            otg = "HETG"
+        elif hetg == 'HETG-OUT' and letg == 'LETG-IN':
+            otg = "LETG"
+        elif hetg == 'HETG-IN' and letg == 'LETG-IN':
+            otg = "BAD"
+        grating.append(otg)
+    crm_flux_table.add_column(instrument, name='instrument')
+    crm_flux_table.add_column(grating, name='grating')
+
     return crm_flux_table
 
 def add_instrument_config_kadi(crm_flux_table, start_fetch):
