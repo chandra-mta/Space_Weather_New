@@ -84,7 +84,7 @@ def rerun(func):
             except _errors as e:
                 _last_exception = e
                 sleep(5)
-        _last_exception.add_note(f'Decorator ran function {_freq} times. Still encountered error.')
+        _last_exception.add_note(f'@rerun ran function {_freq} times. Still encountered error.')
         raise _last_exception
     return wrapper_func
 
