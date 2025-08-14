@@ -235,7 +235,8 @@ def read_ace(start_fetch):
                                       )
     ace_table.add_column(cxotime_col, name='cxosecs')
     start_sel = ace_table['cxosecs'] >= start_fetch
-    ace_table = ace_table[start_sel]
+    stop_sel = ace_table['cxosecs'] <= CXONOW
+    ace_table = ace_table[np.logical_and(start_sel, stop_sel)]
 
     corrected_p3 = np.zeros(len(ace_table)) #: Correct / ignore missing and low values
     _valid = None
@@ -299,6 +300,8 @@ def format_crm_flux_table(start_fetch, kp_table):
         start_interval_marker = CxoTime(row['time_tag']) + timedelta(hours=3)
 
     crm_flux_table = Table([cxosecs, kp, sol_region_idx, crm_proton_flux], names=('cxosecs', 'kp', 'sol_region_idx', 'crm_proton_flux'))
+    stop_sel = crm_flux_table['cxosecs'] <= CXONOW.secs
+    crm_flux_table[stop_sel]
     return crm_flux_table
 
 def add_instrument_config_file(crm_flux_table, start_fetch):
