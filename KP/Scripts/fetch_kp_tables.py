@@ -18,6 +18,7 @@
 import os
 import json
 from time import sleep
+from datetime import datetime, timedelta
 import urllib
 from astropy.table import Table
 from cxotime import CxoTime
@@ -31,7 +32,8 @@ KP_DATA_DIR = "/data/mta4/Space_Weather/KP/Data"
 #
 # --- Globals
 #
-KP_FORECAST_LINK = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json"
+SOURCE_SWPC = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json"
+SOURCE_IAGA = "https://www-app3.gfz-potsdam.de/kp_index/qlyymm.tab"
 CXONOW = CxoTime()
 
 def fetch_kp_tables():
@@ -98,6 +100,47 @@ def reorient_forecast(forecast):
     
     kp_forecast_table = Table(rows=rows)
     return kp_forecast_table
+
+@rerun
+def fetch_IAGA_KP():
+    """
+    Fetches the KP measurement and estimates as weighted by the IAGA
+    Adapted from Kp/Scripts/update_k_index.py
+    
+    :Links: https://www-app3.gfz-potsdam.de/kp_index/qlyymm.html    
+    :Note: Columns are date, 3-hour-blocks_kp(8), daily_sum, average_ap, average_cp
+
+    """
+    def _translate(s):
+        """
+        Translate string marker to float value.
+        """
+        if s[1] == '+':
+            return round(float(s[0]) + 0.33,3)
+        elif s[1] == '-':
+            return round(float(s[0]) - 0.33,3)
+        elif s[1] == 'o':
+            return round(float(s[0]),3)
+    
+    #: IAGA source formats data as a custom string parse with custom tab delimination
+    with urllib.request.urlopen(SOURCE_IAGA, timeout = 10) as url:
+        output = url.read().decode()
+        raw_lines = [line.strip() for line in output.split('\n') if line != '']
+    
+    #: Cut the tabs by line and ignore the daily average and sums, keeping on the KP index for each hour block
+    kp_lines = [x.split()[:9] for x in raw_lines]
+    
+    #: Iterate through each day
+    time_tag = []
+    kp = []
+    for day in kp_lines:
+        date = datetime.strptime(day[0], '%y%m%d')
+        for i, entry in enumerate(day[1:]):
+            time = date + timedelta(hours=3*i)
+            time_tag.append(time.isoformat(timespec='seconds') + 'Z')
+            kp.append(_translate(entry))
+    
+    return Table([time_tag, kp], names = ('time_tag', 'kp'))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
