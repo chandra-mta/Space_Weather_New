@@ -38,16 +38,37 @@ CXONOW = CxoTime()
 
 def fetch_kp_tables():
     """
-    Fetch the KP forecast data from SWPC and orient into a workable astropy table with metadata
+    Fetch and write out the multiple versions of KP tables for each observatory source.
+
+    :NOTE: Each observatory source pulls also pulls from other observatories in real-time and use their own weighting algorithm to calculate KP estimates.
     """
-    forecast = read_json(KP_FORECAST_LINK)
-    kp_forecast_table = reorient_forecast(forecast)
 
-    kp_forecast_table.meta['source'] = KP_FORECAST_LINK
-    kp_forecast_table.meta['script'] = os.path.abspath(__file__)
-    kp_forecast_table.meta['update_time'] = CXONOW.date
+    swpc_kp = fetch_SWPC_KP()
+    iaga_kp = fetch_IAGA_KP()
 
-    kp_forecast_table.write(f"{KP_DATA_DIR}/kp_forecast.ecsv", overwrite=True, format='ascii.ecsv', delimiter=',')
+    swpc_filename = f"{KP_DATA_DIR}/kp_swpc.ecsv"
+    swpc_kp.meta['description'] = "Forecast of the planetary KP index as sourced from the SWPC. Includes observed, estimated, and predicted values. https://www.swpc.noaa.gov/products/planetary-k-index."
+    swpc_kp.meta['sources'] = [
+        {'origin_link': SOURCE_SWPC,
+         'origin_script': os.path.abspath(__file__),
+         'update_time': CXONOW.date,
+         'mta_owned_origin': False,
+         'output_file': swpc_filename
+        }
+    ]
+    swpc_kp.write(swpc_filename, overwrite=True, delimiter=',')
+
+    iaga_filename = f"{KP_DATA_DIR}/kp_iaga.ecsv"
+    iaga_kp.meta['description'] = "Observations of the planetary KP index as compiled by the IAGA. https://www-app3.gfz-potsdam.de/kp_index/qlyymm.html."
+    iaga_kp.meta['sources'] = [
+        {'origin_link': SOURCE_IAGA,
+         'origin_script': os.path.abspath(__file__),
+         'update_time': CXONOW.date,
+         'mta_owned_origin': False,
+         'output_file': iaga_filename
+        }
+    ]
+    iaga_kp.write(iaga_filename, overwrite=True, delimiter=',')
 
 def rerun(func):
     """
@@ -101,15 +122,23 @@ def reorient_forecast(forecast):
     kp_forecast_table = Table(rows=rows)
     return kp_forecast_table
 
+def fetch_SWPC_KP():
+    """
+    Fetch the KP forecast data from the SWPC and orient into a workable astropy table
+
+    :Links: https://www.swpc.noaa.gov/products/planetary-k-index
+    """
+    forecast = read_json(SOURCE_SWPC)
+    kp_forecast_table = reorient_forecast(forecast)
+    return kp_forecast_table
+
 @rerun
 def fetch_IAGA_KP():
     """
     Fetches the KP measurement and estimates as weighted by the IAGA
-    Adapted from Kp/Scripts/update_k_index.py
     
     :Links: https://www-app3.gfz-potsdam.de/kp_index/qlyymm.html    
-    :Note: Columns are date, 3-hour-blocks_kp(8), daily_sum, average_ap, average_cp
-
+    :NOTE: Columns are date, 3-hour-blocks_kp(8), daily_sum, average_ap, average_cp
     """
     def _translate(s):
         """
