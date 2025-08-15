@@ -18,6 +18,7 @@
 import os
 import json
 from time import sleep
+from datetime import datetime, timedelta
 import urllib
 from astropy.table import Table
 from cxotime import CxoTime
@@ -31,21 +32,43 @@ KP_DATA_DIR = "/data/mta4/Space_Weather/KP/Data"
 #
 # --- Globals
 #
-KP_FORECAST_LINK = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json"
+SOURCE_SWPC = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json"
+SOURCE_IAGA = "https://www-app3.gfz-potsdam.de/kp_index/qlyymm.tab"
 CXONOW = CxoTime()
 
 def fetch_kp_tables():
     """
-    Fetch the KP forecast data from SWPC and orient into a workable astropy table with metadata
+    Fetch and write out the multiple versions of KP tables for each observatory source.
+
+    :NOTE: Each observatory source pulls also pulls from other observatories in real-time and use their own weighting algorithm to calculate KP estimates.
     """
-    forecast = read_json(KP_FORECAST_LINK)
-    kp_forecast_table = reorient_forecast(forecast)
 
-    kp_forecast_table.meta['source'] = KP_FORECAST_LINK
-    kp_forecast_table.meta['script'] = os.path.abspath(__file__)
-    kp_forecast_table.meta['update_time'] = CXONOW.date
+    swpc_kp = fetch_SWPC_KP()
+    iaga_kp = fetch_IAGA_KP()
 
-    kp_forecast_table.write(f"{KP_DATA_DIR}/kp_forecast.ecsv", overwrite=True, format='ascii.ecsv', delimiter=',')
+    swpc_filename = f"{KP_DATA_DIR}/kp_swpc.ecsv"
+    swpc_kp.meta['description'] = "Forecast of the planetary KP index as sourced from the SWPC. Includes observed, estimated, and predicted values. https://www.swpc.noaa.gov/products/planetary-k-index."
+    swpc_kp.meta['sources'] = [
+        {'origin_link': SOURCE_SWPC,
+         'origin_script': os.path.abspath(__file__),
+         'update_time': CXONOW.date,
+         'mta_owned_origin': False,
+         'output_file': swpc_filename
+        }
+    ]
+    swpc_kp.write(swpc_filename, overwrite=True, delimiter=',')
+
+    iaga_filename = f"{KP_DATA_DIR}/kp_iaga.ecsv"
+    iaga_kp.meta['description'] = "Observations of the planetary KP index as compiled by the IAGA. https://www-app3.gfz-potsdam.de/kp_index/qlyymm.html."
+    iaga_kp.meta['sources'] = [
+        {'origin_link': SOURCE_IAGA,
+         'origin_script': os.path.abspath(__file__),
+         'update_time': CXONOW.date,
+         'mta_owned_origin': False,
+         'output_file': iaga_filename
+        }
+    ]
+    iaga_kp.write(iaga_filename, overwrite=True, delimiter=',')
 
 def rerun(func):
     """
@@ -61,7 +84,7 @@ def rerun(func):
             except _errors as e:
                 _last_exception = e
                 sleep(5)
-        _last_exception.add_note(f'Decorator ran function {_freq} times. Still encountered error.')
+        _last_exception.add_note(f'@rerun ran function {_freq} times. Still encountered error.')
         raise _last_exception
     return wrapper_func
 
@@ -98,6 +121,55 @@ def reorient_forecast(forecast):
     
     kp_forecast_table = Table(rows=rows)
     return kp_forecast_table
+
+def fetch_SWPC_KP():
+    """
+    Fetch the KP forecast data from the SWPC and orient into a workable astropy table
+
+    :Links: https://www.swpc.noaa.gov/products/planetary-k-index
+    """
+    forecast = read_json(SOURCE_SWPC)
+    kp_forecast_table = reorient_forecast(forecast)
+    return kp_forecast_table
+
+@rerun
+def fetch_IAGA_KP():
+    """
+    Fetches the KP measurement and estimates as weighted by the IAGA
+    
+    :Links: https://www-app3.gfz-potsdam.de/kp_index/qlyymm.html    
+    :NOTE: Columns are date, 3-hour-blocks_kp(8), daily_sum, average_ap, average_cp
+    """
+    def _translate(s):
+        """
+        Translate string marker to float value.
+        """
+        if s[1] == '+':
+            return round(float(s[0]) + 0.33,3)
+        elif s[1] == '-':
+            return round(float(s[0]) - 0.33,3)
+        elif s[1] == 'o':
+            return round(float(s[0]),3)
+    
+    #: IAGA source formats data as a custom string parse with custom tab delimination
+    with urllib.request.urlopen(SOURCE_IAGA, timeout = 10) as url:
+        output = url.read().decode()
+        raw_lines = [line.strip() for line in output.split('\n') if line != '']
+    
+    #: Cut the tabs by line and ignore the daily average and sums, keeping on the KP index for each hour block
+    kp_lines = [x.split()[:9] for x in raw_lines]
+    
+    #: Iterate through each day
+    time_tag = []
+    kp = []
+    for day in kp_lines:
+        date = datetime.strptime(day[0], '%y%m%d')
+        for i, entry in enumerate(day[1:]):
+            time = date + timedelta(hours=3*i)
+            time_tag.append(time.isoformat(timespec='seconds') + 'Z')
+            kp.append(_translate(entry))
+    
+    return Table([time_tag, kp], names = ('time_tag', 'kp'))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
