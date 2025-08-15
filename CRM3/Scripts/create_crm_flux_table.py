@@ -8,6 +8,7 @@
 """
 import os
 import bisect
+import json
 from astropy.io import ascii
 from astropy.table import Table, unique, vstack
 from kadi import events
@@ -27,6 +28,31 @@ OUT_CRM_WEB_DIR = "/data/mta4/www/RADIATION/CRM"
 OUT_CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
 ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
 KP_DATA_DIR = "/data/mta4/Space_Weather/KP/Data"
+FP_FILE = "/proj/sot/acis/FLU-MON/FPHIST-2001.dat"
+GRAT_FILE = "/proj/sot/acis/FLU-MON/GRATHIST-2001.dat"
+#
+# --- Documentation Globals for directories outside of MTA.
+#
+FP_DOCS = {
+    'description': "Focal Plane History File",
+    'sources': [
+        {
+            'origin_file':FP_FILE,
+            'update_time': CxoTime(os.stat(FP_FILE).st_mtime,format='unix').date,
+            'mta_owned_origin': False
+        }
+    ]
+}
+GRAT_DOCS = {
+    'description': "Optical Transmission Grating History File",
+    'sources': [
+        {
+            'origin_file':GRAT_FILE,
+            'update_time': CxoTime(os.stat(GRAT_FILE).st_mtime,format='unix').date,
+            'mta_owned_origin': False
+        }
+    ]
+}
 #
 # --- Globals
 #
@@ -97,7 +123,7 @@ def create_crm_flux_table():
     ace_table = read_ace(start_fetch)
 
     crm_flux_table = format_crm_flux_table(start_fetch, kp_table)
-    crm_flux_table = add_instrument_config(crm_flux_table, start_fetch)
+    crm_flux_table = add_instrument_config_file(crm_flux_table, start_fetch)
     crm_flux_table = add_ace_flux_column(crm_flux_table, ace_table)
     crm_flux_table = add_flux_attenuation(crm_flux_table)
 
@@ -124,12 +150,6 @@ def create_crm_flux_table():
         for k,v in COLUMN_UNITS.items():
             crm_flux_table[k].unit = v
 
-    #: Update the rest of the meta data
-    for k,v in kp_table.meta.items():
-        crm_flux_table.meta[f"kp_{k}"] = v
-    for k,v in ace_table.meta.items():
-        crm_flux_table.meta[f"ace_{k}"] = v
-    
     crm_flux_table.write(f"{OUT_CRM_DATA_DIR}/crm_flux_table.ecsv", overwrite=True, delimiter=',')
 
 def archive(previous_table):
@@ -191,18 +211,32 @@ def fetch_moves(start_fetch):
     grating_moves = events.grating_moves.filter(start=start_fetch - timedelta(days=4)).table
     return tsc_moves, grating_moves
 
+def read_instrument_files(start_fetch):
+    """
+    Read the ACIS focal plane and grating history files to find planned instrument configuration up to now.
+
+    :WARNING: This file contains the planned instrument configuration, therefore it is not perfectly consistent to 
+    actual times of when instrument or grating is in place as confirmed by command history, nor does it factor in radiation interruptions.
+    """
+    fp_table = ascii.read(FP_FILE, data_start=19000, names = ('cxotime', 'instrument', 'obsid')) #: History spans to 2001, start later then select.
+    sel_fp = fp_table['cxotime'] >= start_fetch - timedelta(days=4)
+    fp_table = fp_table[sel_fp]
+
+    grat_table = ascii.read(GRAT_FILE, data_start=7050, names = ('cxotime', 'hetg', 'letg', 'obsid')) #: History spans to 2001, start later then select.
+    sel_grat = grat_table['cxotime'] >= start_fetch - timedelta(days=4)
+    grat_table = grat_table[sel_grat]
+    return fp_table, grat_table
+
 def read_kp(start_fetch):
     """
     Read the most recent observed / estimated value for the KP index.
     """
-    kp_table = ascii.read(f"{KP_DATA_DIR}/kp_forecast.ecsv")
+    kp_table = ascii.read(f"{KP_DATA_DIR}/kp_iaga.ecsv")
     #: Note that the kp_forecast_table is fetched every 3 hours, so sometimes the estimates are outdated.
     start_sel = kp_table['time_tag'] >= _z(start_fetch - timedelta(hours = 3))
     stop_sel = kp_table['time_tag'] <= _z(CXONOW)
     sel = np.logical_and(start_sel, stop_sel)
     kp_table = kp_table[sel]
-    #: The original table writes the source of the data which created the file. Update to reflect file name in this script.
-    kp_table.meta[f"source"] = f"{KP_DATA_DIR}/kp_forecast.ecsv"
     return kp_table
 
 def read_ace(start_fetch):
@@ -217,7 +251,8 @@ def read_ace(start_fetch):
                                       )
     ace_table.add_column(cxotime_col, name='cxosecs')
     start_sel = ace_table['cxosecs'] >= start_fetch
-    ace_table = ace_table[start_sel]
+    stop_sel = ace_table['cxosecs'] <= CXONOW
+    ace_table = ace_table[np.logical_and(start_sel, stop_sel)]
 
     corrected_p3 = np.zeros(len(ace_table)) #: Correct / ignore missing and low values
     _valid = None
@@ -239,7 +274,13 @@ def read_ace(start_fetch):
             corrected_p3[i] = val
             _valid = val
     ace_table[_P3_CHANNEL] = corrected_p3
-    ace_table.meta[f"source"] = f"{ACE_DATA_DIR}/ace_7day_archive"
+    #: The original table does not have metadata as it is not formatted as an ecsv file.
+    #: Therefore we read in a separate metadata file and write to table.
+    with open(f"{ACE_DATA_DIR}/ace_7day_archive.metadata.json") as f:
+        metadata = json.load(f)
+    ace_table.meta = metadata
+    _x = os.stat('/data/mta4/Space_Weather/ACE/Data/ace_7day_archive')
+    ace_table.meta['sources'][0]['update_time'] = CxoTime(_x.st_mtime,format='unix').date
     return ace_table
 
 def intake_crm_table(kp):
@@ -281,11 +322,59 @@ def format_crm_flux_table(start_fetch, kp_table):
         start_interval_marker = CxoTime(row['time_tag']) + timedelta(hours=3)
 
     crm_flux_table = Table([cxosecs, kp, sol_region_idx, crm_proton_flux], names=('cxosecs', 'kp', 'sol_region_idx', 'crm_proton_flux'))
+    stop_sel = crm_flux_table['cxosecs'] <= CXONOW.secs
+    crm_flux_table = crm_flux_table[stop_sel]
+    #: Since this reads from the CRM3_p.dat data files, it does not include source information in the ecsv metadata. Therefore we manually include it.
+    with open(f"{CRM_DATA_DIR}/CRM3_p.dat.metadata.json") as f:
+        metadata = json.load(f)
+    crm_flux_table.meta['sources'] = metadata['sources']
+    #: And since this is a new table dependent on KP data, we include this source as well.
+    crm_flux_table.meta['sources'] += kp_table.meta['sources']
+
     return crm_flux_table
 
-def add_instrument_config(crm_flux_table, start_fetch):
+def add_instrument_config_file(crm_flux_table, start_fetch):
+    """
+    Use the ACIS instrument configuration files to determine the attenuation for the crm flux.
+    """
+    fp_table, grat_table = read_instrument_files(start_fetch)
+    
+    instrument = []
+    grating = []
+    for entry in crm_flux_table:
+        entry_date = CxoTime(entry['cxosecs']).date
+        #: Bisect finds the index to insert a value into an array, therefore stepping back by one is the most recent state
+        inst_idx = bisect.bisect_left(fp_table['cxotime'], entry_date) - 1
+        si = fp_table[inst_idx]['instrument']
+        instrument.append(si)
+
+        grat_idx = bisect.bisect_left(grat_table['cxotime'], entry_date) - 1
+        hetg = grat_table[grat_idx]['hetg']
+        letg = grat_table[grat_idx]['letg']
+        if hetg == 'HETG-OUT' and letg == 'LETG-OUT':
+            otg = 'NONE'
+        elif hetg == 'HETG-IN' and letg == 'LETG-OUT':
+            otg = "HETG"
+        elif hetg == 'HETG-OUT' and letg == 'LETG-IN':
+            otg = "LETG"
+        elif hetg == 'HETG-IN' and letg == 'LETG-IN':
+            otg = "BAD"
+        grating.append(otg)
+    crm_flux_table.add_column(instrument, name='instrument')
+    crm_flux_table.add_column(grating, name='grating')
+
+    #: Include external data sources metadata
+    crm_flux_table.meta['sources'] += FP_DOCS['sources']
+    crm_flux_table.meta['sources'] += GRAT_DOCS['sources']
+
+    return crm_flux_table
+
+def add_instrument_config_kadi(crm_flux_table, start_fetch):
     """
     Use kadi events to fetch TSC and grating moves to determine instrument and grating for attenuating the flux
+
+    :WARNING: This source provides instrument configuration based on known commands in the kadi archive. As such, this function only adds
+    instrument configuration based on data since the last comm, and does not list the most up to date instrument configurations.
     """
     tsc_moves, grating_moves = fetch_moves(start_fetch)
     
@@ -318,6 +407,8 @@ def add_ace_flux_column(crm_flux_table, ace_table):
     ace_table = ace_table[:len(crm_flux_table)]
     
     crm_flux_table.add_column(ace_table[_P3_CHANNEL], name='ace_p3_flux')
+    #: Add source metadata
+    crm_flux_table.meta['sources'] += ace_table.meta['sources']
     return crm_flux_table
 
 def add_flux_attenuation(crm_flux_table):
@@ -326,7 +417,7 @@ def add_flux_attenuation(crm_flux_table):
     """
     crm_factors = [CRM_FACTOR[i] for i in crm_flux_table['sol_region_idx']]
     sw_factors = [SW_FACTOR[i] for i in crm_flux_table['sol_region_idx']]
-    att_factors = _att_factor(crm_flux_table['instrument'], crm_flux_table['grating'])
+    att_factors = _att_factor(crm_flux_table['instrument'].data, crm_flux_table['grating'].data)
 
     corrected =  crm_factors * crm_flux_table['crm_proton_flux'].data + sw_factors * crm_flux_table['ace_p3_flux'].data
     attenuated = att_factors * corrected
@@ -379,7 +470,7 @@ def _convert_time_format(year, month, day, hhmm):
     )
     return CxoTime(time, format="datetime").secs
 
-@np.vectorize
+@np.vectorize(otypes=[float])
 def _att_factor(si, otg):
     """
     Determine instrument attenuation factor
