@@ -19,6 +19,7 @@ from django.db import close_old_connections, utils
 import argparse
 import getpass
 import signal
+import warnings
 #
 # --- Define Directory Pathing
 #
@@ -276,16 +277,23 @@ def read_ace(start_fetch):
     ace_table[_P3_CHANNEL] = corrected_p3
     #: The original table does not have metadata as it is not formatted as an ecsv file.
     #: Therefore we read in a separate metadata file and write to table.
+    _source_list = []
     with open(f"{ACE_DATA_DIR}/ace_7day_archive.metadata.json") as f:
         metadata = json.load(f)
-    ace_table.meta = metadata
-    _x = os.stat('/data/mta4/Space_Weather/ACE/Data/ace_7day_archive')
-    ace_table.meta['sources'][0]['update_time'] = CxoTime(_x.st_mtime,format='unix').date
+        ace_table.meta['description'] = metadata.get('description')
+    if isinstance(metadata.get('sources'), list):
+        #: Manually include update time.
+        _x = os.stat('/data/mta4/Space_Weather/ACE/Data/ace_7day_archive')
+        metadata['sources'][0]['update_time'] = CxoTime(_x.st_mtime,format='unix').date
+        _source_list += metadata.get('sources')
+    else:
+        #: Issue with recording the metadata. Allow process to continue and raise warning
+        warnings.warn("Couldn't assign ACE flux table metadata source")
+    ace_table.meta['sources'] = _source_list
     return ace_table
 
 def intake_crm_table(kp):
-    kpi = f"{kp:.1f}".replace('.', '')
-    file = f"{CRM_DATA_DIR}/CRM3_p.dat{kpi}"
+    file = f"{CRM_DATA_DIR}/CRM3_p.dat{_kpi(kp)}"
     crm_data_table = ascii.read(file, names = _CRM_DATA_COL_NAMES)
     return crm_data_table
 
@@ -324,12 +332,27 @@ def format_crm_flux_table(start_fetch, kp_table):
     crm_flux_table = Table([cxosecs, kp, sol_region_idx, crm_proton_flux], names=('cxosecs', 'kp', 'sol_region_idx', 'crm_proton_flux'))
     stop_sel = crm_flux_table['cxosecs'] <= CXONOW.secs
     crm_flux_table = crm_flux_table[stop_sel]
-    #: Since this reads from the CRM3_p.dat data files, it does not include source information in the ecsv metadata. Therefore we manually include it.
+    _source_list = []
+    #: This table has read from the CRM3_p.dat data files, but non-ecsv files don't include source information. Therefore we manually include it.
     with open(f"{CRM_DATA_DIR}/CRM3_p.dat.metadata.json") as f:
         metadata = json.load(f)
-    crm_flux_table.meta['sources'] = metadata['sources']
-    #: And since this is a new table dependent on KP data, we include this source as well.
-    crm_flux_table.meta['sources'] += kp_table.meta['sources']
+        crm_flux_table.meta['description'] = metadata.get('description')
+    if isinstance(metadata.get('sources'), list):
+        #: Manually include update time.
+        _x = os.stat(f"{CRM_DATA_DIR}/CRM3_p.dat{_kpi(max(crm_flux_table['kp']))}") #: Workaround to ensure we are picking a KP file used in this table.
+        metadata['sources'][0]['update_time'] = CxoTime(_x.st_mtime,format='unix').date
+        _source_list += metadata.get('sources')
+    else:
+        #: Issue with recording the metadata. Allow process to continue and raise warning
+        warnings.warn("Couldn't assign CRM flux table metadata source")
+
+    if isinstance(kp_table.meta.get('sources'), list):
+        #: And since this is a new table dependent on KP data, we include this source.
+        _source_list += kp_table.meta.get('sources')
+    else:
+        #: Issue with recording the metadata. Allow process to continue and raise warning
+        warnings.warn("Couldn't assign KP table metadata source")
+    crm_flux_table.meta['sources'] = _source_list
 
     return crm_flux_table
 
@@ -408,7 +431,7 @@ def add_ace_flux_column(crm_flux_table, ace_table):
     
     crm_flux_table.add_column(ace_table[_P3_CHANNEL], name='ace_p3_flux')
     #: Add source metadata
-    crm_flux_table.meta['sources'] += ace_table.meta['sources']
+    crm_flux_table.meta['sources'] += ace_table.meta.get('sources')
     return crm_flux_table
 
 def add_flux_attenuation(crm_flux_table):
@@ -433,6 +456,12 @@ def _z(arg):
         return arg.isot.split('.')[0] + "Z"
     elif isinstance(arg,datetime):
         return arg.isoformat().split('.')[0] + "Z"
+
+def _kpi(kp):
+    """
+    Corrective KP index float to CRM filename format
+    """
+    return f"{kp:.1f}".replace('.', '')
 
 def _coerce_date(arg):
     """
