@@ -12,7 +12,6 @@ import numpy as np
 import argparse
 import getpass
 import signal
-import warnings
 from astropy.io import ascii
 from cxotime import CxoTime
 from jinja2 import Environment, FileSystemLoader
@@ -48,22 +47,13 @@ def create_crm_summary():
     Read from the crm_flux_table.ecsv and generate summaries.
     """
 
-    summary, summary_meta = read_crm_flux_table()
+    summary, orbit_meta = read_crm_flux_table()
     summary['sol_region'] = SOL_REGION[summary['sol_region_idx']] #: Additional clarity
     summary['cxonow'] = CxoTime(summary['cxosecs']).date
-    supp_data, supp_source_list = crm_supplementary_info()
-
+    supp_data = crm_supplementary_info()
     summary.update(supp_data)
-    if isinstance(summary_meta.get('sources'), list):
-        summary_meta['sources'] += supp_source_list
-    else:
-        warnings.warn("Couldn't assign CRM flux table metadata source")
-        summary_meta['sources'] = supp_source_list
-    summary_meta['description'] = "Summary of CRM data and related fluxes."
-
+    summary.update(orbit_meta)
     summary = _coerce_json_serialize(summary)
-    summary_meta = _coerce_json_serialize(summary_meta)
-    summary['meta'] = summary_meta
 
     with open(f"{OUT_CRM_DATA_DIR}/CRMsummary.json", 'w') as f:
         json.dump(summary, f, indent = 4)
@@ -95,15 +85,12 @@ def crm_supplementary_info():
     Pulls the information included in the CRM summary data file, but isn't used to calculate CRM flux.
     """
     supp_data = {}
-    _source_list = []
-    goes_data, goes_source_list = read_goes()
+    goes_data = read_goes()
     supp_data.update(goes_data)
-    _source_list += goes_source_list
 
-    ephem_data, ephem_source_list = read_ephem()
+    ephem_data = read_ephem()
     supp_data.update(ephem_data)
-    _source_list += ephem_source_list
-    return supp_data, _source_list
+    return supp_data
     
 def read_goes():
     """
@@ -115,16 +102,6 @@ def read_goes():
     diff_proton_table = ascii.read(f"{GOES_DATA_DIR}/goes_differential_protons.ecsv")
     intg_electron_table = ascii.read(f"{GOES_DATA_DIR}/goes_integral_electrons.ecsv")
 
-    _source_list = []
-    if isinstance(diff_proton_table.meta.get('sources'), list):
-        _source_list += diff_proton_table.meta.get('sources')
-    else:
-        warnings.warn("Couldn't assign GOES diff table metadata source")
-    if isinstance(intg_electron_table.meta.get('sources'), list):
-        _source_list += intg_electron_table.meta.get('sources')
-    else:
-        warnings.warn("Couldn't assign GOES diff table metadata source")
-    
     #: In case the most recent flux for the target channel is missing, record the last known values by iterating backwards.
     idx = -1
     while goes_data['goes_p4_flux'] is None:
@@ -148,7 +125,7 @@ def read_goes():
         else:
             goes_data['goes_e2_flux'] = c
 
-    return goes_data, _source_list
+    return goes_data
 
 def read_ephem():
     """
@@ -160,20 +137,7 @@ def read_ephem():
         data = f.read().split() #: Located on the first and only line.
         alt = int(float(data[0]) / 1000)
         leg = data[1]
-    stats = os.stat(f"{EPHEM_DATA_DIR}/gephem.dat")
-    #: Format metadata of text file in style of table metadata
-    meta_data = {
-        'description': "Interpolation of the current Chandra ephemeris.",
-        'sources': [
-            {
-                'origin_script': "/data/mta4/Space_Weather/EPHEM/Scripts/ephem_interpolate.py",
-                'output_file': f"{EPHEM_DATA_DIR}/gephem.dat",
-                'update_time': CxoTime(stats.st_mtime,format='unix').date,
-                'mta_owned_origin': True
-            }
-        ]
-    }
-    return {'orbit_altitude': alt, 'orbit_leg': leg}, meta_data['sources']
+    return {'orbit_altitude': alt, 'orbit_leg': leg}
 
 def _coerce_json_serialize(obj):
     def _coerce(x):

@@ -4,7 +4,7 @@
             GOES-R P4 flux, in RADMON P4GM  units : {{data['goes_p4_flux'] | e_format(2)}}
             GOES-R P7 flux, in RADMON P41GM units : {{data['goes_p7_flux'] | e_format(2)}}
             GOES-R E > 2.0 MeV flux (p/cm^2-s-sr) : {{data['goes_e2_flux'] | e_format(2)}}
-                                 Orbit Start Time : {{data['meta']['orbit_start'] | date_format}}
+                                 Orbit Start Time : {{data['orbit_start'] | date_format}}
               Geocentric Distance (km), Orbit Leg : {{data['orbit_altitude']}} {{data['orbit_leg']}}
                                        CRM Region : {{data['sol_region_idx']}}({{data['sol_region']}})
            External Proton Flux (p/cm^2-s-sr-MeV) : {{data['corrected_crm_flux'] | e_format(4)}}
