@@ -144,15 +144,26 @@ def read_ephem():
     """
     Read the EPHEM file to determine orbit altitude and leg
     
-    The EPHEM file records altitude in meter. This fetch returns in km.
+    The EPHEM file records altitude in meters. This fetch returns in km.
     """
     with open(f"{EPHEM_DATA_DIR}/gephem.dat") as f:
         data = f.read().split() #: Located on the first and only line.
         alt = int(float(data[0]) / 1000)
         leg = data[1]
     stats = os.stat(f"{EPHEM_DATA_DIR}/gephem.dat")
-    time = CxoTime(stats.st_mtime,format='unix')
-    return {'orbit_altitude': alt, 'orbit_leg': leg}, {'orbit_update_time': time}
+    #: Format metadata of text file in style of table metadata
+    meta_data = {
+        'description': "Interpolation of the current Chandra ephemeris.",
+        'sources': [
+            {
+                'origin_script': "/data/mta4/Space_Weather/EPHEM/Scripts/ephem_interpolate.py",
+                'output_file': f"{EPHEM_DATA_DIR}/gephem.dat",
+                'update_time': CxoTime(stats.st_mtime,format='unix'),
+                'mta_owned_origin': True
+            }
+        ]
+    }
+    return {'orbit_altitude': alt, 'orbit_leg': leg}, meta_data
 
 def _coerce_json_serialize(obj):
     def _coerce(x):
