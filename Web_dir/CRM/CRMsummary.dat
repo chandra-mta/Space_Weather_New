@@ -1,17 +1,13 @@
                     Currently scheduled FPSI, OTG : ACIS-I NONE
-                                     Estimated Kp : 1.7
-        ACE EPAM P3 Proton Flux (p/cm^2-s-sr-MeV) : 1.03e+01
-            GOES-R P4 flux, in RADMON P4GM  units : 0.00e+00
-            GOES-R P7 flux, in RADMON P41GM units : 1.16e-02
-            GOES-R E > 2.0 MeV flux (p/cm^2-s-sr) : 2.73e+01
-                                 Orbit Start Time : 2025:198:12:39:04
-              Geocentric Distance (km), Orbit Leg : 148470 A
-                                       CRM Region : 3(Magnetosphere)
-           External Proton Flux (p/cm^2-s-sr-MeV) : 1.3613e+03
-         Attenuated Proton Flux (p/cm^2-s-sr-MeV) : 1.3613e+03
-  External Proton Orbital Fluence (p/cm^2-sr-MeV) : 1.1461e+09
-Attenuated Proton Orbital Fluence (p/cm^2-sr-MeV) : 4.8922e+08
-
-
-Last Data Update: 2025:199:19:34:02 (UT)
-
+                                     Estimated Kp : 1.67
+        ACE EPAM P3 Proton Flux (p/cm^2-s-sr-MeV) : 8.09e+00
+            GOES-R P4 flux, in RADMON P4GM  units : 6.03e-02
+            GOES-R P7 flux, in RADMON P41GM units : 5.57e-03
+            GOES-R E > 2.0 MeV flux (p/cm^2-s-sr) : 2.38e+02
+                                 Orbit Start Time : 2025:230:06:45:16
+              Geocentric Distance (km), Orbit Leg : 117489 A
+                                       CRM Region : 2(Magnetosheath)
+           External Proton Flux (p/cm^2-s-sr-MeV) : 2.9157e+02
+         Attenuated Proton Flux (p/cm^2-s-sr-MeV) : 2.9157e+02
+  External Proton Orbital Fluence (p/cm^2-sr-MeV) : 1.7902e+09
+Attenuated Proton Orbital Fluence (p/cm^2-sr-MeV) : 1.3499e+09
