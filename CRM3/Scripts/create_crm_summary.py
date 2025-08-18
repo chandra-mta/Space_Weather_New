@@ -112,6 +112,8 @@ def read_goes():
     meta_data = {}
     diff_proton_table = ascii.read(f"{GOES_DATA_DIR}/goes_differential_protons.ecsv")
     intg_electron_table = ascii.read(f"{GOES_DATA_DIR}/goes_integral_electrons.ecsv")
+    meta_data.update(diff_proton_table.meta)
+    meta_data.update(intg_electron_table.meta)
     
     #: In case the most recent flux for the target channel is missing, record the last known values by iterating backwards.
     idx = -1
@@ -121,7 +123,6 @@ def read_goes():
             idx -= 1
         else:
             goes_data['goes_p4_flux'] = a * GOES_P4_RADMON_FACTOR
-            meta_data['goes_p4_update_time'] = CxoTime(diff_proton_table['time_tag'][idx])
     idx = -1
     while goes_data['goes_p7_flux'] is None:
         b = diff_proton_table['P7'][idx]
@@ -129,7 +130,6 @@ def read_goes():
             idx -= 1
         else:
             goes_data['goes_p7_flux'] = b * GOES_P7_RADMON_FACTOR
-            meta_data['goes_p7_update_time'] = CxoTime(diff_proton_table['time_tag'][idx])
     idx = -1
     while goes_data['goes_e2_flux'] is None:
         c = intg_electron_table['>=2 MeV'][idx]
@@ -137,7 +137,6 @@ def read_goes():
             idx -= 1
         else:
             goes_data['goes_e2_flux'] = c
-            meta_data['goes_e2_update_time'] = CxoTime(intg_electron_table['time_tag'][idx])
 
     return goes_data, meta_data
 
