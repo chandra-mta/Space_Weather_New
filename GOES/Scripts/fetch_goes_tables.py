@@ -61,16 +61,45 @@ def fetch_goes_tables():
     z['>=2 MeV'].unit = INTG_ELECTRON_UNIT
     z['>=2 MeV'].format = ".5e"
 
-    x.meta['source'] = DIFF_PROTONS_LINK
-    y.meta['source'] = INTG_PROTONS_LINK
-    z.meta['source'] = INTG_ELECTRONS_LINK
-    for _ in (x,y,z):
-        _.meta['script'] = f"{os.path.abspath(__file__)}"
-        _.meta['update_time'] = CXONOW.date
-
-    x.write(f"{GOES_DATA_DIR}/goes_differential_protons.ecsv", overwrite = True, format='ascii.ecsv', delimiter=',')
-    y.write(f"{GOES_DATA_DIR}/goes_integral_protons.ecsv", overwrite = True, format='ascii.ecsv', delimiter=',')
-    z.write(f"{GOES_DATA_DIR}/goes_integral_electrons.ecsv", overwrite = True, format='ascii.ecsv', delimiter=',')
+#
+# --- Write table file metadata
+#
+    x_filename = f"{GOES_DATA_DIR}/goes_differential_protons.ecsv"
+    x.meta['description'] = "Differential directional proton fluxes reported in 13 energy bands between 1.02 MeV and 404 MeV from the GOES-R series satellite. https://www.spaceweather.gov/products/goes-proton-flux."
+    x.meta['sources'] = [
+        {
+            'origin_link': DIFF_PROTONS_LINK,
+            'origin_script': os.path.abspath(__file__),
+            'update_time': CXONOW.date,
+            'mta_owned_origin': False,
+            'output_file': x_filename
+        }
+    ]
+    y_filename = f"{GOES_DATA_DIR}/goes_integral_protons.ecsv"
+    y.meta['description'] = "Integral proton fluxes reported in 8 energy thresholds between ≥1 and ≥500 MeV from the GOES-R series satellite. https://www.spaceweather.gov/products/goes-proton-flux."
+    y.meta['sources'] = [
+        {
+            'origin_link': INTG_PROTONS_LINK,
+            'origin_script': os.path.abspath(__file__),
+            'update_time': CXONOW.date,
+            'mta_owned_origin': False,
+            'output_file': y_filename
+        }
+    ]
+    z_filename = f"{GOES_DATA_DIR}/goes_integral_electrons.ecsv"
+    z.meta['description'] = "Integral electron fluxes for ≥2 MeV from the GOES-R series satellite. https://www.spaceweather.gov/products/goes-electron-flux."
+    z.meta['sources'] = [
+        {
+            'origin_link': INTG_ELECTRONS_LINK,
+            'origin_script': os.path.abspath(__file__),
+            'update_time': CXONOW.date,
+            'mta_owned_origin': False,
+            'output_file': z_filename
+        }
+    ]
+    x.write(x_filename, overwrite = True, format='ascii.ecsv', delimiter=',')
+    y.write(y_filename, overwrite = True, format='ascii.ecsv', delimiter=',')
+    z.write(z_filename, overwrite = True, format='ascii.ecsv', delimiter=',')
 
 def rerun(func):
     """
