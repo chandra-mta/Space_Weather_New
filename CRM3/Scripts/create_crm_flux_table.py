@@ -19,7 +19,6 @@ from django.db import close_old_connections, utils
 import argparse
 import getpass
 import signal
-import warnings
 #
 # --- Define Directory Pathing
 #
@@ -31,29 +30,6 @@ ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
 KP_DATA_DIR = "/data/mta4/Space_Weather/KP/Data"
 FP_FILE = "/proj/sot/acis/FLU-MON/FPHIST-2001.dat"
 GRAT_FILE = "/proj/sot/acis/FLU-MON/GRATHIST-2001.dat"
-#
-# --- Documentation Globals for directories outside of MTA.
-#
-FP_DOCS = {
-    'description': "Focal Plane History File",
-    'sources': [
-        {
-            'origin_file':FP_FILE,
-            'update_time': CxoTime(os.stat(FP_FILE).st_mtime,format='unix').date,
-            'mta_owned_origin': False
-        }
-    ]
-}
-GRAT_DOCS = {
-    'description': "Optical Transmission Grating History File",
-    'sources': [
-        {
-            'origin_file':GRAT_FILE,
-            'update_time': CxoTime(os.stat(GRAT_FILE).st_mtime,format='unix').date,
-            'mta_owned_origin': False
-        }
-    ]
-}
 #
 # --- Globals
 #
@@ -275,21 +251,6 @@ def read_ace(start_fetch):
             corrected_p3[i] = val
             _valid = val
     ace_table[_P3_CHANNEL] = corrected_p3
-    #: The original table does not have metadata as it is not formatted as an ecsv file.
-    #: Therefore we read in a separate metadata file and write to table.
-    _source_list = []
-    with open(f"{ACE_DATA_DIR}/ace_7day_archive.metadata.json") as f:
-        metadata = json.load(f)
-        ace_table.meta['description'] = metadata.get('description')
-    if isinstance(metadata.get('sources'), list):
-        #: Manually include update time.
-        _x = os.stat('/data/mta4/Space_Weather/ACE/Data/ace_7day_archive')
-        metadata['sources'][0]['update_time'] = CxoTime(_x.st_mtime,format='unix').date
-        _source_list += metadata.get('sources')
-    else:
-        #: Issue with recording the metadata. Allow process to continue and raise warning
-        warnings.warn("Couldn't assign ACE flux table metadata source")
-    ace_table.meta['sources'] = _source_list
     return ace_table
 
 def intake_crm_table(kp):
@@ -332,28 +293,6 @@ def format_crm_flux_table(start_fetch, kp_table):
     crm_flux_table = Table([cxosecs, kp, sol_region_idx, crm_proton_flux], names=('cxosecs', 'kp', 'sol_region_idx', 'crm_proton_flux'))
     stop_sel = crm_flux_table['cxosecs'] <= CXONOW.secs
     crm_flux_table = crm_flux_table[stop_sel]
-    _source_list = []
-    #: This table has read from the CRM3_p.dat data files, but non-ecsv files don't include source information. Therefore we manually include it.
-    with open(f"{CRM_DATA_DIR}/CRM3_p.dat.metadata.json") as f:
-        metadata = json.load(f)
-        crm_flux_table.meta['description'] = metadata.get('description')
-    if isinstance(metadata.get('sources'), list):
-        #: Manually include update time.
-        _x = os.stat(f"{CRM_DATA_DIR}/CRM3_p.dat{_kpi(max(crm_flux_table['kp']))}") #: Workaround to ensure we are picking a KP file used in this table.
-        metadata['sources'][0]['update_time'] = CxoTime(_x.st_mtime,format='unix').date
-        _source_list += metadata.get('sources')
-    else:
-        #: Issue with recording the metadata. Allow process to continue and raise warning
-        warnings.warn("Couldn't assign CRM flux table metadata source")
-
-    if isinstance(kp_table.meta.get('sources'), list):
-        #: And since this is a new table dependent on KP data, we include this source.
-        _source_list += kp_table.meta.get('sources')
-    else:
-        #: Issue with recording the metadata. Allow process to continue and raise warning
-        warnings.warn("Couldn't assign KP table metadata source")
-    crm_flux_table.meta['sources'] = _source_list
-
     return crm_flux_table
 
 def add_instrument_config_file(crm_flux_table, start_fetch):
@@ -385,10 +324,6 @@ def add_instrument_config_file(crm_flux_table, start_fetch):
         grating.append(otg)
     crm_flux_table.add_column(instrument, name='instrument')
     crm_flux_table.add_column(grating, name='grating')
-
-    #: Include external data sources metadata
-    crm_flux_table.meta['sources'] += FP_DOCS['sources']
-    crm_flux_table.meta['sources'] += GRAT_DOCS['sources']
 
     return crm_flux_table
 
@@ -430,8 +365,6 @@ def add_ace_flux_column(crm_flux_table, ace_table):
     ace_table = ace_table[:len(crm_flux_table)]
     
     crm_flux_table.add_column(ace_table[_P3_CHANNEL], name='ace_p3_flux')
-    #: Add source metadata
-    crm_flux_table.meta['sources'] += ace_table.meta.get('sources')
     return crm_flux_table
 
 def add_flux_attenuation(crm_flux_table):
