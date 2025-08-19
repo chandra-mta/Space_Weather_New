@@ -7,9 +7,6 @@
 # - {name: corrected_crm_fluence, unit: p/cm^2-sr-Mev, datatype: float64, format: .4e}
 # - {name: attenuated_crm_fluence, unit: p/cm^2-sr-Mev, datatype: float64, format: .4e}
 # delimiter: ','
-# meta: !!omap
-# - {source: kadi.events.orbits}
-# - {script: /data/mta4/Space_Weather/CRM3/Scripts/create_crm_flux_table.py}
 # schema: astropy-2.0
 orbit_start,orbit_stop,orbit_num,corrected_crm_fluence,attenuated_crm_fluence
 2025:214:09:56:35.768,2025:217:01:24:41.060,3590,771841957.5739259,498450613.5267605
