@@ -1,5 +1,5 @@
                     Currently scheduled FPSI, OTG : {{data['instrument']}} {{data['grating']}}
-                                     Estimated Kp : {{data['kp']}}
+                                     Estimated Kp : {{data['kp'] | round(1)}}
         ACE EPAM P3 Proton Flux (p/cm^2-s-sr-MeV) : {{data['ace_p3_flux'] | e_format(2)}}
             GOES-R P4 flux, in RADMON P4GM  units : {{data['goes_p4_flux'] | e_format(2)}}
             GOES-R P7 flux, in RADMON P41GM units : {{data['goes_p7_flux'] | e_format(2)}}
