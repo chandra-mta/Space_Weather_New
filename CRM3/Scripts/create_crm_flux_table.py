@@ -145,7 +145,6 @@ def archive(previous_table):
         attenuated_crm_fluence
     ])
     archive_table.write(f"{OUT_CRM_DATA_DIR}/CRMarchive.ecsv", overwrite=True, delimiter=',')
-    archive_table.write(f"{OUT_CRM_WEB_DIR}/CRMarchive.ecsv", overwrite=True, delimiter=',')
     previous_table.write(f"{OUT_CRM_DATA_DIR}/previous_crm_flux_table.ecsv", overwrite=True, delimiter=',')
 
 def reconnect(func):
@@ -487,6 +486,9 @@ if __name__ == "__main__":
         create_crm_flux_table()
         #: Make available on the web
         os.system(f"cp {OUT_CRM_DATA_DIR}/crm_flux_table.ecsv {OUT_CRM_WEB_DIR}/crm_flux_table.ecsv")
+        if os.stat(f"{OUT_CRM_DATA_DIR}/CRMarchive.ecsv").st_mtime > os.stat(f"{OUT_CRM_WEB_DIR}/CRMarchive.ecsv").st_mtime:
+            #: If archive has been modified recently, update available web copy
+            os.system(f"cp {OUT_CRM_DATA_DIR}/CRMarchive.ecsv {OUT_CRM_WEB_DIR}/CRMarchive.ecsv")
 #
 #--- Remove lock file once process is completed
 #
