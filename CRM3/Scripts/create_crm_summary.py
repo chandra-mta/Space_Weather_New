@@ -19,9 +19,9 @@ from jinja2 import Environment, FileSystemLoader
 #
 # --- Define Directory Pathing
 #
-CRM_WEB_DIR = "/data/mta4/www/RADIATION/CRM"
+CRM_WEB_DIR = "/data/mta4/www/RADIATION/CRM3"
 CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
-OUT_CRM_WEB_DIR = "/data/mta4/www/RADIATION/CRM"
+OUT_CRM_WEB_DIR = "/data/mta4/www/RADIATION/CRM3"
 OUT_CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
 EPHEM_DATA_DIR = "/data/mta4/Space_Weather/EPHEM/Data"
 GOES_DATA_DIR = "/data/mta4/Space_Weather/GOES/Data"
