@@ -89,8 +89,9 @@ input  -- /data/mta4/Space_Weather/EPHEM/Data/PE.EPH.gsme_in_Re
 
 output -- /data/mta4/Space_Weather/CRM3/Data/CRM_p.datXX (where XX is KP from 00 to 90, corresponding to values 0.0 and 9.0)
 
-gfortran -std=legacy -ffixed-form -fd-lines-as-comments -ffixed-line-length-none  \
-            runcrm.f /data/mta4/Space_Weather/CRMFLX/CRMFLX_V33o/CRMFLX_V33.f -o runcrm
+gfortran -std=legacy -ffixed-form -fd-lines-as-comments -ffixed-line-length-none \
+runcrm.f /data/mta4/Space_Weather/CRMFLX/CRMFLX_V33o/CRMFLX_V33.f \
+-o runcrm
 
 #### Binary data compatibility
 CRMFLX_V33.f needs three binary data files which are machine dependent.
