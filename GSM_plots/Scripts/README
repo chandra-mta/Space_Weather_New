@@ -29,7 +29,7 @@ output: <html_dir>/Orbit/Plots/GSM.png
 
 
 web page:
-    cxc.cfa.harvard.edu/mta/RADIATION_new/Orbit/orbit.html (top four plots)
+    cxc.cfa.harvard.edu/mta/RADIATION/Orbit/orbit.html (top four plots)
 
 
 cronjob:
