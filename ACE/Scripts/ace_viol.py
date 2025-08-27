@@ -1,11 +1,51 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**ace_viol.py**: Alert if no recently valid ACE data
+
+:Author: W. Aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Mar 03, 2025
+
+"""
 import os
 import sys
+from email.mime.text import MIMEText
+from subprocess import Popen, PIPE
+from astropy.io import ascii
+from cxotime import CxoTime
+from datetime import timedelta
 import argparse
 #
 #--- Define Globals
 #
-ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
+ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data" #: Directory for ACE Data.
+HOURS_IN_VIOLATION = 12 #: Count of consecutive hours without valid ACE data.
+#: Sporadically valid data might be available. Send alert if number of valid point's doesn't exceed LEEWAY
+LEEWAY = 5
+_ADMIN = "mtadude@cfa.harvard.edu" #: Admin email address
+_ALERT = "sot_ace_alert@cfa.harvard.edu" #: Alert email address
+_INPUT_ACE_COLUMNS = [
+    "year",
+    "month",
+    "day",
+    "hhmm",
+    "mjd",
+    "daysecs",
+    "electron_status",
+    "electron38-53",
+    "electron175-315",
+    "proton_status",
+    "proton47-68",
+    "proton115-195",
+    "proton310-580",
+    "proton795-1193",
+    "proton1060-1900",
+    "aniso",
+]  #: For reading in ACE data file with astropy.io.ascii.
+_DEFAULT_VIOLATION = {
+    "no_valid_ace": {"cxotime": 0, "val": False}
+}  #: If cannot find file of previous violations, then assume issue involving them not being sent and rebuild file. Built for multiple alert types.
+
+
 TESTMAIL = False
 VIOL_HOUR = 8
 ARCHIVE_LENGTH_LIM = 12 * VIOL_HOUR
