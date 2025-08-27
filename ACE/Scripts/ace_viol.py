@@ -11,6 +11,7 @@ import sys
 from email.mime.text import MIMEText
 from subprocess import Popen, PIPE
 from astropy.io import ascii
+from astropy.table import Column, unique
 from cxotime import CxoTime
 from datetime import timedelta
 import numpy as np
@@ -45,6 +46,19 @@ _INPUT_ACE_COLUMNS = [
 _DEFAULT_VIOLATION = {
     "no_valid_ace": {"cxotime": 0, "val": False}
 }  #: If cannot find file of previous violations, then assume issue involving them not being sent and rebuild file. Built for multiple alert types.
+
+def _read_ace_file():
+    
+    data_file = f"{ACE_DATA_DIR}/ace_12h_archive"
+    ace_table = unique(ascii.read(data_file,names=_INPUT_ACE_COLUMNS))
+    cxotime_col = Column(
+        _convert_time_format(
+            ace_table["year"], ace_table["month"], ace_table["day"], ace_table["hhmm"]
+        ),
+        name="cxotime",
+    )
+    ace_table.add_column(cxotime_col)
+    return ace_table
 
 @np.vectorize
 def _convert_time_format(year, month, day, hhmm):
