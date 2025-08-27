@@ -3,14 +3,14 @@ REALTIME XMM-NEWTON RADIATION OBSERVATIONS
 ##########################################
 
 This directory holds scripts related to XMM real time radiation observation
-page http://cxc.cfa.harvard.edu/mta/RADIATION_new/XMM/index.html.
+page http://cxc.cfa.harvard.edu/mta/RADIATION/XMM/index.html.
 
 Directory:
 ==========
 tle_dir  = /data/mta4/Space_Weather/TLE/
 xmm_dir  = /data/mta4/Space_Weather/XMM/
 data_dir = <xmm_dir>/Data
-web_dir  = /data/mta4/www/RADIATION_new/XMM/
+web_dir  = /data/mta4/www/RADIATION/XMM/
 
 Scripts:
 ========

@@ -52,8 +52,8 @@ Current Directory Paths
 '/data/mta4/Space_Weather/MTA_Rad/'         : mta_dir
 '/data/mta4/Space_Weather/ACIS_Rad/'        : acis_dir
 '/data/mta4/Space_Weather/XMM/'             : xmm_dir
-'/data/mta4/www/RADIATION_new/'             : html_dir
-'cxc.cfa.harvard.edu/mta/RADIATION_new/'    : main_web
+'/data/mta4/www/RADIATION/'             : html_dir
+'cxc.cfa.harvard.edu/mta/RADIATION/'    : main_web
 'ftp.swpc.noaa.gov/pub/lists/'              : noaa_ftp
 'ftp.swpc.noaa.gov/pub/lists/ace/'          : ace_ftp
 'services.swpc.noaa.gov/'                   : noaa_site
@@ -67,8 +67,8 @@ Current Directory Paths
 Web Directory
 #############
 
-Html:               http://cxc.cfa.harvard.edu/mta/RADIATION_new/index.html
-Physical Location:  /data/mta4/www/RADIATION_new/
+Html:               http://cxc.cfa.harvard.edu/mta/RADIATION/index.html
+Physical Location:  /data/mta4/www/RADIATION/
 
 
 

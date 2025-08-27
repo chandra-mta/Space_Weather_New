@@ -20,7 +20,7 @@ input:  ftp://ftp.swpc.noaa.gov/pub/lists/ace2/*ace_swepam_1h.txt
 output: <html_dir>/Orbit/Plots/solwin.png
 
 Web address:
-https://cxc.cfa.harvard.edu/mta/RADIATION_new/Orbit/orbit.html
+https://cxc.cfa.harvard.edu/mta/RADIATION/Orbit/orbit.html
 
 cron job
 --------

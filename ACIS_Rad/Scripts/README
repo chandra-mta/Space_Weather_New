@@ -68,7 +68,7 @@ yearly_template
 Output
 ++++++
 
-Directory:      /data/mta4/www/RADIATION_new/ACIS_Rad/Plots/
+Directory:      /data/mta4/www/RADIATION/ACIS_Rad/Plots/
 
 rad_cnts_curr.png
 rad_use_curr.png
@@ -76,13 +76,13 @@ rad_cnts_<mmyy>.png
 rad_use_<mmyy>.png
 Note: older plots are in gif format.
 
-Directory:  /data/mta4/www/RADIATION_new/ACIS_Rad/Html/
+Directory:  /data/mta4/www/RADIATION/ACIS_Rad/Html/
 
 all<yy>.html
 <mmyy>.html
 rad_time_<mmyy>.html
 
-Directory:  /data/mta4/www/RADIATION_new/ACIS_Rad/
+Directory:  /data/mta4/www/RADIATION/ACIS_Rad/
 
 index.html
 
