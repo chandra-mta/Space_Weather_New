@@ -23,7 +23,6 @@ ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data" #: Directory for ACE Data.
 HOURS_MISSING = 12 #: Count of consecutive hours missing valid ACE data.
 #: Sporadically valid data might be available. Send alert if number of valid point's doesn't exceed LEEWAY
 LEEWAY = 5
-_ADMIN = "mtadude@cfa.harvard.edu" #: Admin email address
 _ALERT = "sot_ace_alert@cfa.harvard.edu" #: Alert email address
 _INPUT_ACE_COLUMNS = [
     "year",
@@ -150,15 +149,9 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
     parser.add_argument("-p", "--path", required = False, help = "Directory path to determine input data location.")
     args = parser.parse_args()
-#
-#--- Determine if running in test mode and change pathing if so
-#
+
     if args.mode == "test":
-        print("Running In Test Mode.")
-        TESTMAIL = True
-#
-#--- Path output to same location as unit tests
-#
+        _TESTMAIL = True
         if args.path:
             ACE_DATA_DIR = args.path
         else:
@@ -166,9 +159,8 @@ if __name__ == "__main__":
         TMP_DIR = f"{os.getcwd()}/test/_outTest"
         os.makedirs(f"{ACE_DATA_DIR}", exist_ok = True)
         os.makedirs(f"{TMP_DIR}", exist_ok = True)
-        print(f"ACE_DATA_DIR: {ACE_DATA_DIR}")
-        print(f"TMP_DIR: {TMP_DIR}")
-        check_viol()
+
+        ace_viol()
 
     elif args.mode == "flight":
 #
@@ -181,7 +173,7 @@ if __name__ == "__main__":
             sys.exit(f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog.")
         else:
             os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
-        check_viol()
+        ace_viol()
 #
 #--- Remove lock file once process is completed
 #
