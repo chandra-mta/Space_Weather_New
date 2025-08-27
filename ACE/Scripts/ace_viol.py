@@ -1,6 +1,6 @@
 #!/proj/sot/ska3/flight/bin/python
 """
-**ace_viol.py**: Alert if no recently valid ACE data
+**ace_viol.py**: Alert if missing too much ACE data.
 
 :Author: W. Aaron (william.aaron@cfa.harvard.edu)
 :Last Updated: Mar 03, 2025
@@ -13,14 +13,14 @@ from subprocess import Popen, PIPE
 from astropy.io import ascii
 from astropy.table import Column, unique
 from cxotime import CxoTime
-from datetime import timedelta
+from datetime import datetime, timedelta
 import numpy as np
 import argparse
 #
 #--- Define Globals
 #
 ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data" #: Directory for ACE Data.
-HOURS_IN_VIOLATION = 12 #: Count of consecutive hours without valid ACE data.
+HOURS_MISSING = 12 #: Count of consecutive hours missing valid ACE data.
 #: Sporadically valid data might be available. Send alert if number of valid point's doesn't exceed LEEWAY
 LEEWAY = 5
 _ADMIN = "mtadude@cfa.harvard.edu" #: Admin email address
@@ -43,12 +43,13 @@ _INPUT_ACE_COLUMNS = [
     "proton1060-1900",
     "aniso",
 ]  #: For reading in ACE data file with astropy.io.ascii.
-_DEFAULT_VIOLATION = {
-    "no_valid_ace": {"cxotime": 0, "val": False}
-}  #: If cannot find file of previous violations, then assume issue involving them not being sent and rebuild file. Built for multiple alert types.
+_TESTMAIL = False #: Boolean to test mail
+_NOW = datetime.now()
 
 def _read_ace_file():
-    
+    """
+    Read in the ACE Data file and format into astropy table.
+    """
     data_file = f"{ACE_DATA_DIR}/ace_12h_archive"
     ace_table = unique(ascii.read(data_file,names=_INPUT_ACE_COLUMNS))
     cxotime_col = Column(
@@ -81,6 +82,38 @@ def _convert_time_format(year, month, day, hhmm):
     #: CxoTime accepts ISOT format
     time = f"{year:04}-{month:02}-{day:02}T{hh:02}:{mm:02}:00"
     return CxoTime(time)
+
+def send_mail(subject, recipients, text_body, cc=""):
+    """Send MIMEText Email
+
+    :param subject: Subject of email
+    :type subject: str
+    :param recipients: Intended recipients
+    :type recipients: list or str
+    :param text_body:Email contents
+    :type text_body: str
+    :param cc:Carbon Copy recipients, defaults to ''
+    :type cc: str or list, optional
+    """
+    #
+    # --- Construct message in MIMEText
+    #
+    msg = MIMEText(text_body)
+    msg["Subject"] = subject
+    if type(recipients).__name__ == "list":
+        recipients = ",".join(recipients)
+    if type(cc).__name__ == "list":
+        cc = ",".join(cc)
+    msg["To"] = recipients
+    msg["CC"] = cc
+    #
+    # --- Send Email
+    #
+    if not _TESTMAIL:
+        p = Popen(["/sbin/sendmail", "-t", "-oi"], stdin=PIPE)
+        (out, error) = p.communicate(msg.as_bytes())
+    else:
+        print(msg)
 
 def check_viol():
     """
