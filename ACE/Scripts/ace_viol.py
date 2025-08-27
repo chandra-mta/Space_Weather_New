@@ -95,9 +95,7 @@ def send_mail(subject, recipients, text_body, cc=""):
     :param cc:Carbon Copy recipients, defaults to ''
     :type cc: str or list, optional
     """
-    #
-    # --- Construct message in MIMEText
-    #
+    #: Construct message in MIMEText
     msg = MIMEText(text_body)
     msg["Subject"] = subject
     if type(recipients).__name__ == "list":
@@ -106,69 +104,46 @@ def send_mail(subject, recipients, text_body, cc=""):
         cc = ",".join(cc)
     msg["To"] = recipients
     msg["CC"] = cc
-    #
-    # --- Send Email
-    #
     if not _TESTMAIL:
         p = Popen(["/sbin/sendmail", "-t", "-oi"], stdin=PIPE)
         (out, error) = p.communicate(msg.as_bytes())
     else:
         print(msg)
 
-def check_viol():
+def ace_viol():
     """
-    Emails admins alert if ace data invalid for period of time
-
-    input:	<ace_dir>/Data/ace_12h_archive
-        <ace_dir>/Data/ace.archive
-    output:	Admin Email
-        /tmp/mta/ace_viol.out
+    Iterate over the ACE data table to check counts of missing data.
+    
+    proton_status column has three markers
+        - 0:  Valid Data
+        - -1: Missing Data
+        - 9:  Unidentified invalid channel
     """
-    ifile = f"{ACE_DATA_DIR}/ace_12h_archive"
-    if not os.path.isfile(ifile):
-        content = f"Error: {ifile} not found\n"
-        content += f"by script {__file__}.\n"
-        content += f"Alerts depend on this file. Please Investigate.\n"
-        content += f"This message was sent to {ADMIN}"
-        send_mail("Missing ACE archive",content, ADMIN)
-    else:
-        with open(f"{ACE_DATA_DIR}/ace_12h_archive") as f:
-            file_data = [line.strip() for line in f.readlines() if line != '']
-            file_data.reverse()
-#
-#--- Check only the time subsection of data which corresponds to
-#--- an ARCHIVE_LENGTH_LIM number of 5-min increments
-#
-        data = [line.split() for line in file_data[:ARCHIVE_LENGTH_LIM]]
-#
-#--- If the entire data set is invalid, then email alert, otherwise proceed as normal
-#
-        valid_marker = False
-        for entry in data:
-            if (entry[6] == "0" or entry[9] == "0"):
-                valid_marker = True
-                break
-        if not valid_marker:
+    ace_table = _read_ace_file()
+    #: Slice table to search for consecutive data points for a set
+    #: number of hours ago. Number of hours is HOURS_MISSING variable.
+    _start = ace_table['cxotime'][-1] - timedelta(hours=HOURS_MISSING)
+    ace_table = ace_table[ace_table['cxotime'] >= _start]
+    
+    #: Select missing table values.
+    missing_selection = ace_table['proton_status'] == -1
+    #: If all consecutive data points minus the LEEWAY are less than those missing,
+    #: then check for sending notification.
+    if len(ace_table) - LEEWAY <= sum(missing_selection):
+        if 8 <= _NOW.hour <= 22:
+            #: Between 8 am and 10 pm, send alert
             lockfile = f"{TMP_DIR}/ace_viol.out"
-            if (os.path.exists(lockfile)):
+            if os.path.isfile(lockfile):
+                #: Notification already sent.
                 os.system(f'date >> {lockfile}')
             else:
-                content = f'Alert Trigger Script: {__file__} \n'
-                content += f'Alert in file: {ifile}\n'
-                content += f'No valid ACE data for at least {VIOL_HOUR} hours.\n'
-                content += f"Radiation team should investigate.\n"
-                content += f"This message was sent to {ALERT}\n"
-                send_mail(f"ACE no valid data for >{VIOL_HOUR}h", content, ALERT)
-                os.system(f"cp {ifile} {lockfile}")
-
-def send_mail(subject, content, address):
-    if TESTMAIL:
-        print(f"Test Mode, interrupting following email.\n\
-              Subject: {subject}\n\
-              Address: {address}\n\
-              Content: {content}\n")
-    else:
-        os.system(f"echo '{content}' | mailx -s '{subject}' {address}")
+                text_body = f'Alert Trigger Script: {__file__}\n'
+                text_body += f'Alert in file: {ACE_DATA_DIR}/ace_12h_archive\n'
+                text_body += f'No valid ACE data for at least {HOURS_MISSING} hours.\n'
+                text_body += "Radiation team should investigate.\n"
+                text_body += f"This message was sent to {_ALERT}\n"
+                send_mail(f"ACE no valid data for >{HOURS_MISSING}h", _ALERT, text_body)
+                os.system(f"cp {ACE_DATA_DIR}/ace_12h_archive {lockfile}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
