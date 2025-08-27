@@ -12,7 +12,8 @@ from email.mime.text import MIMEText
 from subprocess import Popen, PIPE
 from astropy.io import ascii
 from cxotime import CxoTime
-from datetime import timedelta
+from datetime import  datetime, timedelta
+import numpy as np
 import argparse
 #
 #--- Define Globals
@@ -45,13 +46,28 @@ _DEFAULT_VIOLATION = {
     "no_valid_ace": {"cxotime": 0, "val": False}
 }  #: If cannot find file of previous violations, then assume issue involving them not being sent and rebuild file. Built for multiple alert types.
 
+@np.vectorize
+def _convert_time_format(year, month, day, hhmm):
+    """Converts separated ``numpy.ndarray`` containing date information into an array of ``CxoTime`` objects.
 
-TESTMAIL = False
-VIOL_HOUR = 8
-ARCHIVE_LENGTH_LIM = 12 * VIOL_HOUR
-ADMIN = 'mtadude@cfa.harvard.edu'
-ALERT = 'sot_ace_alert@cfa.harvard.edu'
-TMP_DIR = "/tmp/mta"
+    :param year: Four digit year
+    :type year: int
+    :param month: Month
+    :type month: int
+    :param day: Day
+    :type day: int
+    :param hhmm: Integer Combining Hours and Minutes
+    :type hhmm: int
+    :return: ``numpy.ndarray`` of ``CxoTime`` objects.
+    :rtype: ``numpy.ndarray(dtype = 'object')``
+
+    """
+    hh = hhmm // 100  #: hours in hundreds and thousands place
+    mm = hhmm % 100  #: minutes in tens and ones place
+    time = datetime.strptime(
+        f"{year:04}:{month:02}:{day:02}:{hh:02}:{mm:02}", "%Y:%m:%d:%H:%M"
+    )
+    return CxoTime(time, format="datetime")
 
 def check_viol():
     """
