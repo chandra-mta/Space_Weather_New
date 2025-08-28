@@ -4,9 +4,9 @@ cd /data/mta4/Space_Weather/CRM3/Scripts
 
 /data/mta4/Space_Weather/CRM3/Scripts/plot_crm_flux_data.py
 
-convert /data/mta4/www/RADIATION_new/Orbit/Plots/crmpl.png -trim /data/mta4/www/RADIATION_new/Orbit/Plots/crmpl.png
+convert /data/mta4/www/RADIATION/Orbit/Plots/crmpl.png -trim /data/mta4/www/RADIATION/Orbit/Plots/crmpl.png
 
-convert /data/mta4/www/RADIATION_new/Orbit/Plots/crmplatt.png -trim /data/mta4/www/RADIATION_new/Orbit/Plots/crmplatt.png
+convert /data/mta4/www/RADIATION/Orbit/Plots/crmplatt.png -trim /data/mta4/www/RADIATION/Orbit/Plots/crmplatt.png
 
 
 
