@@ -16,7 +16,7 @@ if (os.getenv('TEST') == 'TEST'):
     os.system('mkdir -p TestOut')
     test_out = os.getcwd() + '/TestOut'
 
-f    = open('/data/mta4/www/RADIATION_new/CRM/CRMsummary.dat', 'r')
+f    = open('/data/mta4/www/RADIATION/CRM/CRMsummary.dat', 'r')
 line = f.read()
 f.close()
 
@@ -25,7 +25,7 @@ html = f.read()
 
 html = html.replace("#TEXT#", line)
 
-outfile = '/data/mta4/www/RADIATION_new/CRM/CRMsummary.html'
+outfile = '/data/mta4/www/RADIATION/CRM/CRMsummary.html'
 #for writing out files in test directory
 if (os.getenv('TEST') == 'TEST'):
     outfile = test_out + "/" + os.path.basename(outfile)
