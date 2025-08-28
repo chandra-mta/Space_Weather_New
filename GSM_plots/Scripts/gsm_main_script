@@ -4,9 +4,9 @@ cd /data/mta4/Space_Weather/GSM_plots/Scripts/
 /data/mta4/Space_Weather/GSM_plots/Scripts/create_lon_and_lat_orbit_plot.py
 
 
-convert /data/mta4/www/RADIATION_new/Orbit/Plots/GSMORBIT.png -trim /data/mta4/www/RADIATION_new/Orbit/Plots/GSMORBIT.png
-convert /data/mta4/www/RADIATION_new/Orbit/Plots/GSEORBIT.png -trim /data/mta4/www/RADIATION_new/Orbit/Plots/GSEORBIT.png
-convert /data/mta4/www/RADIATION_new/Orbit/Plots/GSM.png -trim /data/mta4/www/RADIATION_new/Orbit/Plots/GSM.png
-convert /data/mta4/www/RADIATION_new/Orbit/Plots/GSE.png -trim /data/mta4/www/RADIATION_new/Orbit/Plots/GSE.png
+convert /data/mta4/www/RADIATION/Orbit/Plots/GSMORBIT.png -trim /data/mta4/www/RADIATION/Orbit/Plots/GSMORBIT.png
+convert /data/mta4/www/RADIATION/Orbit/Plots/GSEORBIT.png -trim /data/mta4/www/RADIATION/Orbit/Plots/GSEORBIT.png
+convert /data/mta4/www/RADIATION/Orbit/Plots/GSM.png -trim /data/mta4/www/RADIATION/Orbit/Plots/GSM.png
+convert /data/mta4/www/RADIATION/Orbit/Plots/GSE.png -trim /data/mta4/www/RADIATION/Orbit/Plots/GSE.png
 
 
