@@ -9,10 +9,10 @@ cd  /data/mta4/Space_Weather/XMM/Scripts
 /data/mta4/Space_Weather/XMM/Scripts/plot_xmm_cxo_comp.py
 /data/mta4/Space_Weather/XMM/Scripts/plot_xmm_rad.py
 
-convert /data/mta4/www/RADIATION_new/XMM/Plots/mta_plot_xmm_comp.png    -trim /data/mta4/www/RADIATION_new/XMM/Plots/mta_plot_xmm_comp.png
-convert /data/mta4/www/RADIATION_new/XMM/Plots/mta_xmm_plot_gsm.png     -trim /data/mta4/www/RADIATION_new/XMM/Plots/mta_xmm_plot_gsm.png
-convert /data/mta4/www/RADIATION_new/XMM/Plots/mta_xmm_plot_gsm_xz.png  -trim /data/mta4/www/RADIATION_new/XMM/Plots/mta_xmm_plot_gsm_xz.png
-convert /data/mta4/www/RADIATION_new/XMM/Plots/mta_xmm_plot_p1.png      -trim /data/mta4/www/RADIATION_new/XMM/Plots/mta_xmm_plot_p1.png
-convert /data/mta4/www/RADIATION_new/XMM/Plots/mta_xmm_plot_p2.png      -trim /data/mta4/www/RADIATION_new/XMM/Plots/mta_xmm_plot_p2.png
+convert /data/mta4/www/RADIATION/XMM/Plots/mta_plot_xmm_comp.png    -trim /data/mta4/www/RADIATION/XMM/Plots/mta_plot_xmm_comp.png
+convert /data/mta4/www/RADIATION/XMM/Plots/mta_xmm_plot_gsm.png     -trim /data/mta4/www/RADIATION/XMM/Plots/mta_xmm_plot_gsm.png
+convert /data/mta4/www/RADIATION/XMM/Plots/mta_xmm_plot_gsm_xz.png  -trim /data/mta4/www/RADIATION/XMM/Plots/mta_xmm_plot_gsm_xz.png
+convert /data/mta4/www/RADIATION/XMM/Plots/mta_xmm_plot_p1.png      -trim /data/mta4/www/RADIATION/XMM/Plots/mta_xmm_plot_p1.png
+convert /data/mta4/www/RADIATION/XMM/Plots/mta_xmm_plot_p2.png      -trim /data/mta4/www/RADIATION/XMM/Plots/mta_xmm_plot_p2.png
 
 

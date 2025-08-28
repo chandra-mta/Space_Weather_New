@@ -8,7 +8,7 @@
 #                                                                                               #
 #           author: t. isobe (tisobe@cfa.harvard.edu)                                           #
 #                                                                                               #
-#           last update: Mar 16, 2021                                                           #
+#           last update: Aug 28, 2025                                                           #
 #                                                                                               #
 #################################################################################################
 
@@ -180,7 +180,7 @@ def run_test():
         line = line + '\n\n\n'
 
         line = line + 'see:\n\n '  
-        line = line + '\t\thttps://cxc.cfa.harvard.edu/mta/RADIATION_new/XMM/ '
+        line = line + '\t\thttps://cxc.cfa.harvard.edu/mta/RADIATION/XMM/ '
         line = line + '\n\nfor the current condition.\n'
 
         outfile = zspace
