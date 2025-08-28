@@ -32,7 +32,7 @@ NADDRESS = cxc.cfa.harvard.edu
 #
 OROOT	= /data/mta4
 OMAIN	= $(OROOT)/Space_Weather
-OHTML	= /data/mta4/www/RADIATION_new
+OHTML	= /data/mta4/www/RADIATION
 SHTML	= /data/mta4/Space_Weather/Web_dir
 OADDRESS = cxc.cfa.harvard.edu
 #
