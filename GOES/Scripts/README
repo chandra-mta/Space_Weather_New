@@ -105,7 +105,9 @@ mta on boba-v
 
 2,7,12,17,22,27,32,37,42,47,52,57 * * * * /data/mta4/Space_Weather/GOES/Scripts/goes_wrap_script      >> $HOME/Logs/goes_main_new.cron      2>&1
 14 2 * * *                                /data/mta4/Space_Weather/GOES/Scripts/goes_long_wrap_script >> $HOME/Logs/goes_long_term_new.cron 2>&1
-30 0 * * *                                /data/mta4/Space_Weather/GOES/Scripts/pull_swpc_media_wrap_script >> $HOME/Logs/swpc_media.cron 2>&1
+#: The pull_swpc_media script marks active solar regions marked as observed or still observed on the current date
+#: Therefore do not run the script too early in the day in case the days' active regions have not been updated yet.
+30 2 * * *                                /data/mta4/Space_Weather/GOES/Scripts/pull_swpc_media_wrap_script >> $HOME/Logs/swpc_media.cron 2>&1
 4,9,14,19,24,29,34,39,44,49,54,59 * * * * /data/mta4/Space_Weather/GOES/Scripts/check_archive_wrap_script >> $HOME/Logs/goes_archive_check.cron 2>&1
 
 
