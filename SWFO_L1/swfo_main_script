@@ -1,0 +1,3 @@
+cd /data/mta4/Space_Weather/SWFO_L1/Scripts
+
+/data/mta4/Space_Weather/SWFO_L1/Scripts/fetch_swfo_files.py -m flight
