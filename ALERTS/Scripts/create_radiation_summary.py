@@ -257,6 +257,9 @@ def read_fp_history_file():
         for line in data[-30:]:
             #: Start times, instrument, obsid
             _a = line.split()
+            if '.' not in _a[0]:
+                #: CxoTime strings need the fractional seconds in order to be parsable.
+                _a[0] = _a[0] + '.000'
             rows.append({'start_cxotime': CxoTime(_a[0]), 'instrument': _a[1]})
     for i in range(len(rows)-1):
         rows[i]['stop_cxotime'] = rows[i+1]['start_cxotime']
