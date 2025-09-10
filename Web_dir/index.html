@@ -145,10 +145,10 @@
     async function updateTime(date){
         // Formatted into %Y:%j:%H:%M:%S format as commonly used in cxotime
         const year = date.getUTCFullYear();
-        const dayOfYear = Math.floor((date - new Date(year, 0, 0)) / (1000 * 60 * 60 * 24));
-        const hours = date.getUTCHours();
-        const minutes = date.getUTCMinutes();
-        const seconds = date.getUTCSeconds();
+        const dayOfYear = String(Math.floor((date - new Date(year, 0, 0)) / (1000 * 60 * 60 * 24))).padStart(3,'0');
+        const hours = String(date.getUTCHours()).padStart(2,'0');
+        const minutes = String(date.getUTCMinutes()).padStart(2,'0');
+        const seconds = String(date.getUTCSeconds()).padStart(2,'0');
         const datetime = `${year}:${dayOfYear}:${hours}:${minutes}:${seconds}`
         document.getElementById("LastUpdated").innerHTML = datetime;
     }
