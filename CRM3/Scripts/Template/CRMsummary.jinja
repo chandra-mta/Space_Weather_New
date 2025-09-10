@@ -1,0 +1,13 @@
+                    Currently scheduled FPSI, OTG : {{data['instrument']}} {{data['grating']}}
+                                     Estimated Kp : {{data['kp'] | round(1)}}
+        ACE EPAM P3 Proton Flux (p/cm^2-s-sr-MeV) : {{data['ace_p3_flux'] | e_format(2)}}
+            GOES-R P4 flux, in RADMON P4GM  units : {{data['goes_p4_flux'] | e_format(2)}}
+            GOES-R P7 flux, in RADMON P41GM units : {{data['goes_p7_flux'] | e_format(2)}}
+            GOES-R E > 2.0 MeV flux (p/cm^2-s-sr) : {{data['goes_e2_flux'] | e_format(2)}}
+                                 Orbit Start Time : {{data['orbit_start'] | date_format}}
+              Geocentric Distance (km), Orbit Leg : {{data['orbit_altitude']}} {{data['orbit_leg']}}
+                                       CRM Region : {{data['sol_region_idx']}} ({{data['sol_region']}})
+           External Proton Flux (p/cm^2-s-sr-MeV) : {{data['corrected_crm_flux'] | e_format(4)}}
+         Attenuated Proton Flux (p/cm^2-s-sr-MeV) : {{data['attenuated_crm_flux'] | e_format(4)}}
+  External Proton Orbital Fluence (p/cm^2-sr-MeV) : {{data['corrected_crm_fluence'] | e_format(4)}}
+Attenuated Proton Orbital Fluence (p/cm^2-sr-MeV) : {{data['attenuated_crm_fluence'] | e_format(4)}}

@@ -2,12 +2,10 @@
 <html>
 <head>
    <title>RADIATION CENTRAL</title>
-        <!-- Changed by: t. isobe Aug 28, 2018 -->
     <meta charset="UTF-8">
 </head>
 
-<body style="width:95%;margin-left:10px; margin-right;10px;background-color:#FAEBD7;font-family:Georgia, "Times New Roman", Times, serif">
-
+<body style="width:95%;margin-left:10px; margin-right:10px;background-color:#FAEBD7;">
 
 <h1 style='text-align:center;'>Chandra Radiation Monitoring</h1>
 <table border=1>
@@ -16,14 +14,12 @@
     <ul>
     <li><h2> Realtime Pages</h2>
         <ul>
-        <li> <a href="./Orbit/orbit.html">Our current orbital profile</a></li>
-        <li> <a href="./ACE//ace.html">ACE</a></li>
-        <!-- <li> <a href="https://cxc.cfa.harvard.edu/mta/ace_fast.html"> ACE - quicklook </a></li> -->
-        <li> <a href="./GOES/goes_pchan_p.html">GOES Primary</a> (primary proton,electron,magnetometer - includes I4 rates - HRC proxy)</li>
-        <li> <a href="./GOES/goes_part_p.html">GOES Primary  - electrons and integrated particles</a> </li>
-        <li> <a href="./GOES/goes_pchan_s.html">GOES Secondary</a> (secondary proton,electron magnetometer)</li>
-        <li> <a href="./GOES/goes_part_s.html">GOES Secondary  - electrons and integrated particles</a> </li>
         <li> <a href="./Alerts/rad_summ.html"> Chandra Radiation Environment Summary </a></li>
+        <li> <a href="./Orbit/orbit.html">CXO current orbital profile</a></li>
+        <li> <a href="./ACE//ace.html">ACE</a></li>
+        <li> <a href="./GOES/goes_pchan_p.html">GOES differential proton and HRC proxy</a></li>
+        <li> <a href="./GOES/goes_part_p.html">GOES integrated particles and electrons</a></li>
+        <li> <a href="./GOES/goes_xray_p.html">GOES Solar Flares >M1 (with active region magnetogram)</a></li>
         <li> <a href="./STEREO/stereo.html">STEREO</a> (IMPACT - low energy protons and electrons)  </li>
         <li> <a href="./XMM/index.html">XMM</a>  Their orbit and radiation environment</li>
         <li> <a href="http://xmm.vilspa.esa.es/external/xmm_obs_info/radmon/index.php"> XMM-Newton Live Radiation Monitor Feed</a></li>
@@ -45,7 +41,7 @@
     
     <li><h2>More Realtime data</h2>
         <ul>
-        <li> <a href="http://stereo-ssc.nascom.nasa.gov/beacon/beacon_secchi.shtml">STEREO</a> (home page)</li>
+        <li> <a href="https://stereo.gsfc.nasa.gov/">STEREO</a> (home page)</li>
         <li> <a href="http://umbra.gsfc.nasa.gov/images/latest.html">Solar images at SDAC</a></li>
         <li> <a href="http://www.raben.com/maps/">Spot maps (both sides of the Sun)</a></li>
         <li> <a href="http://sohowww.nascom.nasa.gov/">SOHO </a> (home page)
@@ -60,89 +56,105 @@
     </li>
 
     </ul>
-</td>
 
-<td style='vertical-align:top;' >
     <ul>
     <li><h2>Other Radiation Links</h2>
         <ul>
         <li> <a href="http://occwww.cfa.harvard.edu/occweb/web/spaceweatherindex.htm"> The OCC Solar Monitoring and Space Weather Page </a></li>
         <li> <a href="http://sun.stanford.edu/"> Stanford Solar Center </a></li>
         <li> <a href="http://cxc.harvard.edu/newsletters/news_09/node12.html">Rob's newsletter article from March 2002.</a></li>
-        <li> <a href="./ACE/ace_flux.dat"> Latest ACE orbital fluence when CHANDRA is above 70kkm. </a></li>
+        <li> <a href="./ACE/ace_flux_dat.html"> Latest ACE orbital fluence when CHANDRA is above 70kkm. </a></li>
         <li> <a href="https://ccmc.gsfc.nasa.gov/iswa/"> ISWA </a> GSFC's organizational page.</li>
-        <li> <a href="./Alerts/current.dat"> Fluence on ACIS per orbit. </a></li>
-        <li> <a href="./Alerts/protons.dat"> Archival fluence in the ACE P3 channel</a></li>
-        <li> <a href="./Alerts/all.dat"> Archival fluence of all ACE channels</a></li>
         <li> <a href="./ACE/about_ace_page.html"> About our ACE Monitoring and Alerts.</a></li>
         </ul>
     </li>
+</td>
 
-    <li><h2>Summary and Predictive Data </h2>
-        <ul>
-        <li> <b>Predictors</b>
+<td style='vertical-align:top;' >
+
+    <ul>
+    <li><h2>Summary</h2>
+        <pre style='font-size:85%;' id="CRMsummary">
+            Cannot fetch CRM Summary
+        </pre>
+        <p>
+        See also: 
+        <a href="./Alerts/rad_summ.html"> Chandra Radiation Environment Summary </a>
+        </p>
+    </li>
+
+    <li> <h2>Predictive Data</h2>
             <ul>
-            <li><a href ="http://www.swpc.noaa.gov/products/27-day-outlook-107-cm-radio-flux-and-geomagnetic-indices"> 27 Day Outlook  </a> </li>
-            <li> <a href="./Orbit/Plots/solwin.gif"> 4-week Solar Wind Predictions</a></li>
+            <li><a href ="http://www.swpc.noaa.gov/products/27-day-outlook-107-cm-radio-flux-and-geomagnetic-indices"> 27 Day Outlook (NOAA Site)</a> </li>
+            <li> <a href="./SOHO/solwin.html"> 4-week Solar Wind Predictions</a></li>
             </ul>
         </li>
-        <li> <b>Archives</b>
-            <ul>
+    <li><h2> <b>Archives</h2>
+       <ul>
             <li> <a href="../../mta_days/mta_interrupt/time_order.html"> Archive of each event which shutdown Chandra.</a></li>
-            <li> <a href="./CRM/CRMsummary.dat"> Summary of Chandra flux and orbital fluence, updated every 5 minutes.</a></li>
             <li> <a href="./CRM/CRMarchive.dat"> Archive of Chandra orbital fluence, updated once per orbit.</a><br>
                           (2000:270-present. Updated to CRM 3.3 2010:319)</li>
             <li> <a href="./ACIS_Rad/index.html">ACIS Radiation Correlations</a></li>
-            </ul>
-        </li>
         </ul>
     </li>
 
     <li><h2>Others</h2>
         <ul>
-            <li> <a href="../sot.html"> SOT home</a></li>
+            <li> <a href="../sot.html">SOT home</a></li>
             <li> <a href="../../mta_days/MIRROR/"> SOT Mirror Site</a></li>
         </ul>
     </li>
+    </ul>
 </td>
 </tr>
-
 </table>
 
-
-
-
-
+<p style='padding-top:20px;  text-align:justify; margin-left:40px; margin-right:40px;'>
+   Plot of predicted future Chandra radiation, with SI config and
+   DSN schedule plots, updated every 5 minutes.
+   The left plot shows the external environment, and the right plot shows the attenuated plots
+   due to the instruments used.
+</p>
 <div style='text-align:center;padding-top:40px;'>
-<img src="./Orbit/Plots/crmpl.gif">
-</div>
-<p style='padding-top:20px; padding-bottom:20px; text-align:jastify; margin-left:40px; margin-right:40px;'>
-   Plot of predicted future Chandra radiation, with SI config and
-   DSN schedule plots, updated every 5 minutes (without radiation
-   attenuation appropriate for SIM and OTG positions).</a><p>
+<img src="./Orbit/Plots/crmpl.png" style="width:45%;padding-right:10px;">
+<img src="./Orbit/Plots/crmplatt.png" style="width:45%;">
+<p>
+ <span style='color:lime;'><b>Green lines</b></span> indicates fluence estimates 
+ based on the current KP value.
 </p>
-
-<div style='text-align:center;'>
-<img src="./Orbit/Plots/crmplatt.gif">
 </div>
-
-<p style='padding-top:20px; padding-bottom:20px; text-align:jastify; margin-left:40px; margin-right:40px;'>
-   Plot of predicted future Chandra radiation, with SI config and
-   DSN schedule plots, updated every 5 minutes (with radiation
-   attenuation appropriate for SIM and OTG positions).</a>
-</p>
 
 <hr />
 <p style='padding-top:10px;padding-bottom:10px;font-size:90%;'>
-<a href="mailto:swolk@head-cfa.harvard.edu">Email problems to: swolk@head-cfa.harvard.edu</a>
-(<a href="http://hea-www.harvard.edu/~swolk/swolk.html">Scott Wolk</A>) ...it is all his fault.
+<a href="mailto:swolk@cfa.harvard.edu">Email problems to: swolk@cfa.harvard.edu</a>
+(<a href="http://hea-www.harvard.edu/~swolk/swolk.html">Scott Wolk</A>) 
+</p>
+<p style='padding-top:10px;padding-bottom:10px;font-size:90%;'>
+<a href="mailto:william.aaron@cfa.harvard.edu">Tech: William Aaron</a>
 </p>
 <p style='padding-bottom:10px;'>
-<em>Last Update: Aug 29, 2018</em>
+<em>Last Update:Jul 18, 2025</em>
 <p>
 
 <script>
-    setTimeout('location.reload()',300000)
+    // Since we are working with setInterval to periodically run an asynchronous fetch of data, we work with Javascript Promises and the async and await keywords.
+    const summaryURL = "./CRM/CRMsummary.dat";
+    const refreshInterval = 300 * 1000;
+
+    async function updateData() {
+        return fetch(summaryURL, {cache: 'no-cache'}) // Fetch needs to have 'no-cache' so that the browser actually fetches a new copy of the summary data set.
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.text();
+            })
+            .then(data => {document.getElementById("CRMsummary").innerHTML = data;})
+            .catch(error => console.error(`Failed to fetch data: ${error}`));
+    }
+    updateData();
+    setInterval(updateData, refreshInterval);
+
 </script>
 
 </body>

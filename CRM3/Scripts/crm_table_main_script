@@ -1,8 +1,10 @@
 cd /data/mta4/Space_Weather/CRM3/Scripts
 
-/data/mta4/Space_Weather/CRM3/Scripts/create_crm_summary_table.py
+/data/mta4/Space_Weather/CRM3/Scripts/create_crm_flux_table.py -m flight
 
-/data/mta4/Space_Weather/CRM3/Scripts/plot_crm_flux_data.py
+/data/mta4/Space_Weather/CRM3/Scripts/create_crm_summary.py -m flight
+
+/data/mta4/Space_Weather/CRM3/Scripts/plot_crm_flux_data.py -m flight
 
 convert /data/mta4/www/RADIATION/Orbit/Plots/crmpl.png -trim /data/mta4/www/RADIATION/Orbit/Plots/crmpl.png
 
