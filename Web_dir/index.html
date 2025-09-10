@@ -22,16 +22,16 @@
         <li> <a href="./GOES/goes_xray_p.html">GOES Solar Flares >M1 (with active region magnetogram)</a></li>
         <li> <a href="./STEREO/stereo.html">STEREO</a> (IMPACT - low energy protons and electrons)  </li>
         <li> <a href="./XMM/index.html">XMM</a>  Their orbit and radiation environment</li>
-        <li> <a href="http://xmm.vilspa.esa.es/external/xmm_obs_info/radmon/index.php"> XMM-Newton Live Radiation Monitor Feed</a></li>
+        <li> <a href="https://www.cosmos.esa.int/web/xmm-newton/live-radmon-plots"> XMM-Newton Live Radiation Monitor Feed</a></li>
         </ul>
     </li>
 
     <li><h2> Space Weather</h2>
         <ul>
-        <li> <a href="http://www.swpc.noaa.gov/communities/space-weather-enthusiasts">NOAA Space Weather Enthusiasts</A> </li>
+        <li> <a href="https://www.swpc.noaa.gov/communities/space-weather-enthusiasts-dashboard">NOAA Space Weather Enthusiasts</A> </li>
         <li> <a href="http://www.spaceweather.com">Space Weather dot com</a> </li>
-        <li> <a href="http://www.solarham.net">Solar Ham </a>  </li>
-        <li> <a href="http://prop.hfradio.org">Propagation and Space weather</a></li>
+        <li> <a href="https://www.solarham.com">Solar Ham </a>  </li>
+        <li> <a href="https://www.swpc.noaa.gov/communities/radio-communications">Radio Communication Dashboard</a></li>
         <li> <a href="http://www.solen.info/solar/">Solar Terrestrial Activity Report </a></li>
         <li> <a href="http://www.swpc.noaa.gov/products/alerts-watches-and-warnings">Space Weather Alerts page </a></li>
         <li> <a href="http://www.swpc.noaa.gov/products/report-and-forecast-solar-and-geophysical-activity">
@@ -44,14 +44,12 @@
         <li> <a href="https://stereo.gsfc.nasa.gov/">STEREO</a> (home page)</li>
         <li> <a href="http://umbra.gsfc.nasa.gov/images/latest.html">Solar images at SDAC</a></li>
         <li> <a href="http://www.raben.com/maps/">Spot maps (both sides of the Sun)</a></li>
-        <li> <a href="http://sohowww.nascom.nasa.gov/">SOHO </a> (home page)
+        <li> <a href="https://soho.nascom.nasa.gov/">SOHO</a> (home page)
             <ul>
-                <li> <a href="http://umtof.umd.edu/pm"> SOHO Proton Monitor </a></li>
+                <li> <a href="https://space.umd.edu/pm/"> SOHO Proton Monitor </a></li>
                 <li> <a href="http://sohowww.nascom.nasa.gov/data/latestimages.html"> SOHO images </a></li>
             </ul>
         </li>
-        <li> <a href="http://radiosun.ts.astro.it/">Trieste Coronal Radio Surveillance</a></li>
-        <li> <a href="http://www.cluster.rl.ac.uk/csdsweb-cgi/csdsweb_pick"> Cluster overview data </a></li>
         </ul>
     </li>
 
@@ -64,7 +62,7 @@
         <li> <a href="http://sun.stanford.edu/"> Stanford Solar Center </a></li>
         <li> <a href="http://cxc.harvard.edu/newsletters/news_09/node12.html">Rob's newsletter article from March 2002.</a></li>
         <li> <a href="./ACE/ace_flux_dat.html"> Latest ACE orbital fluence when CHANDRA is above 70kkm. </a></li>
-        <li> <a href="https://ccmc.gsfc.nasa.gov/iswa/"> ISWA </a> GSFC's organizational page.</li>
+        <li> <a href="https://ccmc.gsfc.nasa.gov/tools/ISWA/"> ISWA </a> GSFC's organizational page.</li>
         <li> <a href="./ACE/about_ace_page.html"> About our ACE Monitoring and Alerts.</a></li>
         </ul>
     </li>
@@ -76,6 +74,9 @@
     <li><h2>Summary</h2>
         <pre style='font-size:85%;' id="CRMsummary">
             Cannot fetch CRM Summary
+        </pre>
+        <pre style='font-size:85%;'>
+            Last Updated: <span id="LastUpdated">--</span> (UTC)
         </pre>
         <p>
         See also: 
@@ -91,8 +92,8 @@
         </li>
     <li><h2> <b>Archives</h2>
        <ul>
-            <li> <a href="../../mta_days/mta_interrupt/time_order.html"> Archive of each event which shutdown Chandra.</a></li>
-            <li> <a href="./CRM/CRMarchive.dat"> Archive of Chandra orbital fluence, updated once per orbit.</a><br>
+            <li> <a href="../../mta_days/mta_interrupt/time_order.html">Radiation Shutdown Event Archive.</a></li>
+            <li> <a href="./CRM/CRMarchive.ecsv"> Archive of Chandra orbital fluence, updated once per orbit.</a><br>
                           (2000:270-present. Updated to CRM 3.3 2010:319)</li>
             <li> <a href="./ACIS_Rad/index.html">ACIS Radiation Correlations</a></li>
         </ul>
@@ -138,8 +139,19 @@
 
 <script>
     // Since we are working with setInterval to periodically run an asynchronous fetch of data, we work with Javascript Promises and the async and await keywords.
-    const summaryURL = "./CRM/CRMsummary.dat";
+    const summaryURL = "./CRM3/CRMsummary.dat";
     const refreshInterval = 300 * 1000;
+
+    async function updateTime(date){
+        // Formatted into %Y:%j:%H:%M:%S format as commonly used in cxotime
+        const year = date.getUTCFullYear();
+        const dayOfYear = Math.floor((date - new Date(year, 0, 0)) / (1000 * 60 * 60 * 24));
+        const hours = date.getUTCHours();
+        const minutes = date.getUTCMinutes();
+        const seconds = date.getUTCSeconds();
+        const datetime = `${year}:${dayOfYear}:${hours}:${minutes}:${seconds}`
+        document.getElementById("LastUpdated").innerHTML = datetime;
+    }
 
     async function updateData() {
         return fetch(summaryURL, {cache: 'no-cache'}) // Fetch needs to have 'no-cache' so that the browser actually fetches a new copy of the summary data set.
@@ -147,6 +159,8 @@
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
+                // Update the Last Updated time with the summary's file modification time.
+                updateTime(new Date(response.headers.get("last-modified")));
                 return response.text();
             })
             .then(data => {document.getElementById("CRMsummary").innerHTML = data;})
