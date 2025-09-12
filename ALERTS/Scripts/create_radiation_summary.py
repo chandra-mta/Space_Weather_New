@@ -96,18 +96,23 @@ def create_radiation_summary():
     # --- Pull Direct Time Data
     #
     cxo_orbit_start = CxoTime(crm_data['orbit_start'])
-    time_data, duration_data = pull_time_data()
+    time_data, duration_data = pull_time_data(cxo_orbit_start)
     #
     # --- Pull flux and fluence values from different data sets.
     #
     goes_data = pull_goes_data(cxo_orbit_start, flux_att_factor, fluence_att_factor)
     ace_data = pull_ace_data()
 
-    rad_summ = structure_rad_summ(crm_data, goes_data, ace_data, duration_data)
-    #: Add timing and orbit data
-    rad_summ.update({'time': time_data, 'duration': duration_data})
+    rad_summ = {}
+    #: Configuration and orbit data
     for _ in ('instrument', 'grating', 'orbit_altitude', 'orbit_leg', 'orbit_start'):
         rad_summ[_] = crm_data[_]
+    #: Add timing and duration data
+    rad_summ.update({'time': time_data, 'duration': duration_data})
+    #: Flux and fluence data.
+    rad_summ.update(structure_rad_summ(crm_data, goes_data, ace_data, duration_data))
+    
+    
 
     with open(f'{ALERTS_DATA_DIR}/radiation_summary.json', 'w') as f:
         json.dump(rad_summ, f, indent = 4)
