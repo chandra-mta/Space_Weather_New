@@ -82,7 +82,13 @@ def create_radiation_summary():
     crm_file = f"{CRM_DATA_DIR}/CRMsummary.json"
     with open(crm_file) as f:
         crm_data = json.load(f)
-        
+    #
+    # --- Calculate amount of attenuation
+    #
+    flux_att_factor = crm_data['attenuated_crm_flux'] / crm_data['corrected_crm_flux']
+    fluence_att_factor = crm_data['attenuated_crm_fluence'] / crm_data['corrected_crm_fluence']
+
+
     cxo_orbit_start = CxoTime(crm_data['orbit_start'])
     time_data = {'orbit_duration': round((CXONOW - cxo_orbit_start).sec)} #: astropy.time.core.TimeDelta when subtracted
 
