@@ -81,11 +81,17 @@ def create_radiation_summary():
     crm_file = f"{CRM_DATA_DIR}/CRMsummary.json"
     with open(crm_file) as f:
         crm_data = json.load(f)
+        #: rename for ease
+        flux = crm_data.pop('corrected_crm_flux')
+        fluence = crm_data.pop('corrected_crm_fluence')
+        crm_data['crm_flux'] = flux
+        crm_data['crm_fluence'] = fluence
     #
-    # --- Calculate amount of attenuation
+    # --- Calculate ammount of attenuation
     #
-    flux_att_factor = crm_data['attenuated_crm_flux'] / crm_data['corrected_crm_flux']
-    fluence_att_factor = crm_data['attenuated_crm_fluence'] / crm_data['corrected_crm_fluence']
+    cxo_orbit_start = CxoTime(crm_data['orbit_start'])
+    flux_att_factor = crm_data['attenuated_crm_flux'] / crm_data['crm_flux']
+    fluence_att_factor = crm_data['attenuated_crm_fluence'] / crm_data['crm_fluence']
     #
     # --- Pull Direct Time Data
     #
