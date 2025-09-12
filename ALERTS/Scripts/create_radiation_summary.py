@@ -78,7 +78,6 @@ def reconnect(func):
 
 def create_radiation_summary():
 
-    #crm_data = read_crm_summary()
     crm_file = f"{CRM_DATA_DIR}/CRMsummary.json"
     with open(crm_file) as f:
         crm_data = json.load(f)
@@ -87,19 +86,12 @@ def create_radiation_summary():
     #
     flux_att_factor = crm_data['attenuated_crm_flux'] / crm_data['corrected_crm_flux']
     fluence_att_factor = crm_data['attenuated_crm_fluence'] / crm_data['corrected_crm_fluence']
-
-
+    #
+    # --- Pull Direct Time Data
+    #
     cxo_orbit_start = CxoTime(crm_data['orbit_start'])
     time_data = {'orbit_duration': round((CXONOW - cxo_orbit_start).sec)} #: astropy.time.core.TimeDelta when subtracted
-
-    #goes_data = compute_goes_fluence(cxo_orbit_start, crm_data)
-    #
-    # --- Pull External Flux and Fluence Values from different data sets.
-    #
-    goes_data = pull_goes_data(cxo_orbit_start)
-    acis_ace_data = read_acis_ace_data()
     time_data.update(read_comm_data())
-
     rad_table = read_rad_zone()
     #: parse the radiation table to find start, and stop periods of the next time in-between radiation zones.
     if rad_table[0]['start'] < CXONOW:
@@ -114,6 +106,12 @@ def create_radiation_summary():
         enter_rad = CxoTime(rad_table[0]['start'])
     time_data['next_rad_zone'] = enter_rad.date.split('.')[0]
     time_data['till_next_rad_zone'] = round((enter_rad - leave_rad).sec) #: astropy.time.core.TimeDelta when subtracted
+    #
+    # --- Pull External Flux and Fluence Values from different data sets.
+    #
+    goes_data = pull_goes_data(cxo_orbit_start)
+    acis_ace_data = read_acis_ace_data()
+
     fp_history_table = read_fp_history_file()
     
     time_data['attenuated_rad_duration'] = find_acis_attenuated_time(fp_history_table, leave_rad, enter_rad)
