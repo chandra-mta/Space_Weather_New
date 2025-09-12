@@ -111,8 +111,6 @@ def create_radiation_summary():
 
     with open(f'{ALERTS_DATA_DIR}/radiation_summary.json', 'w') as f:
         json.dump(rad_summ, f, indent = 4)
-    with open(f'{ALERTS_WEB_DIR}/radiation_summary.json', 'w') as f:
-        json.dump(rad_summ, f, indent = 4)
 
 def pull_goes_data(cxo_orbit_start, flux_att_factor, fluence_att_factor):
     """
@@ -469,7 +467,6 @@ if __name__ == "__main__":
         if args.path:
             ALERTS_DATA_DIR = args.path
         os.makedirs(ALERTS_DATA_DIR, exist_ok=True)
-        ALERTS_WEB_DIR = ALERTS_DATA_DIR
         try:
             create_radiation_summary()
         except json.decoder.JSONDecodeError:
@@ -492,6 +489,8 @@ if __name__ == "__main__":
 
         try:
             create_radiation_summary()
+            #: Copy the created summary to the web directory
+            os.system(f"cp {ALERTS_DATA_DIR}/radiation_summary.json {ALERTS_WEB_DIR}/radiation_summary.json")
         except json.decoder.JSONDecodeError:
             traceback.print_exc() #: Record issue with downloaded JSON and finish.
         #
