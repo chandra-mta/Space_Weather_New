@@ -92,9 +92,9 @@ def create_radiation_summary():
     cxo_orbit_start = CxoTime(crm_data['orbit_start'])
     time_data, duration_data = pull_time_data()
     #
-    # --- Pull External Flux and Fluence Values from different data sets.
+    # --- Pull flux and fluence values from different data sets.
     #
-    goes_data = pull_goes_data(cxo_orbit_start)
+    goes_data = pull_goes_data(cxo_orbit_start, flux_att_factor, fluence_att_factor)
     ace_data = pull_ace_data()
 
     projected_fluence_data = calculate_projected_fluence(crm_data, goes_data, ace_data, time_data)
@@ -111,7 +111,7 @@ def create_radiation_summary():
     with open(f'{ALERTS_WEB_DIR}/radiation_summary.json', 'w') as f:
         json.dump(rad_summ, f, indent = 4)
 
-def pull_goes_data(cxo_orbit_start):
+def pull_goes_data(cxo_orbit_start, flux_att_factor, fluence_att_factor):
     """
     Compute GOES fluence of this orbital period.
 
@@ -150,6 +150,11 @@ def pull_goes_data(cxo_orbit_start):
     goes_data['p7_fluence'] = p7_fluence
     goes_data['e2_fluence'] = e2_fluence
     
+    #: Calculate what the attenuated flux and fluence would be for GOES based on attenuation factors from CRM.
+    for k in ('p4','p7', 'e2'):
+        goes_data[f"attenuated_{k}_flux"] = flux_att_factor * goes_data[f"{k}_flux"]
+        goes_data[f"attenuated_{k}_fluence"] = fluence_att_factor * goes_data[f"{k}_fluence"]
+
     return goes_data
 
 def pull_ace_data():
