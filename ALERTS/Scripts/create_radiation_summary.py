@@ -92,7 +92,11 @@ def create_radiation_summary():
     cxo_orbit_start = CxoTime(crm_data['orbit_start'])
     time_data = {'orbit_duration': round((CXONOW - cxo_orbit_start).sec)} #: astropy.time.core.TimeDelta when subtracted
 
-    goes_data = compute_goes_fluence(cxo_orbit_start, crm_data)
+    #goes_data = compute_goes_fluence(cxo_orbit_start, crm_data)
+    #
+    # --- Pull External Flux and Fluence Values from different data sets.
+    #
+    goes_data = pull_goes_data(cxo_orbit_start)
     acis_ace_data = read_acis_ace_data()
     time_data.update(read_comm_data())
 
@@ -129,6 +133,47 @@ def create_radiation_summary():
         json.dump(rad_summ, f, indent = 4)
     with open(f'{ALERTS_WEB_DIR}/radiation_summary.json', 'w') as f:
         json.dump(rad_summ, f, indent = 4)
+
+def pull_goes_data(cxo_orbit_start):
+    """
+    Compute GOES fluence of this orbital period.
+
+    :param cxo_orbit_start: CxoTime object of the start of this current orbit as read from the CRM summary.
+    :type cxo_orbit_start: CxoTime
+    """
+    proton_table, electron_table = _fetch_for_goes()
+    proton_table = reorient_particle_table(proton_table, gen_column = 'channel', column_list = ['P4', 'P7'])
+    electron_table = reorient_particle_table(electron_table)
+
+    #: Keep only entires which are after the start of this orbit.
+    proton_table.add_column(CxoTime(proton_table['time_tag']).secs, name='cxotime')
+    electron_table.add_column(CxoTime(electron_table['time_tag']).secs, name='cxotime')
+    #: Convert proton unit to MeV in line with Electron Unit
+    proton_table['P4'] = proton_table['P4']*1e3
+    proton_table['P7'] = proton_table['P7']*1e3
+    #: Record the most recent fluxes
+    goes_data = {
+        "p4_flux": proton_table['P4'][-1],
+        "p7_flux": proton_table['P7'][-1],
+        "e2_flux": electron_table['>=2 MeV'][-1],
+    }
+    #: Find the fluence based on date after start of current orbit.
+    proton_table = proton_table[proton_table['cxotime'] >= cxo_orbit_start.secs]
+    electron_table = electron_table[electron_table['cxotime'] >= cxo_orbit_start.secs]
+    #: At the start of a new orbit, these fluences could be zero if there is not recorded flux data points after the orbit start
+
+    #: Compute fluence for each energy distinction. Multiply by 300 seconds for sum of 5-min segment table entries
+    #: Ignore invalid values. Invalid proton marker is -1e5, invalid electron marker is 4.
+    p4_fluence = sum(proton_table[proton_table['P4'] >= 0]['P4']) * 300
+    p7_fluence = sum(proton_table[proton_table['P7'] >= 0]['P7']) * 300
+    e2_fluence = sum(electron_table[electron_table['>=2 MeV'] > 4]['>=2 MeV']) * 300
+
+    #: Also record the final flux value for each channel.
+    goes_data['p4_fluence'] = p4_fluence
+    goes_data['p7_fluence'] = p7_fluence
+    goes_data['e2_fluence'] = e2_fluence
+    
+    return goes_data
 
 def read_crm_summary():
     """
