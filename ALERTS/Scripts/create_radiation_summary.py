@@ -90,7 +90,7 @@ def create_radiation_summary():
     # --- Pull Direct Time Data
     #
     cxo_orbit_start = CxoTime(crm_data['orbit_start'])
-    time_data = pull_time_data()
+    time_data, duration_data = pull_time_data()
     #
     # --- Pull External Flux and Fluence Values from different data sets.
     #
@@ -170,8 +170,12 @@ def pull_ace_data():
     return acis_ace_data
 
 def pull_time_data(cxo_orbit_start):
-    time_data = {'orbit_duration': round((CXONOW - cxo_orbit_start).sec)} #: astropy.time.core.TimeDelta when subtracted
-    time_data.update(read_comm_data())
+    """
+    Collect together time and duration data
+    """
+    time_data, duration_data = read_comm_data()
+    duration_data.update({'orbit_duration': round((CXONOW - cxo_orbit_start).sec)}) #: astropy.time.core.TimeDelta when subtracted
+    
     rad_table = read_rad_zone()
     #: parse the radiation table to find start, and stop periods of the next time in-between radiation zones.
     if rad_table[0]['start'] < CXONOW:
@@ -185,17 +189,20 @@ def pull_time_data(cxo_orbit_start):
         leave_rad = CXONOW
         enter_rad = CxoTime(rad_table[0]['start'])
     time_data['next_rad_zone'] = enter_rad.date.split('.')[0]
-    time_data['till_next_rad_zone'] = round((enter_rad - leave_rad).sec) #: astropy.time.core.TimeDelta when subtracted
+    duration_data['till_next_rad_zone'] = round((enter_rad - leave_rad).sec) #: astropy.time.core.TimeDelta when subtracted
     fp_history_table = read_fp_history_file()
-    time_data['attenuated_rad_duration'] = find_acis_attenuated_time(fp_history_table, leave_rad, enter_rad)
-    time_data['attenuated_next_comm_duration'] = find_acis_attenuated_time(fp_history_table, CXONOW, CxoTime(time_data['next_comm']))
-    time_data['attenuated_second_comm_duration'] = find_acis_attenuated_time(fp_history_table, CXONOW, CxoTime(time_data['second_comm']))
+    duration_data['attenuated_till_next_rad_zone'] = find_acis_attenuated_time(fp_history_table, leave_rad, enter_rad)
+    duration_data['attenuated_till_next_comm'] = find_acis_attenuated_time(fp_history_table, CXONOW, CxoTime(time_data['next_comm']))
+    duration_data['attenuated_till_second_comm'] = find_acis_attenuated_time(fp_history_table, CXONOW, CxoTime(time_data['second_comm']))
+    
+    return time_data, duration_data
 
 def read_comm_data():
     """
     Comm time listed in GMT.
     """
     time_data = {}
+    duration_data = {}
     with open(COMM_DATA_FILE) as f:
         data = [line.strip().split() for line in f.readlines() if line.strip() != '' and line[0] != "#"]
         for i in range(len(data)-2):
@@ -216,9 +223,9 @@ def read_comm_data():
     time_data['recent_comm'] = recent_comm.date.split('.')[0]
     time_data['next_comm'] = next_comm.date.split('.')[0]
     time_data['second_comm'] = second_comm.date.split('.')[0]
-    time_data['till_next_comm'] = round((next_comm - CXONOW).sec) #: astropy.time.core.TimeDelta when subtracted
-    time_data['till_second_comm'] = round((second_comm - CXONOW).sec)
-    return time_data
+    duration_data['till_next_comm'] = round((next_comm - CXONOW).sec) #: astropy.time.core.TimeDelta when subtracted
+    duration_data['till_second_comm'] = round((second_comm - CXONOW).sec)
+    return time_data, duration_data
 
 @reconnect
 def read_rad_zone():
