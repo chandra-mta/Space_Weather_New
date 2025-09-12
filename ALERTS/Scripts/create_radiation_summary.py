@@ -90,37 +90,16 @@ def create_radiation_summary():
     # --- Pull Direct Time Data
     #
     cxo_orbit_start = CxoTime(crm_data['orbit_start'])
-    time_data = {'orbit_duration': round((CXONOW - cxo_orbit_start).sec)} #: astropy.time.core.TimeDelta when subtracted
-    time_data.update(read_comm_data())
-    rad_table = read_rad_zone()
-    #: parse the radiation table to find start, and stop periods of the next time in-between radiation zones.
-    if rad_table[0]['start'] < CXONOW:
-        #: Currently in the rad zone
-        time_data['in_rad_zone'] = True
-        leave_rad = CxoTime(rad_table[0]['stop'])
-        enter_rad = CxoTime(rad_table[1]['start'])
-    else:
-        #: If we are currently in-between rad zones, then use current time for the start of this in-between period
-        time_data['in_rad_zone'] = False
-        leave_rad = CXONOW
-        enter_rad = CxoTime(rad_table[0]['start'])
-    time_data['next_rad_zone'] = enter_rad.date.split('.')[0]
-    time_data['till_next_rad_zone'] = round((enter_rad - leave_rad).sec) #: astropy.time.core.TimeDelta when subtracted
+    time_data = pull_time_data()
     #
     # --- Pull External Flux and Fluence Values from different data sets.
     #
     goes_data = pull_goes_data(cxo_orbit_start)
     ace_data = pull_ace_data()
 
-    fp_history_table = read_fp_history_file()
-    
-    time_data['attenuated_rad_duration'] = find_acis_attenuated_time(fp_history_table, leave_rad, enter_rad)
-    time_data['attenuated_next_comm_duration'] = find_acis_attenuated_time(fp_history_table, CXONOW, CxoTime(time_data['next_comm']))
-    time_data['attenuated_second_comm_duration'] = find_acis_attenuated_time(fp_history_table, CXONOW, CxoTime(time_data['second_comm']))
-
     projected_fluence_data = calculate_projected_fluence(crm_data, goes_data, ace_data, time_data)
 
-    rad_summ = {'last_update': CXONOW.date.split('.')[0]}
+    rad_summ = {}
     rad_summ.update(crm_data)
     rad_summ.update(goes_data)
     rad_summ.update(ace_data)
@@ -189,6 +168,28 @@ def pull_ace_data():
         acis_ace_data['attenuated_ace_flux'] = float(data[13].split()[9])
         acis_ace_data['attenuated_ace_fluence'] = float(data[15].split()[9])
     return acis_ace_data
+
+def pull_time_data(cxo_orbit_start):
+    time_data = {'orbit_duration': round((CXONOW - cxo_orbit_start).sec)} #: astropy.time.core.TimeDelta when subtracted
+    time_data.update(read_comm_data())
+    rad_table = read_rad_zone()
+    #: parse the radiation table to find start, and stop periods of the next time in-between radiation zones.
+    if rad_table[0]['start'] < CXONOW:
+        #: Currently in the rad zone
+        time_data['in_rad_zone'] = True
+        leave_rad = CxoTime(rad_table[0]['stop'])
+        enter_rad = CxoTime(rad_table[1]['start'])
+    else:
+        #: If we are currently in-between rad zones, then use current time for the start of this in-between period
+        time_data['in_rad_zone'] = False
+        leave_rad = CXONOW
+        enter_rad = CxoTime(rad_table[0]['start'])
+    time_data['next_rad_zone'] = enter_rad.date.split('.')[0]
+    time_data['till_next_rad_zone'] = round((enter_rad - leave_rad).sec) #: astropy.time.core.TimeDelta when subtracted
+    fp_history_table = read_fp_history_file()
+    time_data['attenuated_rad_duration'] = find_acis_attenuated_time(fp_history_table, leave_rad, enter_rad)
+    time_data['attenuated_next_comm_duration'] = find_acis_attenuated_time(fp_history_table, CXONOW, CxoTime(time_data['next_comm']))
+    time_data['attenuated_second_comm_duration'] = find_acis_attenuated_time(fp_history_table, CXONOW, CxoTime(time_data['second_comm']))
 
 def read_comm_data():
     """
@@ -266,7 +267,7 @@ def find_acis_attenuated_time(fp_history_table, period_start, period_stop):
         attenuated_time = 0
     elif len(x) == 1:
         #
-        # --- We have two time intervals with intederminant overlap.
+        # --- We have two time intervals with undetermined overlap.
         # --- Put all four in time order, then two middle time points
         # --- will be the duration.
         #
