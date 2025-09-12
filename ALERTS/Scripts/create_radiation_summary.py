@@ -87,7 +87,7 @@ def create_radiation_summary():
         crm_data['crm_flux'] = flux
         crm_data['crm_fluence'] = fluence
     #
-    # --- Calculate ammount of attenuation
+    # --- Calculate amount of attenuation
     #
     cxo_orbit_start = CxoTime(crm_data['orbit_start'])
     flux_att_factor = crm_data['attenuated_crm_flux'] / crm_data['crm_flux']
@@ -103,14 +103,11 @@ def create_radiation_summary():
     goes_data = pull_goes_data(cxo_orbit_start, flux_att_factor, fluence_att_factor)
     ace_data = pull_ace_data()
 
-    projected_fluence_data = calculate_projected_fluence(crm_data, goes_data, ace_data, time_data)
-
-    rad_summ = {}
-    rad_summ.update(crm_data)
-    rad_summ.update(goes_data)
-    rad_summ.update(ace_data)
-    rad_summ.update(time_data)
-    rad_summ.update(projected_fluence_data)
+    rad_summ = structure_rad_summ(crm_data, goes_data, ace_data, duration_data)
+    #: Add timing and orbit data
+    rad_summ.update({'time': time_data, 'duration': duration_data})
+    for _ in ('instrument', 'grating', 'orbit_altitude', 'orbit_leg', 'orbit_start'):
+        rad_summ[_] = crm_data[_]
 
     with open(f'{ALERTS_DATA_DIR}/radiation_summary.json', 'w') as f:
         json.dump(rad_summ, f, indent = 4)
@@ -136,9 +133,9 @@ def pull_goes_data(cxo_orbit_start, flux_att_factor, fluence_att_factor):
     proton_table['P7'] = proton_table['P7']*1e3
     #: Record the most recent fluxes
     goes_data = {
-        "p4_flux": proton_table['P4'][-1],
-        "p7_flux": proton_table['P7'][-1],
-        "e2_flux": electron_table['>=2 MeV'][-1],
+        "goes_p4_flux": proton_table['P4'][-1],
+        "goes_p7_flux": proton_table['P7'][-1],
+        "goes_e2_flux": electron_table['>=2 MeV'][-1],
     }
     #: Find the fluence based on date after start of current orbit.
     proton_table = proton_table[proton_table['cxotime'] >= cxo_orbit_start.secs]
@@ -152,12 +149,12 @@ def pull_goes_data(cxo_orbit_start, flux_att_factor, fluence_att_factor):
     e2_fluence = sum(electron_table[electron_table['>=2 MeV'] > 4]['>=2 MeV']) * 300
 
     #: Also record the final flux value for each channel.
-    goes_data['p4_fluence'] = p4_fluence
-    goes_data['p7_fluence'] = p7_fluence
-    goes_data['e2_fluence'] = e2_fluence
+    goes_data['goes_p4_fluence'] = p4_fluence
+    goes_data['goes_p7_fluence'] = p7_fluence
+    goes_data['goes_e2_fluence'] = e2_fluence
     
     #: Calculate what the attenuated flux and fluence would be for GOES based on attenuation factors from CRM.
-    for k in ('p4','p7', 'e2'):
+    for k in ('goes_p4','goes_p7', 'goes_e2'):
         goes_data[f"attenuated_{k}_flux"] = flux_att_factor * goes_data[f"{k}_flux"]
         goes_data[f"attenuated_{k}_fluence"] = fluence_att_factor * goes_data[f"{k}_fluence"]
 
@@ -174,10 +171,10 @@ def pull_ace_data():
     with open(ACIS_ACE_FILE) as f:
         data = [line.strip() for line in f.readlines() if line.strip() != '']
         _a = data[5].split()
-        acis_ace_data['ace_flux'] = float(_a[9])
-        acis_ace_data['ace_fluence'] = float(data[7].split()[9])
-        acis_ace_data['attenuated_ace_flux'] = float(data[13].split()[9])
-        acis_ace_data['attenuated_ace_fluence'] = float(data[15].split()[9])
+        acis_ace_data['ace_p3_flux'] = float(_a[9])
+        acis_ace_data['ace_p3_fluence'] = float(data[7].split()[9])
+        acis_ace_data['attenuated_ace_p3_flux'] = float(data[13].split()[9])
+        acis_ace_data['attenuated_ace_p3_fluence'] = float(data[15].split()[9])
     return acis_ace_data
 
 def pull_time_data(cxo_orbit_start):
@@ -305,29 +302,80 @@ def find_acis_attenuated_time(fp_history_table, period_start, period_stop):
     
     return round(attenuated_time)
 
-def calculate_projected_fluence(crm_data, goes_data, acis_ace_data, time_data):
+def structure_rad_summ(crm_data,goes_data,ace_data,duration_data):
     """
-    Calculate the projected flux and fluences based onf current attenuation factors
+    Structure the relevant radiation summary flux, fluence, and projection values into a
+    three tiered dictionary / table structure.
     """
+    rad_summ = {}
+    for keyword in ('', 'attenuated_'):
+        table = {}
+        for _channel, _data in zip(('crm', 'ace_p3'), (crm_data, ace_data)):
+            table = _construct_rows(table,
+                                    keyword,
+                                    _channel,
+                                    _data,
+                                    duration_data,
+                                    multi_factor = True
+                                   )
+        for _channel in ('goes_p4', 'goes_p7', 'goes_e2'):
+            table = _construct_rows(
+                table,
+                keyword,
+                _channel,
+                goes_data,
+                duration_data
+            )
+        if keyword == '':
+            rad_summ['external'] = table
+        else:
+            rad_summ['attenuated'] = table
+    return rad_summ
 
-    projected_fluence_data = {}
-    for keyword in ('', 'attenuated_'): #: Loop over regular and attenuated versions
+
+def _project_fluence(flux, fluence, duration, factor=1):
+    """
+    Calculate the projected fluence for a provided channel flux, fluence, and duration.
+    """
+    return (factor * flux) * duration + fluence 
+
+def _construct_rows(table, keyword, _channel, _data, duration_data, multi_factor = False):
+    """
+    Provided a channel, the flux / fluence data set, and the duration data, we calculate the tables' rows.
+    """
+    #: Starting Columns
+    table[_channel] = {
+                'flux': _data[f'{keyword}{_channel}_flux'],
+                'fluence': _data[f'{keyword}{_channel}_fluence'],
+            }
+    #: Determine if calculating additional scaled columns (CRM and ACE)
+    if multi_factor:
         for factor in (1,2,10):
-            projected_fluence_data[f"{keyword}projected_crm_fluence_rad_{factor}"] = (factor * crm_data[f'{keyword}crm_flux'] * time_data['till_next_rad_zone']) + crm_data[f'{keyword}crm_fluence']
-            projected_fluence_data[f"{keyword}projected_ace_fluence_rad_{factor}"] = (factor * acis_ace_data[f'{keyword}ace_flux'] * time_data['till_next_rad_zone']) + acis_ace_data[f'{keyword}ace_fluence']
-        
-        for k in ('next', 'second'):
-            projected_fluence_data[f"{keyword}projected_crm_fluence_{k}_comm"] = crm_data[f'{keyword}crm_flux'] * time_data[f"till_{k}_comm"] + crm_data[f'{keyword}crm_fluence']
-            projected_fluence_data[f"{keyword}projected_ace_fluence_{k}_comm"] = acis_ace_data[f'{keyword}ace_flux'] * time_data[f"till_{k}_comm"] + acis_ace_data[f'{keyword}ace_fluence']
-        
-        for channel in ('p4','p7', 'e2'):
-            _e = goes_data[f"{keyword}{channel}_flux"]
-            _f = goes_data[f"{keyword}{channel}_fluence"]
-            projected_fluence_data[f'{keyword}projected_{channel}_fluence_rad'] = _e * time_data['till_next_rad_zone'] + _f
-            projected_fluence_data[f'{keyword}projected_{channel}_fluence_next_comm'] = _e * time_data['till_next_comm'] + _f
-            projected_fluence_data[f'{keyword}projected_{channel}_fluence_second_comm'] = _e * time_data['till_second_comm'] + _f
-
-    return projected_fluence_data
+            table[_channel][f'proj_rad_zone_{factor}'] = _project_fluence(
+                    table[_channel]['flux'],
+                    table[_channel]['fluence'],
+                    duration_data[f"{keyword}till_next_rad_zone"],
+                    factor
+                )
+    else:
+        table[_channel]['proj_rad_zone'] = _project_fluence(
+                table[_channel]['flux'],
+                table[_channel]['fluence'],
+                duration_data[f"{keyword}till_next_rad_zone"],
+            )
+    #: Projection for next comm.
+    table[_channel]['proj_next_comm'] = _project_fluence(
+        table[_channel]['flux'],
+        table[_channel]['fluence'],
+        duration_data[f"{keyword}till_next_comm"]
+    )
+    #: Projection for second comm.
+    table[_channel]['proj_second_comm'] = _project_fluence(
+        table[_channel]['flux'],
+        table[_channel]['fluence'],
+        duration_data[f"{keyword}till_second_comm"]
+    )
+    return table
 
 def _fetch_for_goes():
     """
