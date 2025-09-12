@@ -110,7 +110,7 @@ def create_radiation_summary():
     # --- Pull External Flux and Fluence Values from different data sets.
     #
     goes_data = pull_goes_data(cxo_orbit_start)
-    acis_ace_data = read_acis_ace_data()
+    ace_data = pull_ace_data()
 
     fp_history_table = read_fp_history_file()
     
@@ -118,12 +118,12 @@ def create_radiation_summary():
     time_data['attenuated_next_comm_duration'] = find_acis_attenuated_time(fp_history_table, CXONOW, CxoTime(time_data['next_comm']))
     time_data['attenuated_second_comm_duration'] = find_acis_attenuated_time(fp_history_table, CXONOW, CxoTime(time_data['second_comm']))
 
-    projected_fluence_data = calculate_projected_fluence(crm_data, goes_data, acis_ace_data, time_data)
+    projected_fluence_data = calculate_projected_fluence(crm_data, goes_data, ace_data, time_data)
 
     rad_summ = {'last_update': CXONOW.date.split('.')[0]}
     rad_summ.update(crm_data)
     rad_summ.update(goes_data)
-    rad_summ.update(acis_ace_data)
+    rad_summ.update(ace_data)
     rad_summ.update(time_data)
     rad_summ.update(projected_fluence_data)
 
@@ -173,18 +173,17 @@ def pull_goes_data(cxo_orbit_start):
     
     return goes_data
 
-def read_acis_ace_data():
+def pull_ace_data():
     """
     Pull the ACIS team's calculation for ACE flux, fluence, and attenuation to ACIS.
 
     :NOTE: Attenuated in this context references the flux and fluence experienced by ACIS for the ACE P3 channel.
-    Therefore, if ACIS is not in the focal plane, then the measurement is attenuated to zero. This calculation is done byt ACIS team.
+    Therefore, if ACIS is not in the focal plane, then the measurement is attenuated to zero. This calculation is done by ACIS team.
     """
     acis_ace_data = {}
     with open(ACIS_ACE_FILE) as f:
         data = [line.strip() for line in f.readlines() if line.strip() != '']
         _a = data[5].split()
-        acis_ace_data['ace_last_update'] = datetime.strptime(f"{_a[0]}-{_a[1]:>02}-{_a[2]:>02}-{_a[3]:>04}", '%Y-%m-%d-%H%M').strftime("%Y:%j:%H:%M:%S")
         acis_ace_data['ace_flux'] = float(_a[9])
         acis_ace_data['ace_fluence'] = float(data[7].split()[9])
         acis_ace_data['attenuated_ace_flux'] = float(data[13].split()[9])
