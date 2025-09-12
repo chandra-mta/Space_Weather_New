@@ -28,7 +28,7 @@ import traceback
 #
 ALERTS_DATA_DIR = "/data/mta4/Space_Weather/ALERTS/Data"
 ALERTS_WEB_DIR = "/data/mta4/www/RADIATION/Alerts"
-CRM_DATA_FILE = "/data/mta4/Space_Weather/CRM3/Data/CRMsummary.dat"
+CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
 ACIS_ACE_FILE = "/proj/web-cxc/htdocs/acis/Fluence/current.dat"
 COMM_DATA_FILE = "/data/mta4/Space_Weather/Comm_data/Data/comm_data"
 FP_HISTORY_FILE = "/proj/sot/acis/FLU-MON/FPHIST-2001.dat"
@@ -78,7 +78,11 @@ def reconnect(func):
 
 def create_radiation_summary():
 
-    crm_data = read_crm_summary()
+    #crm_data = read_crm_summary()
+    crm_file = f"{CRM_DATA_DIR}/CRMsummary.json"
+    with open(crm_file) as f:
+        crm_data = json.load(f)
+        
     cxo_orbit_start = CxoTime(crm_data['orbit_start'])
     time_data = {'orbit_duration': round((CXONOW - cxo_orbit_start).sec)} #: astropy.time.core.TimeDelta when subtracted
 
