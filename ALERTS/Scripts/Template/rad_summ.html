@@ -21,22 +21,22 @@ See <a href="about_rad_summ.html">about rad_summ</a> for the definition and orig
 
 <table border=0>
 <tr>
-    <th>Orbit start:</th><td><span id="orbit_start">--</span> (<span id="orbit_duration">--</span> ksec in this period)</td><!--default, float ks-->
+    <th>Orbit start:</th><td><span id="time-orbit_start">--</span> (<span id="duration-orbit_duration">--</span> ksec in this period)</td><!--default, float ks-->
 </tr>
 <tr>
-    <th>Current altitude/orbit leg:</th><td><span id="altitude">--</span> (km)</td><!--default-->
+    <th>Current altitude/orbit leg:</th><td><span id="general-orbit_altitude">--</span> <span id="general-orbit_leg">--</span> (km)</td><!--default, default-->
 </tr>
 <tr>
-    <th>Current configuration:</th><td id="instrument_config">--</td><!--default-->
+    <th>Current configuration:</th><td><span id="general-instrument">--</span> <span id="general-grating">--</span></td><!--default, default-->
 </tr>
 <tr>
-    <th>Next comm:</th><td><span id="next_comm">--</span> (<span id="till_next_comm">--</span> hours) <span id="in_comm"></span></td><!--default, float hours, boolean-->
+    <th>Next comm:</th><td><span id="time-next_comm">--</span> (<span id="duration-till_next_comm">--</span> hours) <span id="general-in_comm"></span></td><!--default, float hours, boolean-->
 </tr>
 <tr>
-    <th>Next rad zone:</th><td><span id="next_rad_zone">--</span> (<span id="till_next_rad_zone">--</span> hours) <span id="in_rad_zone"></span></td><!--default, float hours, boolean-->
+    <th>Next rad zone:</th><td><span id="time-next_rad_zone">--</span> (<span id="duration-till_next_rad_zone">--</span> hours) <span id="general-in_rad_zone"></span></td><!--default, float hours, boolean-->
 </tr>
 <tr>
-    <th>Last updated (every 10 minutes):</th><td id="last_update">--</td> <!--default-->
+    <th>Last updated (every 10 minutes):</th><td id="LastUpdated">--</td> <!--default-->
 </tr>
 </table>
 <p>
@@ -48,8 +48,8 @@ See <a href="about_rad_summ.html">about rad_summ</a> for the definition and orig
 <tr>
     <th>&#160</th><th colspan=6>Attenuated - projects fluences based on upcoming SI and grating configuration
     <br>ACIS effective exposure times (ks)
-    &#160 &#160 Until next radzone:   <span id="attenuated_rad_duration">--</span><!--float ks-->
-    &#160 &#160 Until next comm:    <span id="attenuated_next_comm_duration">--</span><!--float ks-->
+    &#160 &#160 Until next radzone:   <span id="duration-attenuated_till_next_rad_zone">--</span><!--float ks-->
+    &#160 &#160 Until next comm:    <span id="duration-attenuated_till_next_comm">--</span><!--float ks-->
     </th>
 </tr>
 <tr>
@@ -63,55 +63,55 @@ See <a href="about_rad_summ.html">about rad_summ</a> for the definition and orig
 </tr>
 <tr>
     <th>CRM</th>
-    <td id="attenuated_crm_flux">--</td><!--e-notation-->
-    <td id="attenuated_crm_fluence">--</td><!--e-notation-->
+    <td id="attenuated-crm-flux">--</td><!--e-notation-->
+    <td id="attenuated-crm-fluence">--</td><!--e-notation-->
     <td>
-        <span id="attenuated_projected_crm_fluence_rad_1">--</span><br><!--e-notation-->
-        (<span id="attenuated_projected_crm_fluence_rad_2">--</span>)<br><!--e-notation-->
-        *<span id="attenuated_projected_crm_fluence_rad_10">--</span>*<br><!--e-notation-->
+        <span id="attenuated-crm-proj_rad_zone_1">--</span><br><!--e-notation-->
+        (<span id="attenuated-crm-proj_rad_zone_2">--</span>)<br><!--e-notation-->
+        *<span id="attenuated-crm-proj_rad_zone_10">--</span>*<br><!--e-notation-->
     </td>
-    <td id="attenuated_projected_crm_fluence_next_comm">--</td><!--e-notation-->
-    <td id="attenuated_projected_crm_fluence_second_comm">--</td><!--e-notation-->
+    <td id="attenuated-crm-proj_next_comm">--</td><!--e-notation-->
+    <td id="attenuated-crm-proj_second_comm">--</td><!--e-notation-->
     <td>Yellow Limit:<br>1.0e+09 (fluence)</td>
 </tr>
 <tr>
     <th>ACE P3</th>
-    <td id="attenuated_ace_flux">--</td><!--e-notation-->
-    <td id="attenuated_ace_fluence">--</td><!--e-notation-->
+    <td id="attenuated-ace_p3-flux">--</td><!--e-notation-->
+    <td id="attenuated-ace_p3-fluence">--</td><!--e-notation-->
     <td>
-        <span id="attenuated_projected_ace_fluence_rad_1">--</span><br><!--e-notation-->
-        (<span id="attenuated_projected_ace_fluence_rad_2">--</span>)<br><!--e-notation-->
-        *<span id="attenuated_projected_ace_fluence_rad_10">--</span>*<br><!--e-notation-->
+        <span id="attenuated-ace_p3-proj_rad_zone_1">--</span><br><!--e-notation-->
+        (<span id="attenuated-ace_p3-proj_rad_zone_2">--</span>)<br><!--e-notation-->
+        *<span id="attenuated-ace_p3-proj_rad_zone_10">--</span>*<br><!--e-notation-->
     </td>
-    <td id="attenuated_projected_ace_fluence_next_comm">--</td><!--e-notation-->
-    <td id="attenuated_projected_ace_fluence_second_comm">--</td><!--e-notation-->
+    <td id="attenuated-ace_p3-proj_next_comm">--</td><!--e-notation-->
+    <td id="attenuated-ace_p3-proj_second_comm">--</td><!--e-notation-->
     <td>Alert Trigger:<br>1.0e+09 (fluence)</td>
 </tr>
 <tr>
     <th>GOES-R (P4)</th>
-    <td id="attenuated_p4_flux">--</td><!--e-notation-->
-    <td id="attenuated_p4_fluence">--</td><!--e-notation-->
-    <td id="attenuated_projected_p4_fluence_rad">--</td><!--e-notation-->
-    <td id="attenuated_projected_p4_fluence_next_comm">--</td><!--e-notation-->
-    <td id="attenuated_projected_p4_fluence_second_comm">--</td><!--e-notation-->
+    <td id="attenuated-goes_p4-flux">--</td><!--e-notation-->
+    <td id="attenuated-goes_p4-fluence">--</td><!--e-notation-->
+    <td id="attenuated-goes_p4-proj_rad_zone">--</td><!--e-notation-->
+    <td id="attenuated-goes_p4-proj_next_comm">--</td><!--e-notation-->
+    <td id="attenuated-goes_p4-proj_second_comm">--</td><!--e-notation-->
     <td>&#160</td>
 </tr>
 <tr>
     <th>GOES-R (P7)</th>
-    <td id="attenuated_p7_flux">--</td><!--e-notation-->
-    <td id="attenuated_p7_fluence">--</td><!--e-notation-->
-    <td id="attenuated_projected_p7_fluence_rad">--</td><!--e-notation-->
-    <td id="attenuated_projected_p7_fluence_next_comm">--</td><!--e-notation-->
-    <td id="attenuated_projected_p7_fluence_second_comm">--</td><!--e-notation-->
+    <td id="attenuated-goes_p7-flux">--</td><!--e-notation-->
+    <td id="attenuated-goes_p7-fluence">--</td><!--e-notation-->
+    <td id="attenuated-goes_p7-proj_rad_zone">--</td><!--e-notation-->
+    <td id="attenuated-goes_p7-proj_next_comm">--</td><!--e-notation-->
+    <td id="attenuated-goes_p7-proj_second_comm">--</td><!--e-notation-->
     <td>&#160</td>
 </tr>
 <tr>
     <th>GOES-R (E>2.0MeV)</th>
-    <td id="attenuated_e2_flux">--</td><!--e-notation-->
-    <td id="attenuated_e2_fluence">--</td><!--e-notation-->
-    <td id="attenuated_projected_e2_fluence_rad">--</td><!--e-notation-->
-    <td id="attenuated_projected_e2_fluence_next_comm">--</td><!--e-notation-->
-    <td id="attenuated_projected_e2_fluence_second_comm">--</td><!--e-notation-->
+    <td id="attenuated-goes_e2-flux">--</td><!--e-notation-->
+    <td id="attenuated-goes_e2-fluence">--</td><!--e-notation-->
+    <td id="attenuated-goes_e2-proj_rad_zone">--</td><!--e-notation-->
+    <td id="attenuated-goes_e2-proj_next_comm">--</td><!--e-notation-->
+    <td id="attenuated-goes_e2-proj_second_comm">--</td><!--e-notation-->
     <td>&#160</td>
 </tr>
 <tr>
@@ -138,62 +138,62 @@ See <a href="about_rad_summ.html">about rad_summ</a> for the definition and orig
 </tr>
 <tr>
     <th>CRM</th>
-    <td id="crm_flux">--</td><!--e-notation-->
-    <td id="crm_fluence">--</td><!--e-notation-->
+    <td id="external-crm-flux">--</td><!--e-notation-->
+    <td id="external-crm-fluence">--</td><!--e-notation-->
     <td>
-        <span id="projected_crm_fluence_rad_1">--</span><br><!--e-notation-->
-        (<span id="projected_crm_fluence_rad_2">--</span>)<br><!--e-notation-->
-        *<span id="projected_crm_fluence_rad_10">--</span>*<br><!--e-notation-->
+        <span id="external-crm-proj_rad_zone_1">--</span><br><!--e-notation-->
+        (<span id="external-crm-proj_rad_zone_2">--</span>)<br><!--e-notation-->
+        *<span id="external-crm-proj_rad_zone_10">--</span>*<br><!--e-notation-->
     </td>
-    <td id="projected_crm_fluence_next_comm">--</td><!--e-notation-->
-    <td id="projected_crm_fluence_second_comm">--</td><!--e-notation-->
+    <td id="external-crm-proj_next_comm">--</td><!--e-notation-->
+    <td id="external-crm-proj_second_comm">--</td><!--e-notation-->
     <td>&#160</td>
 </tr>
 <tr>
     <th>ACE P3</th>
-    <td id="ace_flux">--</td><!--e-notation-->
-    <td id="ace_fluence">--</td><!--e-notation-->
+    <td id="external-ace_p3-flux">--</td><!--e-notation-->
+    <td id="external-ace_p3-fluence">--</td><!--e-notation-->
     <td>
-        <span id="projected_ace_fluence_rad_1">--</span><br><!--e-notation-->
-        (<span id="projected_ace_fluence_rad_2">--</span>)<br><!--e-notation-->
-        *<span id="projected_ace_fluence_rad_10">--</span>*<br><!--e-notation-->
+        <span id="external-ace_p3-proj_rad_zone_1">--</span><br><!--e-notation-->
+        (<span id="external-ace_p3-proj_rad_zone_2">--</span>)<br><!--e-notation-->
+        *<span id="external-ace_p3-proj_rad_zone_10">--</span>*<br><!--e-notation-->
     </td>
-    <td id="projected_ace_fluence_next_comm">--</td><!--e-notation-->
-    <td id="projected_ace_fluence_second_comm">--</td><!--e-notation-->
+    <td id="external-ace_p3-proj_next_comm">--</td><!--e-notation-->
+    <td id="external-ace_p3-proj_second_comm">--</td><!--e-notation-->
     <td>3.6e8 (2 hr fluence, red)</td>
 </tr>
 <tr>
     <th>GOES-R (P4)</th>
-    <td id="p4_flux">--</td><!--e-notation-->
-    <td id="p4_fluence">--</td><!--e-notation-->
-    <td id="projected_p4_fluence_rad">--</td><!--e-notation-->
-    <td id="projected_p4_fluence_next_comm">--</td><!--e-notation-->
-    <td id="projected_p4_fluence_second_comm">--</td><!--e-notation-->
+    <td id="external-goes_p4-flux">--</td><!--e-notation-->
+    <td id="external-goes_p4-fluence">--</td><!--e-notation-->
+    <td id="external-goes_p4-proj_rad_zone">--</td><!--e-notation-->
+    <td id="external-goes_p4-proj_next_comm">--</td><!--e-notation-->
+    <td id="external-goes_p4-proj_second_comm">--</td><!--e-notation-->
     <td>30.0/90.9 (flux, yellow/red)</td>
 </tr>
 <tr>
     <th>GOES-R (P7)</th>
-    <td id="p7_flux">--</td><!--e-notation-->
-    <td id="p7_fluence">--</td><!--e-notation-->
-    <td id="projected_p7_fluence_rad">--</td><!--e-notation-->
-    <td id="projected_p7_fluence_next_comm">--</td><!--e-notation-->
-    <td id="projected_p7_fluence_second_comm">--</td><!--e-notation-->
+    <td id="external-goes_p7-flux">--</td><!--e-notation-->
+    <td id="external-goes_p7-fluence">--</td><!--e-notation-->
+    <td id="external-goes_p7-proj_rad_zone">--</td><!--e-notation-->
+    <td id="external-goes_p7-proj_next_comm">--</td><!--e-notation-->
+    <td id="external-goes_p7-proj_second_comm">--</td><!--e-notation-->
     <td>0.25/0.70 (flux, yellow/red)</td>
 </tr>
 <tr>
     <th>GOES-R (E>2.0MeV)</th>
-    <td id="e2_flux">--</td><!--e-notation-->
-    <td id="e2_fluence">--</td><!--e-notation-->
-    <td id="projected_e2_fluence_rad">--</td><!--e-notation-->
-    <td id="projected_e2_fluence_next_comm">--</td><!--e-notation-->
-    <td id="projected_e2_fluence_second_comm">--</td><!--e-notation-->
+    <td id="external-goes_e2-flux">--</td><!--e-notation-->
+    <td id="external-goes_e2-fluence">--</td><!--e-notation-->
+    <td id="external-goes_e2-proj_rad_zone">--</td><!--e-notation-->
+    <td id="external-goes_e2-proj_next_comm">--</td><!--e-notation-->
+    <td id="external-goes_e2-proj_second_comm">--</td><!--e-notation-->
     <td>&#160</td>
 </tr>
 </table>
 <br>The current fluence is calculated from the beginning on the current orbit. 
 The ACE P3 external fluence starts integrating above 10 kkm.
 
-<br>* EPHIN "fluxes" are raw counts as of the last support [<span id="recent_comm">--</span>], not averaged.
+<br>* EPHIN "fluxes" are raw counts as of the last support [<span id="time-recent_comm">--</span>], not averaged.
 <br><br>
 <div style="text-align:center;">
 <h4>Attenuated CRM Proton Fluence</h4>
@@ -273,18 +273,18 @@ The ACE P3 external fluence starts integrating above 10 kkm.
         var value = data['general']['in_comm'];
         var data_element = document.getElementById('general-in_comm');
         if (data_element != null) {
-                    if (value) {
-                        data_element.innerHTML = "(Currently in Comm)";
-                    } else {
-                        data_element.innerHTML = "";
-                    }
+            if (value) {
+                data_element.innerHTML = "(Currently in Comm)";
+            } else {
+                data_element.innerHTML = "";
+            }
         }
         var value = data['general']['in_rad_zone'];
         var data_element = document.getElementById('general-in_rad_zone');
         if (data_element != null) {
             if (value) {
                 data_element.innerHTML = "(Currently in Rad Zone)";
-                } else {
+            } else {
                 data_element.innerHTML = "";
             }
         }
@@ -293,14 +293,14 @@ The ACE P3 external fluence starts integrating above 10 kkm.
             const data_element = document.getElementById(`time-${key}`);
             if (data_element != null) {
                 data_element.innerHTML = data['time'][key].split('.')[0];
-                }
+            }
         });
         // Default
         ['orbit_altitude', 'orbit_leg', 'instrument', 'grating'].forEach(key => {
             const data_element = document.getElementById(`general-${key}`);
             if (data_element != null) {
                 data_element.innerHTML = data['general'][key];
-        }
+            }
         });
     }
     updateData();
