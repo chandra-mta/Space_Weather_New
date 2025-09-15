@@ -206,7 +206,7 @@ def pull_time_data(cxo_orbit_start):
         time_data['in_rad_zone'] = False
         leave_rad = CXONOW
         enter_rad = CxoTime(rad_table[0]['start'])
-    time_data['next_rad_zone'] = enter_rad.date.split('.')[0]
+    time_data['next_rad_zone'] = enter_rad.date
     duration_data['till_next_rad_zone'] = round((enter_rad - leave_rad).sec) #: astropy.time.core.TimeDelta when subtracted
     fp_history_table = read_fp_history_file()
     duration_data['attenuated_till_next_rad_zone'] = find_acis_attenuated_time(fp_history_table, leave_rad, enter_rad)
@@ -238,9 +238,9 @@ def read_comm_data():
                 next_comm = CxoTime(data[i+1][2])
                 second_comm = CxoTime(data[i+2][2])
                 break
-    time_data['recent_comm'] = recent_comm.date.split('.')[0]
-    time_data['next_comm'] = next_comm.date.split('.')[0]
-    time_data['second_comm'] = second_comm.date.split('.')[0]
+    time_data['recent_comm'] = recent_comm.date
+    time_data['next_comm'] = next_comm.date
+    time_data['second_comm'] = second_comm.date
     duration_data['till_next_comm'] = round((next_comm - CXONOW).sec) #: astropy.time.core.TimeDelta when subtracted
     duration_data['till_second_comm'] = round((second_comm - CXONOW).sec)
     return time_data, duration_data
