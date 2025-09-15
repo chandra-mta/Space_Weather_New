@@ -212,15 +212,16 @@ The ACE P3 external fluence starts integrating above 10 kkm.
     const radsummURL = "radiation_summary.json";
     const refreshInterval = 300 * 1000;
 
-    const ks_keys = ['orbit_duration',
-        'thing',
-        'attenuated_rad_duration',
-        'attenuated_next_comm_duration',
-    ];
-    const hour_keys = ['till_next_comm',
-        'till_next_rad_zone',
-    ];
-    // Every other fetched key, with a matching id uses e-notation
+    async function updateTime(date){
+        // Formatted into %Y:%j:%H:%M:%S format as commonly used in cxotime
+        const year = date.getUTCFullYear();
+        const dayOfYear = String(Math.floor((date - new Date(year, 0, 0)) / (1000 * 60 * 60 * 24))).padStart(3,'0');
+        const hours = String(date.getUTCHours()).padStart(2,'0');
+        const minutes = String(date.getUTCMinutes()).padStart(2,'0');
+        const seconds = String(date.getUTCSeconds()).padStart(2,'0');
+        const datetime = `${year}:${dayOfYear}:${hours}:${minutes}:${seconds}`
+        document.getElementById("LastUpdated").innerHTML = datetime;
+    }
 
     async function updateData() {
         return fetch(radsummURL, {cache: 'no-cache'}) // Fetch needs to have 'no-cache' so that the browser actually fetches a new copy of the summary data set.
@@ -228,6 +229,8 @@ The ACE P3 external fluence starts integrating above 10 kkm.
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
+                // Update the Last Updated time with the summary's file modification time.
+                updateTime(new Date(response.headers.get("last-modified")));
                 return response.json();
             })
             .then(data => updateHTML(data))
@@ -235,45 +238,71 @@ The ACE P3 external fluence starts integrating above 10 kkm.
     }
 
     function updateHTML(data) {
-        for (let key in data) {
-            // Check if this key is included in the document
-            const data_element = document.getElementById(key);
+        // Guided iteration through the summary levels.
+        // Radiation metrics
+        ['attenuated', 'external'].forEach(table => {
+            for (let channel in data[table]){
+                for (let col in data[table][channel]) {
+                    const match_id = `${table}-${channel}-${col}`;
+                    const data_element = document.getElementById(match_id);
+                    if (data_element != null) {
+                        data_element.innerHTML = (data[table][channel][col]).toExponential(3);
+                    }
+                }
+            }
+        });
+        // Timing (Kiloseconds)
+        ['orbit_duration', 'attenuated_till_next_rad_zone', 'attenuated_till_next_comm'].forEach(key => {
+            const match_id = `duration-${key}`;
+            const data_element = document.getElementById(match_id);
             if (data_element != null) {
-                // Present in document, check data value
-                // Format Edge-case first, otherwise e-notation if number
-                const value = data[key];
-                if (typeof(value) == "number") {
-                    if (ks_keys.includes(key)) {
-                        // Format into kilo-seconds
-                        data_element.innerHTML = (value / 1000).toFixed(1);
-                    } else if (hour_keys.includes(key)) {
-                        // Format into hours
-                        data_element.innerHTML = (value / 3600).toFixed(1);
-                    } else {
-                        // Format floats into e-notation
-                        data_element.innerHTML = (value).toExponential(3);
-                    }
-                } else if (key == 'in_rad_zone') {
-                    // Rad Zone Edge case
-                    if (value) {
-                        data_element.innerHTML = "(Currently in Rad Zone)";
-                    } else {
-                        data_element.innerHTML = "";
-                    }
-                } else if (key == 'in_comm') {
-                    // Comm Edge case
+                data_element.innerHTML = (data['duration'][key] / 1000).toFixed(1);
+            }
+            
+        });
+        // Timing (Hours)
+        ['till_next_rad_zone', 'till_next_comm'].forEach(key => {
+            const match_id = `duration-${key}`;
+            const data_element = document.getElementById(match_id);
+            if (data_element != null) {
+                data_element.innerHTML = (data['duration'][key] / 3600).toFixed(1);
+            }
+            
+        });
+        /// Booleans
+        var value = data['general']['in_comm'];
+        var data_element = document.getElementById('general-in_comm');
+        if (data_element != null) {
                     if (value) {
                         data_element.innerHTML = "(Currently in Comm)";
                     } else {
                         data_element.innerHTML = "";
                     }
+        }
+        var value = data['general']['in_rad_zone'];
+        var data_element = document.getElementById('general-in_rad_zone');
+        if (data_element != null) {
+            if (value) {
+                data_element.innerHTML = "(Currently in Rad Zone)";
                 } else {
-                    data_element.innerHTML = value;
-                }
+                data_element.innerHTML = "";
             }
         }
+        // Time String
+        ['orbit_start', 'next_comm', 'next_rad_zone', 'recent_comm'].forEach(key => {
+            const data_element = document.getElementById(`time-${key}`);
+            if (data_element != null) {
+                data_element.innerHTML = data['time'][key].split('.')[0];
+                }
+        });
+        // Default
+        ['orbit_altitude', 'orbit_leg', 'instrument', 'grating'].forEach(key => {
+            const data_element = document.getElementById(`general-${key}`);
+            if (data_element != null) {
+                data_element.innerHTML = data['general'][key];
+        }
+        });
     }
-
     updateData();
     setInterval(updateData, refreshInterval);
 
