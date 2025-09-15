@@ -102,13 +102,20 @@ def create_radiation_summary():
     #
     goes_data = pull_goes_data(cxo_orbit_start, flux_att_factor, fluence_att_factor)
     ace_data = pull_ace_data()
-
-    rad_summ = {}
+    #
+    # --- Categorize and write the radiation summary
+    #
+    rad_summ = {'general': {}}
     #: Configuration and orbit data
-    for _ in ('instrument', 'grating', 'orbit_altitude', 'orbit_leg', 'orbit_start'):
-        rad_summ[_] = crm_data[_]
+    for _ in ('instrument', 'grating', 'orbit_altitude', 'orbit_leg'):
+        rad_summ['general'][_] = crm_data[_]
     #: Add timing and duration data
+    in_comm= time_data.pop('in_comm')
+    in_rad_zone= time_data.pop('in_rad_zone')
     rad_summ.update({'time': time_data, 'duration': duration_data})
+    rad_summ['time']['orbit_start'] = crm_data['orbit_start']
+    rad_summ['general']['in_comm'] = in_comm
+    rad_summ['general']['in_rad_zone'] = in_rad_zone
     #: Flux and fluence data.
     rad_summ.update(structure_rad_summ(crm_data, goes_data, ace_data, duration_data))
     
