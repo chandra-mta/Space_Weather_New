@@ -28,7 +28,7 @@ import traceback
 #
 ALERTS_DATA_DIR = "/data/mta4/Space_Weather/ALERTS/Data"
 ALERTS_WEB_DIR = "/data/mta4/www/RADIATION/Alerts"
-CRM_DATA_FILE = "/data/mta4/Space_Weather/CRM3/Data/CRMsummary.dat"
+CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
 ACIS_ACE_FILE = "/proj/web-cxc/htdocs/acis/Fluence/current.dat"
 COMM_DATA_FILE = "/data/mta4/Space_Weather/Comm_data/Data/comm_data"
 FP_HISTORY_FILE = "/proj/sot/acis/FLU-MON/FPHIST-2001.dat"
@@ -78,71 +78,53 @@ def reconnect(func):
 
 def create_radiation_summary():
 
-    crm_data = read_crm_summary()
+    crm_file = f"{CRM_DATA_DIR}/CRMsummary.json"
+    with open(crm_file) as f:
+        crm_data = json.load(f)
+        #: rename for ease
+        flux = crm_data.pop('corrected_crm_flux')
+        fluence = crm_data.pop('corrected_crm_fluence')
+        crm_data['crm_flux'] = flux
+        crm_data['crm_fluence'] = fluence
+    #
+    # --- Calculate amount of attenuation
+    #
     cxo_orbit_start = CxoTime(crm_data['orbit_start'])
-    time_data = {'orbit_duration': round((CXONOW - cxo_orbit_start).sec)} #: astropy.time.core.TimeDelta when subtracted
-
-    goes_data = compute_goes_fluence(cxo_orbit_start, crm_data)
-    acis_ace_data = read_acis_ace_data()
-    time_data.update(read_comm_data())
-
-    rad_table = read_rad_zone()
-    #: parse the radiation table to find start, and stop periods of the next time in-between radiation zones.
-    if rad_table[0]['start'] < CXONOW:
-        #: Currently in the rad zone
-        time_data['in_rad_zone'] = True
-        leave_rad = CxoTime(rad_table[0]['stop'])
-        enter_rad = CxoTime(rad_table[1]['start'])
-    else:
-        #: If we are currently in-between rad zones, then use current time for the start of this in-between period
-        time_data['in_rad_zone'] = False
-        leave_rad = CXONOW
-        enter_rad = CxoTime(rad_table[0]['start'])
-    time_data['next_rad_zone'] = enter_rad.date.split('.')[0]
-    time_data['till_next_rad_zone'] = round((enter_rad - leave_rad).sec) #: astropy.time.core.TimeDelta when subtracted
-    fp_history_table = read_fp_history_file()
+    flux_att_factor = crm_data['attenuated_crm_flux'] / crm_data['crm_flux']
+    fluence_att_factor = crm_data['attenuated_crm_fluence'] / crm_data['crm_fluence']
+    #
+    # --- Pull Direct Time Data
+    #
+    cxo_orbit_start = CxoTime(crm_data['orbit_start'])
+    time_data, duration_data = pull_time_data(cxo_orbit_start)
+    #
+    # --- Pull flux and fluence values from different data sets.
+    #
+    goes_data = pull_goes_data(cxo_orbit_start, flux_att_factor, fluence_att_factor)
+    ace_data = pull_ace_data()
+    #
+    # --- Categorize and write the radiation summary
+    #
+    rad_summ = {'general': {}}
+    #: Configuration and orbit data
+    for _ in ('instrument', 'grating', 'orbit_altitude', 'orbit_leg'):
+        rad_summ['general'][_] = crm_data[_]
+    #: Add timing and duration data
+    in_comm= time_data.pop('in_comm')
+    in_rad_zone= time_data.pop('in_rad_zone')
+    rad_summ.update({'time': time_data, 'duration': duration_data})
+    rad_summ['time']['orbit_start'] = crm_data['orbit_start']
+    rad_summ['general']['in_comm'] = in_comm
+    rad_summ['general']['in_rad_zone'] = in_rad_zone
+    #: Flux and fluence data.
+    rad_summ.update(structure_rad_summ(crm_data, goes_data, ace_data, duration_data))
     
-    time_data['attenuated_rad_duration'] = find_acis_attenuated_time(fp_history_table, leave_rad, enter_rad)
-    time_data['attenuated_next_comm_duration'] = find_acis_attenuated_time(fp_history_table, CXONOW, CxoTime(time_data['next_comm']))
-    time_data['attenuated_second_comm_duration'] = find_acis_attenuated_time(fp_history_table, CXONOW, CxoTime(time_data['second_comm']))
-
-    projected_fluence_data = calculate_projected_fluence(crm_data, goes_data, acis_ace_data, time_data)
-
-    rad_summ = {'last_update': CXONOW.date.split('.')[0]}
-    rad_summ.update(crm_data)
-    rad_summ.update(goes_data)
-    rad_summ.update(acis_ace_data)
-    rad_summ.update(time_data)
-    rad_summ.update(projected_fluence_data)
+    
 
     with open(f'{ALERTS_DATA_DIR}/radiation_summary.json', 'w') as f:
         json.dump(rad_summ, f, indent = 4)
-    with open(f'{ALERTS_WEB_DIR}/radiation_summary.json', 'w') as f:
-        json.dump(rad_summ, f, indent = 4)
 
-def read_crm_summary():
-    """
-    Read the CRM summary file.
-    
-    :NOTE: Altitude describes the geocentric distance in (km), and the orbit leg (ascending or descending)
-    :TODO: Identify manner of attenuation.
-    """
-
-    crm_data = {}
-    with open(CRM_DATA_FILE) as f:
-        data = [line.strip() for line in f.readlines() if line.strip() != '']
-        crm_data['instrument_config'] = data[0].split(":")[1].strip()
-        crm_data['orbit_start'] = data[6].split(" : ")[1].strip()
-        crm_data['altitude'] = data[7].split(":")[1].strip()
-        crm_data['crm_flux'] = float(data[9].split(":")[1].strip())
-        crm_data['attenuated_crm_flux'] = float(data[10].split(":")[1].strip())
-        crm_data['crm_fluence'] = float(data[11].split(":")[1].strip())
-        crm_data['attenuated_crm_fluence'] = float(data[12].split(":")[1].strip())
-        crm_data['crm_last_update'] = data[13].split(": ")[1].strip()
-    
-    return crm_data
-
-def compute_goes_fluence(cxo_orbit_start, crm_data):
+def pull_goes_data(cxo_orbit_start, flux_att_factor, fluence_att_factor):
     """
     Compute GOES fluence of this orbital period.
 
@@ -161,10 +143,9 @@ def compute_goes_fluence(cxo_orbit_start, crm_data):
     proton_table['P7'] = proton_table['P7']*1e3
     #: Record the most recent fluxes
     goes_data = {
-        "p4_flux": proton_table['P4'][-1],
-        "p7_flux": proton_table['P7'][-1],
-        "e2_flux": electron_table['>=2 MeV'][-1],
-        'goes_last_update': CxoTime(proton_table['cxotime'][-1]).date.split('.')[0]
+        "goes_p4_flux": proton_table['P4'][-1],
+        "goes_p7_flux": proton_table['P7'][-1],
+        "goes_e2_flux": electron_table['>=2 MeV'][-1],
     }
     #: Find the fluence based on date after start of current orbit.
     proton_table = proton_table[proton_table['cxotime'] >= cxo_orbit_start.secs]
@@ -178,43 +159,68 @@ def compute_goes_fluence(cxo_orbit_start, crm_data):
     e2_fluence = sum(electron_table[electron_table['>=2 MeV'] > 4]['>=2 MeV']) * 300
 
     #: Also record the final flux value for each channel.
-    goes_data['p4_fluence'] = p4_fluence
-    goes_data['p7_fluence'] = p7_fluence
-    goes_data['e2_fluence'] = e2_fluence
+    goes_data['goes_p4_fluence'] = p4_fluence
+    goes_data['goes_p7_fluence'] = p7_fluence
+    goes_data['goes_e2_fluence'] = e2_fluence
     
-    #: Calculate what the attenuated flux and fluence would be for GOES based on ACIS attenuation factors from CRM.
-    flux_factor = crm_data['attenuated_crm_flux'] / crm_data['crm_flux']
-    fluence_factor = crm_data['attenuated_crm_fluence'] / crm_data['crm_fluence']
-
-    for k in ('p4','p7', 'e2'):
-        goes_data[f"attenuated_{k}_flux"] = flux_factor * goes_data[f"{k}_flux"]
-        goes_data[f"attenuated_{k}_fluence"] = fluence_factor * goes_data[f"{k}_fluence"]
+    #: Calculate what the attenuated flux and fluence would be for GOES based on attenuation factors from CRM.
+    for k in ('goes_p4','goes_p7', 'goes_e2'):
+        goes_data[f"attenuated_{k}_flux"] = flux_att_factor * goes_data[f"{k}_flux"]
+        goes_data[f"attenuated_{k}_fluence"] = fluence_att_factor * goes_data[f"{k}_fluence"]
 
     return goes_data
 
-def read_acis_ace_data():
+def pull_ace_data():
     """
     Pull the ACIS team's calculation for ACE flux, fluence, and attenuation to ACIS.
 
     :NOTE: Attenuated in this context references the flux and fluence experienced by ACIS for the ACE P3 channel.
-    Therefore, if ACIS is not in the focal plane, then the measurement is attenuated to zero. This calculation is done byt ACIS team.
+    Therefore, if ACIS is not in the focal plane, then the measurement is attenuated to zero. This calculation is done by ACIS team.
     """
     acis_ace_data = {}
     with open(ACIS_ACE_FILE) as f:
         data = [line.strip() for line in f.readlines() if line.strip() != '']
         _a = data[5].split()
-        acis_ace_data['ace_last_update'] = datetime.strptime(f"{_a[0]}-{_a[1]:>02}-{_a[2]:>02}-{_a[3]:>04}", '%Y-%m-%d-%H%M').strftime("%Y:%j:%H:%M:%S")
-        acis_ace_data['ace_flux'] = float(_a[9])
-        acis_ace_data['ace_fluence'] = float(data[7].split()[9])
-        acis_ace_data['attenuated_ace_flux'] = float(data[13].split()[9])
-        acis_ace_data['attenuated_ace_fluence'] = float(data[15].split()[9])
+        acis_ace_data['ace_p3_flux'] = float(_a[9])
+        acis_ace_data['ace_p3_fluence'] = float(data[7].split()[9])
+        acis_ace_data['attenuated_ace_p3_flux'] = float(data[13].split()[9])
+        acis_ace_data['attenuated_ace_p3_fluence'] = float(data[15].split()[9])
     return acis_ace_data
+
+def pull_time_data(cxo_orbit_start):
+    """
+    Collect together time and duration data
+    """
+    time_data, duration_data = read_comm_data()
+    duration_data.update({'orbit_duration': round((CXONOW - cxo_orbit_start).sec)}) #: astropy.time.core.TimeDelta when subtracted
+    
+    rad_table = read_rad_zone()
+    #: parse the radiation table to find start, and stop periods of the next time in-between radiation zones.
+    if rad_table[0]['start'] < CXONOW:
+        #: Currently in the rad zone
+        time_data['in_rad_zone'] = True
+        leave_rad = CxoTime(rad_table[0]['stop'])
+        enter_rad = CxoTime(rad_table[1]['start'])
+    else:
+        #: If we are currently in-between rad zones, then use current time for the start of this in-between period
+        time_data['in_rad_zone'] = False
+        leave_rad = CXONOW
+        enter_rad = CxoTime(rad_table[0]['start'])
+    time_data['next_rad_zone'] = enter_rad.date
+    duration_data['till_next_rad_zone'] = round((enter_rad - leave_rad).sec) #: astropy.time.core.TimeDelta when subtracted
+    fp_history_table = read_fp_history_file()
+    duration_data['attenuated_till_next_rad_zone'] = find_acis_attenuated_time(fp_history_table, leave_rad, enter_rad)
+    duration_data['attenuated_till_next_comm'] = find_acis_attenuated_time(fp_history_table, CXONOW, CxoTime(time_data['next_comm']))
+    duration_data['attenuated_till_second_comm'] = find_acis_attenuated_time(fp_history_table, CXONOW, CxoTime(time_data['second_comm']))
+    
+    return time_data, duration_data
 
 def read_comm_data():
     """
     Comm time listed in GMT.
     """
     time_data = {}
+    duration_data = {}
     with open(COMM_DATA_FILE) as f:
         data = [line.strip().split() for line in f.readlines() if line.strip() != '' and line[0] != "#"]
         for i in range(len(data)-2):
@@ -232,12 +238,12 @@ def read_comm_data():
                 next_comm = CxoTime(data[i+1][2])
                 second_comm = CxoTime(data[i+2][2])
                 break
-    time_data['recent_comm'] = recent_comm.date.split('.')[0]
-    time_data['next_comm'] = next_comm.date.split('.')[0]
-    time_data['second_comm'] = second_comm.date.split('.')[0]
-    time_data['till_next_comm'] = round((next_comm - CXONOW).sec) #: astropy.time.core.TimeDelta when subtracted
-    time_data['till_second_comm'] = round((second_comm - CXONOW).sec)
-    return time_data
+    time_data['recent_comm'] = recent_comm.date
+    time_data['next_comm'] = next_comm.date
+    time_data['second_comm'] = second_comm.date
+    duration_data['till_next_comm'] = round((next_comm - CXONOW).sec) #: astropy.time.core.TimeDelta when subtracted
+    duration_data['till_second_comm'] = round((second_comm - CXONOW).sec)
+    return time_data, duration_data
 
 @reconnect
 def read_rad_zone():
@@ -286,7 +292,7 @@ def find_acis_attenuated_time(fp_history_table, period_start, period_stop):
         attenuated_time = 0
     elif len(x) == 1:
         #
-        # --- We have two time intervals with intederminant overlap.
+        # --- We have two time intervals with undetermined overlap.
         # --- Put all four in time order, then two middle time points
         # --- will be the duration.
         #
@@ -306,29 +312,80 @@ def find_acis_attenuated_time(fp_history_table, period_start, period_stop):
     
     return round(attenuated_time)
 
-def calculate_projected_fluence(crm_data, goes_data, acis_ace_data, time_data):
+def structure_rad_summ(crm_data,goes_data,ace_data,duration_data):
     """
-    Calculate the projected flux and fluences based onf current attenuation factors
+    Structure the relevant radiation summary flux, fluence, and projection values into a
+    three tiered dictionary / table structure.
     """
+    rad_summ = {}
+    for keyword in ('', 'attenuated_'):
+        table = {}
+        for _channel, _data in zip(('crm', 'ace_p3'), (crm_data, ace_data)):
+            table = _construct_rows(table,
+                                    keyword,
+                                    _channel,
+                                    _data,
+                                    duration_data,
+                                    multi_factor = True
+                                   )
+        for _channel in ('goes_p4', 'goes_p7', 'goes_e2'):
+            table = _construct_rows(
+                table,
+                keyword,
+                _channel,
+                goes_data,
+                duration_data
+            )
+        if keyword == '':
+            rad_summ['external'] = table
+        else:
+            rad_summ['attenuated'] = table
+    return rad_summ
 
-    projected_fluence_data = {}
-    for keyword in ('', 'attenuated_'): #: Loop over regular and attenuated versions
+
+def _project_fluence(flux, fluence, duration, factor=1):
+    """
+    Calculate the projected fluence for a provided channel flux, fluence, and duration.
+    """
+    return (factor * flux) * duration + fluence 
+
+def _construct_rows(table, keyword, _channel, _data, duration_data, multi_factor = False):
+    """
+    Provided a channel, the flux / fluence data set, and the duration data, we calculate the tables' rows.
+    """
+    #: Starting Columns
+    table[_channel] = {
+                'flux': _data[f'{keyword}{_channel}_flux'],
+                'fluence': _data[f'{keyword}{_channel}_fluence'],
+            }
+    #: Determine if calculating additional scaled columns (CRM and ACE)
+    if multi_factor:
         for factor in (1,2,10):
-            projected_fluence_data[f"{keyword}projected_crm_fluence_rad_{factor}"] = (factor * crm_data[f'{keyword}crm_flux'] * time_data['till_next_rad_zone']) + crm_data[f'{keyword}crm_fluence']
-            projected_fluence_data[f"{keyword}projected_ace_fluence_rad_{factor}"] = (factor * acis_ace_data[f'{keyword}ace_flux'] * time_data['till_next_rad_zone']) + acis_ace_data[f'{keyword}ace_fluence']
-        
-        for k in ('next', 'second'):
-            projected_fluence_data[f"{keyword}projected_crm_fluence_{k}_comm"] = crm_data[f'{keyword}crm_flux'] * time_data[f"till_{k}_comm"] + crm_data[f'{keyword}crm_fluence']
-            projected_fluence_data[f"{keyword}projected_ace_fluence_{k}_comm"] = acis_ace_data[f'{keyword}ace_flux'] * time_data[f"till_{k}_comm"] + acis_ace_data[f'{keyword}ace_fluence']
-        
-        for channel in ('p4','p7', 'e2'):
-            _e = goes_data[f"{keyword}{channel}_flux"]
-            _f = goes_data[f"{keyword}{channel}_fluence"]
-            projected_fluence_data[f'{keyword}projected_{channel}_fluence_rad'] = _e * time_data['till_next_rad_zone'] + _f
-            projected_fluence_data[f'{keyword}projected_{channel}_fluence_next_comm'] = _e * time_data['till_next_comm'] + _f
-            projected_fluence_data[f'{keyword}projected_{channel}_fluence_second_comm'] = _e * time_data['till_second_comm'] + _f
-
-    return projected_fluence_data
+            table[_channel][f'proj_rad_zone_{factor}'] = _project_fluence(
+                    table[_channel]['flux'],
+                    table[_channel]['fluence'],
+                    duration_data[f"{keyword}till_next_rad_zone"],
+                    factor
+                )
+    else:
+        table[_channel]['proj_rad_zone'] = _project_fluence(
+                table[_channel]['flux'],
+                table[_channel]['fluence'],
+                duration_data[f"{keyword}till_next_rad_zone"],
+            )
+    #: Projection for next comm.
+    table[_channel]['proj_next_comm'] = _project_fluence(
+        table[_channel]['flux'],
+        table[_channel]['fluence'],
+        duration_data[f"{keyword}till_next_comm"]
+    )
+    #: Projection for second comm.
+    table[_channel]['proj_second_comm'] = _project_fluence(
+        table[_channel]['flux'],
+        table[_channel]['fluence'],
+        duration_data[f"{keyword}till_second_comm"]
+    )
+    return table
 
 def _fetch_for_goes():
     """
@@ -422,7 +479,6 @@ if __name__ == "__main__":
         if args.path:
             ALERTS_DATA_DIR = args.path
         os.makedirs(ALERTS_DATA_DIR, exist_ok=True)
-        ALERTS_WEB_DIR = ALERTS_DATA_DIR
         try:
             create_radiation_summary()
         except json.decoder.JSONDecodeError:
@@ -445,6 +501,8 @@ if __name__ == "__main__":
 
         try:
             create_radiation_summary()
+            #: Copy the created summary to the web directory
+            os.system(f"cp {ALERTS_DATA_DIR}/radiation_summary.json {ALERTS_WEB_DIR}/radiation_summary.json")
         except json.decoder.JSONDecodeError:
             traceback.print_exc() #: Record issue with downloaded JSON and finish.
         #
