@@ -1,15 +1,12 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**create_gsm_gse_orbit_plots.py**: create gsm and gse orbit plots
 
-#################################################################################
-#                                                                               #
-#       create_gsm_gse_orbit_plots.py: create gsm and gse orbit plots           #
-#                                                                               #
-#           author: t. isobe (tisobe@cfa.harvard.edu)                           #
-#                                                                               #
-#           last update: Mar 16, 2021                                           #
-#                                                                               #
-#################################################################################
+:Author: t. isobe (tisobe@cfa.harvard.edu)
+:Maintainer: W. Aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Mar 16, 2021
 
+"""
 import sys
 import os
 import string
