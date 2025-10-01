@@ -1,15 +1,12 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**update_stereo_data.py**: download stereo data from ftp site
 
-#####################################################################################################
-#                                                                                                   #
-#           update_stereo_data.py: download stereo data from ftp site                               #
-#                                                                                                   #
-#               author: t. isobe    (tisobe@cfa.harvard.edu)                                        #
-#                                                                                                   #
-#               Last update: Mar 16, 2021                                                           #
-#                                                                                                   #
-#####################################################################################################
+:Author: t. isobe (tisobe@cfa.harvard.edu)
+:Maintainer: W. Aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Mar 16, 2021
 
+"""
 import os
 import sys
 import re
