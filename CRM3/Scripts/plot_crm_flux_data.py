@@ -1,15 +1,12 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**plot_crm_flux_data.py**: create crm predicted flux plot
 
-#################################################################################
-#                                                                               #
-#           plot_crm_flux_data.py: create crm predicted flux plot               #
-#                                                                               #
-#           author: t. isobe (tisobe@cfa.harvard.edu)                           #
-#                                                                               #
-#           last update: Mar 16, 2021                                           #
-#                                                                               #
-#################################################################################
+:Author: t. isobe  (tisobe@cfa.harvard.edu)
+:Maintainer: w. aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Mar 16, 2021
 
+"""
 import sys
 import os
 import string
