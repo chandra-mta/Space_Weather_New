@@ -1,15 +1,12 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**create_config_plot.py**: create configuration plot for monthly report
 
-#####################################################################################################
-#                                                                                                   #
-#       create_config_plot.py: create configuration plot for monthly report                         #
-#                                                                                                   #
-#               author: t. isobe    (tisobe@cfa.harvard.edu)                                        #
-#                                                                                                   #
-#               last update: Mar 16, 2021                                                           #
-#                                                                                                   #
-#####################################################################################################
+:Author: t. isobe  (tisobe@cfa.harvard.edu)
+:Maintainer: w. aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Mar 16, 2021
 
+"""
 import os
 import sys
 import re

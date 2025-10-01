@@ -1,15 +1,12 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**create_rad_cnt_plots.py**: create radiation count rate plots
 
-#####################################################################################################
-#                                                                                                   #
-#           create_rad_cnt_plots.py: create radiation count rate plots                              #
-#                                                                                                   #
-#               author: t. isobe    (tisobe@cfa.harvard.edu)                                        #
-#                                                                                                   #
-#               last update: Mar 16, 2021                                                           #
-#                                                                                                   #
-#####################################################################################################
+:Author: t. isobe  (tisobe@cfa.harvard.edu)
+:Maintainer: w. aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Mar 16, 2021
 
+"""
 import os
 import sys
 import re
