@@ -1,15 +1,12 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**plot_p3_data.py**: create scaled p3 data plot
 
-#########################################################################################
-#                                                                                       #
-#               plot_p3_data.py: create scaled p3 data plot                             #
-#                                                                                       #
-#               author: t. isobe    (tisobe@cfa.harvard.edu)                            #
-#                                                                                       #
-#               Last update: Mar 16, 2021                                               #
-#                                                                                       #
-#########################################################################################
+:Author: t. isobe  (tisobe@cfa.harvard.edu)
+:Maintainer: w. aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Mar 16, 2021
 
+"""
 import os
 import re
 import time
