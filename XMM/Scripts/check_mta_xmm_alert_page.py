@@ -11,7 +11,15 @@
 #           last update: Aug 28, 2025                                                           #
 #                                                                                               #
 #################################################################################################
+"""
+**check_mta_xmm_alert_page.py**: check the latest count Il count rate and xmm orbital altitude
+                                 and send out warning if mta_XMM_alert file does not exist.
 
+:Author: t. isobe (tisobe@cfa.harvard.edu)
+:Maintainer: W. Aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Aug 28, 2025
+
+"""
 import sys
 import os
 import string
