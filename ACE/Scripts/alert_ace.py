@@ -1,5 +1,4 @@
 #!/proj/sot/ska3/flight/bin/python
-
 """
 **alert_ace.py**: Run ACE alerts.
 
@@ -7,7 +6,6 @@
 :Last Updated: Mar 03, 2025
 
 """
-
 import os
 from email.mime.text import MIMEText
 from subprocess import Popen, PIPE

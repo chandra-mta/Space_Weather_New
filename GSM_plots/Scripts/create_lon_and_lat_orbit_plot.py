@@ -1,16 +1,12 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**create_lon_and_lat_orbit_plot.py**: create gsm and gse orbit plots in longitude and latitude
 
-#################################################################################
-#                                                                               #
-#   create_lon_and_lat_orbit_plot.py:create gsm and gse orbit plots             #
-#                                     in londitude and latitude                 #
-#                                                                               #
-#           author: t. isobe (tisobe@cfa.harvard.edu)                           #
-#                                                                               #
-#           last update: Mar 16, 2021                                           #
-#                                                                               #
-#################################################################################
+:Author: t. isobe (tisobe@cfa.harvard.edu)
+:Maintainer: W. Aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Mar 16, 2021
 
+"""
 import sys
 import os
 import string

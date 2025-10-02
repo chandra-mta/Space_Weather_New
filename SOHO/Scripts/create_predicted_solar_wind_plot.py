@@ -1,16 +1,12 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**create_predicted_solar_wind_plot.py**: create predicted solar wind speed and density plot
 
-#################################################################################
-#                                                                               #
-#   create_predicted_solar_wind_plot.py: create predicted solar wind            #
-#                                        speed and density plot                 #
-#                                                                               #
-#           author: t. isobe (tisobe@cfa.harvard.edu)                           #
-#                                                                               #
-#           last update: Mar 16, 2021                                           #
-#                                                                               #
-#################################################################################
+:Author: t. isobe (tisobe@cfa.harvard.edu)
+:Maintainer: W. Aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Mar 16, 2021
 
+"""
 import sys
 import os
 import requests

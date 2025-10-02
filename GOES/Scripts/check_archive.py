@@ -1,4 +1,11 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**check_archive.py**: Verify the HRC Proxy Archive is being updated.
+
+:Author: W. Aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Feb 20, 2025
+
+"""
 import os
 import sys
 from datetime import datetime, timezone

@@ -1,15 +1,12 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**collect_comm_data.py**: read comm data and extract data for +/- 10 days
 
-#####################################################################################
-#                                                                                   #
-#       collect_comm_data.py: read comm data and extract data for +/- 10 days       #
-#                                                                                   #
-#           author: t. isobe (tiosbe@cfa.harvard.edu)                               #
-#                                                                                   #
-#           last update: Mar 16, 2021                                               #
-#                                                                                   #
-#####################################################################################
+:Author: t. isobe  (tisobe@cfa.harvard.edu)
+:Maintainer: w. aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Mar 16, 2021
 
+"""
 import os
 import sys
 import re

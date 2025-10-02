@@ -1,15 +1,12 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**update_html_page.py**: update radiation related html page
 
-#################################################################################################
-#                                                                                               #
-#       update_html_page.py: update radiation related html page                                 #
-#                                                                                               #
-#           author: t. isobe    (tiosbe@cfa.harvard.edu)                                        #
-#                                                                                               #
-#           last update: Mar 16, 2021                                                           #
-#                                                                                               #
-#################################################################################################
+:Author: t. isobe  (tisobe@cfa.harvard.edu)
+:Maintainer: w. aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Mar 16, 2021
 
+"""
 import os
 import sys
 import re

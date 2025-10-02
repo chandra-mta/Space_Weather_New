@@ -3,6 +3,7 @@
 **collect_goes_long.py**: Collect GOES data for the long term use
 
 :Author: t. isobe (tisobe@cfa.harvard.edu)
+:Maintainer: W. Aaron (william.aaron@cfa.harvard.edu)
 :Last Updated: Feb 18, 2025
 
 """

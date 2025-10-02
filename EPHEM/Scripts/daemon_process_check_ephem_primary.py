@@ -1,15 +1,12 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**daemon_process_check_ephem_primary.py**: check whether EPHEM related daemon is running.
 
-#############################################################################
-#                                                                           #
-#   daemon_process_check.py: check whether EPHEM related daemon is running. #
-#                                                                           #
-#               author: t. isobe@cfa.harvard.edu                            #
-#                                                                           #
-#               last update Oct 12, 2022                                    #
-#                                                                           #
-#############################################################################
+:Author: t. isobe  (tisobe@cfa.harvard.edu)
+:Maintainer: w. aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Oct 12, 2022
 
+"""
 import sys
 import os
 import string

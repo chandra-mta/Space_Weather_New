@@ -1,15 +1,12 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**ephem_interpolate.py**: interpolate the current ephemeris data
 
-#############################################################################
-#                                                                           #
-#           ephem_interpolate.py: interpolate the current epheris data      #
-#                                                                           #
-#               author: t. isobe (tisobe@cfa.harvard.edu)                   #
-#                                                                           #
-#                   last update: Mar 16, 2021                               #
-#                                                                           #
-#############################################################################
+:Author: t. isobe  (tisobe@cfa.harvard.edu)
+:Maintainer: w. aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Mar 16, 2021
 
+"""
 import os
 import sys
 import re

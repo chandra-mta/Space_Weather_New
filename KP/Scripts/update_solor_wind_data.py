@@ -1,15 +1,12 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**update_solor_wind_data.py**: copy kp data and create a file to match in the required format
 
-#####################################################################################################
-#                                                                                                   #
-#       update_solor_wind_data.py: copy kp data and create a file to match in the required format   #
-#                                                                                                   #
-#               author: t. isobe (tisobe@cfa.harvard.edu)                                           #
-#                                                                                                   #
-#               last updae: Mar 16, 2021                                                            #
-#                                                                                                   #
-#####################################################################################################
+:Author: t. isobe (tisobe@cfa.harvard.edu)
+:Maintainer: W. Aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Mar 16, 2021
 
+"""
 import os
 import sys
 import re

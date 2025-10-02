@@ -1,15 +1,12 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**cocochan.py**: convert Chandra ECI linear coords to GSE, GSE coord
 
-#####################################################################################
-#                                                                                   #
-#       cocochan.py: convert Chandra ECI linear coords to GSE, GSE coord            #
-#                                                                                   #
-#           author: t. isobe (tisobe@cfa.harvard.edu)                               #
-#                                                                                   #
-#           last updae: Mar 16, 2021                                                #
-#                                                                                   #
-#####################################################################################
+:Author: t. isobe  (tisobe@cfa.harvard.edu)
+:Maintainer: w. aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Mar 16, 2021
 
+"""
 import os
 import sys
 import re

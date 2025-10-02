@@ -1,15 +1,12 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**add_region_info.py**: add region information to the crm data
 
-#################################################################################################
-#                                                                                               #
-#           add_region_info.py: add region information to the crm data                          #
-#                                                                                               #
-#           author: t. isobe (tisobe@cfa.harvard.edu)                                           #
-#                                                                                               #
-#           last update: Mar 16, 2021                                                           #
-#                                                                                               #
-#################################################################################################
+:Author: t. isobe (tisobe@cfa.harvard.edu)
+:Maintainer: W. Aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Mar 16, 2021
 
+"""
 import sys
 import os
 import string

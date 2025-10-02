@@ -1,15 +1,12 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**plot_gsm_orbits_xz_plane.py**: plot xmm and cxo orbits in gsm coordinates in xz plane.
 
-#################################################################################################
-#                                                                                               #
-#   plot_gsm_orbits_xz_plane.py: plot xmm and cxo orbits in gsm coordinates in xz plane         #
-#                                                                                               #
-#           author: t. isobe (tisobe@cfa.harvard.edu)                                           #
-#                                                                                               #
-#           last update: Mar 16, 2021                                                           #
-#                                                                                               #
-#################################################################################################
+:Author: t. isobe (tisobe@cfa.harvard.edu)
+:Maintainer: W. Aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Mar 16, 2021
 
+"""
 import sys
 import os
 import string

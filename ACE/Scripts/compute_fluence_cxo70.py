@@ -1,16 +1,12 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**compute_fluence_cxo70.py**: create a html page displaying ace fluence when cxo is above 70kkm
 
-#####################################################################################
-#                                                                                   #
-#   compute_fluence_cxo70.py: create a html page displaying ace fluence             #
-#                               when cxo is above 70kkm                             #
-#                                                                                   #
-#               author: t. isobe (tisobe@cfa.harvard.edu)                           #
-#                                                                                   #
-#               last updae: Mar 16, 2021                                            #
-#                                                                                   #
-#####################################################################################
+:Author: t. isobe  (tisobe@cfa.harvard.edu)
+:Maintainer: w. aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Mar 16, 2021
 
+"""
 import os
 import sys
 import re
