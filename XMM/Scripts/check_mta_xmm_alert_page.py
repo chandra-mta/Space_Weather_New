@@ -1,16 +1,4 @@
 #!/proj/sot/ska3/flight/bin/python
-
-#################################################################################################
-#                                                                                               #
-#   check_mta_xmm_alert_page.py: check the latest count Il count rate and xmm orbital           #
-#                                altitude and send out warning if mta_XMM_alert file            #
-#                                does not exist.                                                #
-#                                                                                               #
-#           author: t. isobe (tisobe@cfa.harvard.edu)                                           #
-#                                                                                               #
-#           last update: Aug 28, 2025                                                           #
-#                                                                                               #
-#################################################################################################
 """
 **check_mta_xmm_alert_page.py**: check the latest count Il count rate and xmm orbital altitude
                                  and send out warning if mta_XMM_alert file does not exist.

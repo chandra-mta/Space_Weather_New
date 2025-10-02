@@ -1,15 +1,12 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**plot_xmm_cxo_comp.py**: plot xmm and cxo gsm orbits and compare.
 
-#################################################################################################
-#                                                                                               #
-#           plot_xmm_cxo_comp.py: plot xmm and cxo gsm orbits and compare                       #
-#                                                                                               #
-#           author: t. isobe (tisobe@cfa.harvard.edu)                                           #
-#                                                                                               #
-#           last update: Mar 16, 2021                                                           #
-#                                                                                               #
-#################################################################################################
+:Author: t. isobe (tisobe@cfa.harvard.edu)
+:Maintainer: W. Aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Mar 16, 2021
 
+"""
 import sys
 import os
 import string

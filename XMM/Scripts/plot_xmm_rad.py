@@ -1,15 +1,12 @@
 #!/proj/sot/ska3/flight/bin/python
+"""
+**plot_xmm_rad.py**: plot xmm radiation flux and environment.
 
-#################################################################################################
-#                                                                                               #
-#           plot_xmm_rad.py: plot xmm radiation flux and environment                            #
-#                                                                                               #
-#           author: t. isobe (tisobe@cfa.harvard.edu)                                           #
-#                                                                                               #
-#           last update: Mar 16, 2021                                                           #
-#                                                                                               #
-#################################################################################################
+:Author: t. isobe (tisobe@cfa.harvard.edu)
+:Maintainer: W. Aaron (william.aaron@cfa.harvard.edu)
+:Last Updated: Mar 16, 2021
 
+"""
 import sys
 import os
 import string
