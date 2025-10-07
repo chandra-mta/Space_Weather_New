@@ -1,8 +1,7 @@
 #tablediv
 {
-   float:right;
+   float:left;
    padding:10px 10px 10px 10px;
-   width:60%;
 }
 #mapdiv
 {
@@ -12,5 +11,4 @@
 #xray_container
 {
    display: inline-block;
-   width:100%
 }

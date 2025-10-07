@@ -658,12 +658,13 @@ if __name__ == "__main__":
         else:
             GOES_DATA_DIR = OUT_DIR
             HTML_GOES_DIR = f"{OUT_DIR}/GOES"
+            os.makedirs(HTML_GOES_DIR, exist_ok = True)
 
         if args.json:
             DLINK = args.json
         
         #: Refresh GOES css
-        os.system(f"cp {GOES_TEMPLATE_DIR}/goes.css {HTML_GOES_DIR}")
+        os.system(f"cp {GOES_TEMPLATE_DIR}/goes.css {HTML_GOES_DIR}/")
 
         update_goes_html_page()
     elif args.mode == "flight":
