@@ -20,7 +20,6 @@ Makefile        --- a make file
 Makefile_local  --- a make file without copying files from the source directory
 MTA_Rad         --- Convert /dsops/... data to mta usable data format
 SOHO            --- Predict and plot the solar wind environment for Chandra
-STEREO          --- Copying data and plots from NOAA STEREO site
 TLE             --- process TLE ephemeris files for XMM and CXO
 Web_dir         --- Saving web directroy
 XMM             --- Real time XMM-Newton radiation observations
@@ -42,7 +41,6 @@ Current Directory Paths
 '/data/mta4/Space_Weather/geopack/'         : geopack_dir
 '/data/mta4/Space_Weather/SOHO/'            : soho_dir
 '/data/mta4/Space_Weather/TLE/'             : tle_dir
-'/data/mta4/Space_Weather/STEREO/'          : stereo_dir
 '/data/mta4/Space_Weather/Comm_data/'       : comm_dir
 '/data/mta4/Space_Weather/CRM/'             : crm_dir
 '/data/mta4/Space_Weather/CRM2/'            : crm2_dir
@@ -138,10 +136,6 @@ han-v as mta
 #--- SOHO ---
 #
 36 0,3,6,9,12,15,18,21 * * *  cd /data/mta4/Space_Weather/SOHO/Scripts; /data/mta4/Space_Weather/SOHO/Scripts/solar_wind_warp_script 2>&1
-#
-#--- STEREO ---
-#
-2,6,11,16,21,26,31,36,41,46,51,56 * * * * /data/mta4/Space_Weather/STEREO/Scripts/stereo_wrap_script > /data/mta4/Space_Weather/Test_Logs/stereo_data.cron 2>&1
 #
 #--- TLE ---
 #

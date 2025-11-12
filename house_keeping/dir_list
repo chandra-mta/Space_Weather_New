@@ -9,7 +9,6 @@
 '/data/mta4/Space_Weather/geopack/'         : geopack_dir
 '/data/mta4/Space_Weather/SOHO/'            : soho_dir
 '/data/mta4/Space_Weather/TLE/'             : tle_dir
-'/data/mta4/Space_Weather/STEREO/'          : stereo_dir
 '/data/mta4/Space_Weather/Comm_data/'       : comm_dir
 '/data/mta4/Space_Weather/CRM/'             : crm_dir
 '/data/mta4/Space_Weather/CRM2/'            : crm2_dir
