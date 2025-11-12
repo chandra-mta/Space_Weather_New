@@ -38,7 +38,7 @@ OADDRESS = cxc.cfa.harvard.edu
 #
 #--- Define lists of sub directories
 #
-M_LIST = ACE ACIS_Rad ALERTS Comm_data CRM3 EPHEM GOES GSM_plots KP MTA_Rad SOHO STEREO TLE XMM
+M_LIST = ACE ACIS_Rad ALERTS Comm_data CRM3 EPHEM GOES GSM_plots KP MTA_Rad SOHO TLE XMM
 N_LIST = house_keeping Doc
 
 install:
