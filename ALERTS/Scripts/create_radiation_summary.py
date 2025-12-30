@@ -103,8 +103,14 @@ def create_radiation_summary():
     # --- Calculate amount of attenuation
     #
     cxo_orbit_start = CxoTime(crm_data['orbit_start'])
-    flux_att_factor = crm_data['attenuated_crm_flux'] / crm_data['crm_flux']
-    fluence_att_factor = crm_data['attenuated_crm_fluence'] / crm_data['crm_fluence']
+    flux_att_factor = _att_factor(crm_data['instrument'], crm_data['grating'])
+    try:
+        #: Attenuation over orbit often is interpolation of factors since instrument/grating switch over time.
+        fluence_att_factor = crm_data['attenuated_crm_fluence'] / crm_data['crm_fluence']
+    except ZeroDivisionError:
+        #: No sufficient non-zero fluence values to estimate this orbits overall fluence attenuation.
+        #: Use the current / flux attenuation factor instead.
+        fluence_att_factor = flux_att_factor
     #
     # --- Pull Direct Time Data
     #
