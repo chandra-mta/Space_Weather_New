@@ -40,6 +40,19 @@ CXONOW = CxoTime()
 PLINK = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json'
 ELINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-3-day.json'
 
+def _att_factor(si, otg):
+    """
+    Determine instrument attenuation factor
+    """
+    att = 1
+    if si in ("HRC-I", "HRC-S"):
+        att = 0
+    elif otg == "LETG":
+        att = 0.5
+    elif otg == "HETG":
+        att = 0.2
+    return att
+
 def rerun(func):
     """
     Function decorator which sleeps and reruns the provided function upon encountering a set of errors.
