@@ -6,13 +6,16 @@
 :Maintainer: w. aaron (william.aaron@cfa.harvard.edu)
 :Last Updated: Jul 15, 2025
 
+# /// testing
+# tested-ska-release = "2026.1"
+# ///
 """
 import os
 import sys
 import re
 import time
 from datetime import datetime
-import Chandra.Time
+from cxotime import CxoTime
 import copy 
 import subprocess
 import urllib.request
@@ -33,10 +36,10 @@ NOAA_LINK = 'https://services.swpc.noaa.gov/text/ace-epam.txt'
 #--- current time
 #
 current_time_date    = time.strftime('%Y:%j:%H:%M:%S', time.gmtime())
-current_chandra_time = Chandra.Time.DateTime(current_time_date).secs
+current_chandra_time = CxoTime(current_time_date).secs
 this_year            = int(float(time.strftime('%Y', time.gmtime())))
 this_doy             = int(float(time.strftime('%j', time.gmtime())))
-year_start           = Chandra.Time.DateTime(str(this_year) + ':001:00:00:00').secs
+year_start           = CxoTime(str(this_year) + ':001:00:00:00').secs
 #
 #--- other consts
 #
@@ -257,7 +260,7 @@ def read_ace_table_data(data):
         ltime = atemp[0] + ':' + atemp[1] + ':' + atemp[2] + ':' + atemp[3][0] + atemp[3][1] + ':'
         ltime = ltime    + atemp[3][2] + atemp[3][3] + ':00' 
         ltime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(ltime, '%Y:%m:%d:%H:%M:%S'))
-        stime = int(Chandra.Time.DateTime(ltime).secs)
+        stime = int(CxoTime(ltime).secs)
 #
 #--- save time part in a string format (YR MO DA  HHMM    Day    Day)
 #
@@ -607,7 +610,7 @@ def update_long_term_data(ndata):
     ltime = atemp[0] + ':' + atemp[1] + ':' + atemp[2] + ':' + atemp[3][0] + atemp[3][1] + ':'
     ltime = ltime    + atemp[3][2] + atemp[3][3] + ':00' 
     ltime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(ltime, '%Y:%m:%d:%H:%M:%S'))
-    stime = int(Chandra.Time.DateTime(ltime).secs)
+    stime = int(CxoTime(ltime).secs)
 
     dlen  = len(ndata[0])
     line  = ''
@@ -663,7 +666,7 @@ def create_new_table(dfile, ndata, tstart, cut):
         ltime = atemp[0] + ':' + atemp[1] + ':' + atemp[2] + ':' + atemp[3][0] + atemp[3][1] + ':'
         ltime = ltime    + atemp[3][2] + atemp[3][3] + ':00' 
         ltime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(ltime, '%Y:%m:%d:%H:%M:%S'))
-        stime = int(Chandra.Time.DateTime(ltime).secs)
+        stime = int(CxoTime(ltime).secs)
         if stime < cut:
             continue
         elif stime > tstart:
@@ -871,7 +874,7 @@ def update_kp_data_file():
     ltime = float(atemp[0])
     kval  = atemp[1]
     
-    ltime = Chandra.Time.DateTime(ltime).date
+    ltime = CxoTime(ltime).date
     mc= re.search(r'\.', ltime)
     if mc is not None:
         btemp = re.split(r'\.', ltime)
