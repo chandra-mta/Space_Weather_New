@@ -351,33 +351,21 @@ def create_ace_data_table(cdata, l_vals):
 #
 
     if (p5_p6 > P5_P6_LIM) or (p5_p6 < 1):
-        speci     = "%12.1f" % p5_p6
-        speci_lim = "%8.1f"  % P5_P6_LIM
+        speci     = f"{p5_p6:12.1f}"
+        speci_lim = f"{P5_P6_LIM:8.1f}"
 
         ace_invalid_spec(speci, speci_lim)
 #
 #--- create a summary table
 #
-
-    summary_table = "%7s %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f\n"\
-                   % ("AVERAGE        ", e38a, e175a, p56a, p130a, p5_p3a, p6_p3a, p337a, p761a, p1073a)
-
-    summary_table += "%7s %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f %11.3f\n"\
-                   % ("MINIMUM        ", e38m, e175m, p56m, p130m, p5_p3m, p6_p3m, p337m, p761m, p1073m)
-
-    summary_table += "%7s %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e\n\n"\
-                   % ("FLUENCE        ", e38f, e175f, p56f, p130f, p5_p3f, p6_p3f, p337f, p761f, p1073f)
-
-    summary_table += "%7s %11s %11.3f %11s %11.3f %11s %11.3f %11s %11.3f \n\n"\
-                   % ("SPECTRA        ", "p3/p5", p3_p5, "p3/p6", p3_p6, "p5/p6", p5_p6, "p6/p7", p6_p7)
-    summary_table += "%62s %4.1f\n"\
-                   % ("*   This P3 channel is currently scaled from P5 data. P3* = P5 X ", P5_P3_SCALE)
-
-    summary_table += "%62s %4.1f\n"\
-                   % ("**  This P3 channel is currently scaled from P6 data. P3** = P6 X ", P6_P3_SCALE)
-
-    summary_table+= "%62s %4.1f\n"\
-                   % ("*** This P3 channel (not shown) is currently scaled from P7 data. P3*** = P7 X ", P7_P3_SCALE)
+    
+    summary_table = f"AVERAGE         {e38a:11.3f} {e175a:11.3f} {p56a:11.3f} {p130a:11.3f} {p5_p3a:11.3f} {p6_p3a:11.3f} {p337a:11.3f} {p761a:11.3f} {p1073a:11.3f}\n"
+    summary_table += f"MINIMUM         {e38m:11.3f} {e175m:11.3f} {p56m:11.3f} {p130m:11.3f} {p5_p3m:11.3f} {p6_p3m:11.3f} {p337m:11.3f} {p761m:11.3f} {p1073m:11.3f}\n"
+    summary_table += f"FLUENCE         {e38f:11.4e} {e175f:11.4e} {p56f:11.4e} {p130f:11.4e} {p5_p3f:11.4e} {p6_p3f:11.4e} {p337f:11.4e} {p761f:11.4e} {p1073f:11.4e}\n\n"
+    summary_table += f"SPECTRA         p3/p5       {p3_p5:11.3f} p3/p6       {p3_p6:11.3f} p5/p6       {p5_p6:11.3f} p6/p7       {p6_p7:11.3f} \n\n"
+    summary_table += f"*   This P3 channel is currently scaled from P5 data. P3* = P5 X  {P5_P3_SCALE:4.1f}\n"
+    summary_table += f"**  This P3 channel is currently scaled from P6 data. P3** = P6 X  {P6_P3_SCALE:4.1f}\n"
+    summary_table+= f"*** This P3 channel (not shown) is currently scaled from P7 data. P3*** = P7 X  {P7_P3_SCALE:4.1f}\n"
 
     return ace_table, summary_table
 
@@ -434,7 +422,7 @@ def convert_to_stime(year, yday):
     diff  = val - mm
     ss    = int(60 *diff)
 
-    htime = str(year).zfill(4) + ':' + atemp[0].zfill(3) + ':' + str(hh).zfill(2) + ':' + str(mm).zfill(2) + ':' + str(ss).zfill(2)
+    htime = f"{year:04}:{atemp[0]:03}:{hh:02}:{mm:02}:{ss:02}"
     stime = CxoTime(htime).secs 
 
     return stime
