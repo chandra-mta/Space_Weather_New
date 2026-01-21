@@ -4,8 +4,11 @@
 
 :Author: t. isobe  (tisobe@cfa.harvard.edu)
 :Maintainer: w. aaron (william.aaron@cfa.harvard.edu)
-:Last Updated: Mar 16, 2021
+:Last Updated: Jul 21, 2025
 
+# /// testing
+# tested-ska-release = "2026.1"
+# ///
 """
 import os
 import re
