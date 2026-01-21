@@ -642,35 +642,6 @@ def create_attenuation_list(ftime_list, flux_list, inst_start, inst_stop, otg_st
 
     return [nfluxi, nfluxia]
 
-#--------------------------------------------------------------------------------
-#-- convert_to_ctime: convert <yyyy> <doy>.<fractional doy> to Chandra Time    --
-#--------------------------------------------------------------------------------
-
-def convert_to_ctime(year, fyday):
-    """
-    convert <yyyy> <doy>.<fractional doy> to Chandra Time
-    input:  year    --- year
-            fyday   --- fractional day of year
-    output: time in seconds from 1998.1.1
-    """
-    year  = str(year)
-
-    ydate = float(fyday)
-    yday  = int(ydate)
-    frc   = 24 * (ydate - yday)
-    hh    = int(frc)
-    frc   = 60 *(frc - hh)
-    mm    = int(frc)
-    ss    = 60 *(frc - mm)
-    ss    = int(ss)
-
-    ltime = year  + ':' + mcf.add_leading_zero(yday, 3) + ':' + mcf.add_leading_zero(hh)
-    ltime = ltime + ':' + mcf.add_leading_zero(mm)      + ':' + mcf.add_leading_zero(ss)
-
-    ctime = Chandra.Time.DateTime(ltime).secs
-    ctime = int(ctime)
-
-    return ctime
     
 #--------------------------------------------------------------------------------
 #-- plot_crm: plot predictive CRM fluence model                                --
