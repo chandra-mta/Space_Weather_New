@@ -5,6 +5,10 @@
 :Author: W. Aaron (william.aaron@cfa.harvard.edu)
 :Last Updated: Jan 21, 2026
 
+# /// script
+# requires-python = ">3.12"
+# ///
+
 # /// testing
 # tested-ska-release = "2026.1"
 # ///
