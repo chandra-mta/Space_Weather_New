@@ -3,8 +3,11 @@
 **alert_ace.py**: Run ACE alerts.
 
 :Author: W. Aaron (william.aaron@cfa.harvard.edu)
-:Last Updated: Mar 03, 2025
+:Last Updated: Jan 21, 2026
 
+# /// testing
+# tested-ska-release = "2026.1"
+# ///
 """
 import os
 from email.mime.text import MIMEText
@@ -73,7 +76,7 @@ def alert_ace():
     no_outlier = Table(names = ace_table.colnames, dtype=ace_table.dtype)
     no_outlier.add_row(ace_table[0])
     for i in range(1,len(ace_table)):
-        if ace_table[i][_P3_CHANNEL] - no_outlier[i-1][_P3_CHANNEL] < _BOGUS_P3:
+        if ace_table[i][_P3_CHANNEL] - no_outlier[-1][_P3_CHANNEL] < _BOGUS_P3:
             no_outlier.add_row(ace_table[i])
     
     two_hours_ago = no_outlier["cxotime"][-1] - timedelta(hours=2)

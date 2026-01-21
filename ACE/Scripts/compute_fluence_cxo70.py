@@ -6,13 +6,28 @@
 :Maintainer: w. aaron (william.aaron@cfa.harvard.edu)
 :Last Updated: Mar 16, 2021
 
+# /// script
+# requires-python = ">3.12"
+# ///
+
+# /// testing
+# tested-ska-release = "2026.1"
+# ///
+
 """
 import os
 import sys
 import re
 import time
-import Chandra.Time
+from cxotime import CxoTime
 import argparse
+from jinja2 import Environment, FileSystemLoader
+
+#
+# --- Template Globals
+#
+_JINJA_ENV = Environment(loader = FileSystemLoader('Template', followlinks = True))
+
 #
 #--- Define Directory Pathing
 #
@@ -24,7 +39,7 @@ WEB_LINK = "cxc.cfa.harvard.edu/mta/RADIATION"
 #
 #--- current time
 #
-CURRENT_CHANDRA_TIME = Chandra.Time.DateTime().secs
+CURRENT_CHANDRA_TIME = CxoTime().secs
 
 #-----------------------------------------------------------------------------
 #-- compute_fluence_cxo70: create a html page displaying ace fluence when cxo is above 70kkm
@@ -71,6 +86,7 @@ def compute_fluence_cxo70():
 #
     with open(f"{ACE_DATA_DIR}/ace_7day_archive") as f:
         data = [line.strip() for line in f.readlines()]
+    ftime  = "NA"
     e1     = 0.0
     e2     = 0.0
     p1     = 0.0
@@ -88,7 +104,7 @@ def compute_fluence_cxo70():
         ltime = atemp[0] + ':' + atemp[1] + ':' + atemp[2] + ':' + atemp[3][0] + atemp[3][1] + ':'
         ltime = ltime    + atemp[3][2] + atemp[3][3] + ':00'
         ltime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(ltime, '%Y:%m:%d:%H:%M:%S'))
-        stime = int(Chandra.Time.DateTime(ltime).secs)
+        stime = int(CxoTime(ltime).secs)
 #
 #--- compute fluence between the span
 #
@@ -109,8 +125,7 @@ def compute_fluence_cxo70():
                 cstart = stime
             cstop = stime
 
-            ftime = atemp[0] + ' '  + atemp[1] + ' ' + atemp[2] + '  ' + atemp[3]
-            ftime = ftime    + '%8d%8d' % (float(atemp[4]), float(atemp[5]))
+            ftime = f"{atemp[0]} {atemp[1]} {atemp[2]}  {atemp[3]}{float(atemp[4]):8.0f}{float(atemp[5]):8.0f}"
 
             ve1 = float(atemp[7])
             ve2 = float(atemp[8])
@@ -137,66 +152,23 @@ def compute_fluence_cxo70():
             p4 +=  vp4 * 300
             p5 +=  vp5 * 300
 #
-#-- print out a text data
+# --- Render ace_flux jinja template
 #
-    aline = 'Latest valid ACE flux data...\n'
-    aline = aline + '# UT Date   Time  Julian  of the  ----- Electron -----   '
-    aline = aline + '------------------- Protons keV -------------------   Anis.\n'
-    aline = aline + '# YR MO DA  HHMM    Day    Day    S    38-53   175-315   '
-    aline = aline + 'S    47-68   115-195   310-580   795-1193 1060-1900   Index\n'
-    aline = aline + '#' + '-'* 114 + '\n'
-    aline = aline + data[-1] + '\n'
-    aline = aline + 'Latest ACE fluence when CXO is above 70kkm' + ' '*67
-    aline = aline + 'Int Time (s)\n'
-    try:
-        aline = aline + ftime 
-        aline = aline + '  -'
-        aline = aline + '%10.2e' % e1
-        aline = aline + '%10.2e' % e2
-        aline = aline + '  -'
-        aline = aline + '%10.2e' % p1
-        aline = aline + '%10.2e' % p2
-        aline = aline + '%10.2e' % p3
-        aline = aline + '%10.2e' % p4
-        aline = aline + '%10.2e' % p5
-        aline = aline + '%8d\n' % (cstop - cstart)
-    except:
-        aline = aline + '              N/A\n'
+    ace_flux = data[-1]
+    ace_flux_70kkm = f"{ftime}  -{e1:10.2e}{e2:10.2e}  -{p1:10.2e}{p2:10.2e}{p3:10.2e}{p4:10.2e}{p5:10.2e}{cstop - cstart:8.0f}"
 
+    template = _JINJA_ENV.get_template('ace_flux.jinja')
+    render = template.render(ace_flux = ace_flux, ace_flux_70kkm = ace_flux_70kkm)
     with open(f"{ACE_HTML_DIR}/ace_flux.dat", 'w') as fo:
-        fo.write(aline)
+        fo.write(render)
 #
 #--- create the html page
 #
-    line = '<!DOCTYPE html>\n'
-    line = line + '<html>\n'
-    line = line + '<head>\n'
-    line = line + '   <meta charset="UTF-8">\n'
-    line = line + '   <title>ACE Fluence when CXO is above 70kkm</title>\n'
-    line = line + '</head>\n'
-    line = line + '<body style="width:95%;margin-left:10px; '
-    line = line + 'margin-right;10px;background-color:#FAEBD7;font-family:Georgia, '
-    line = line + '"Times New Roman", Times, serif">\n'
-    line = line + '<h3>Most Recent ACE Fluxes and Fluences When CXO Is Above 70kkm</h3>\n'
-    line = line + '<div style="text-align:right;">\n'
-    line = line + '<a href="../index.html">Back to Radiation Monitoring Central Page.</a>\n'
-    line = line + '</div>\n'
-    line = line + '<pre>\n'
-    line = line + aline
-    line = line + '</pre>\n'
-    line = line + '<p style="padding-top:30p;">'
-
-    line = line + f'<a href="https://{WEB_LINK}/ACE/ace.html">'
-    line = line + 'Go to ACE page</a><br />'
-
-    line = line + f'<a href="https://{WEB_LINK}/Orbit/orbit.html">'
-    line = line + 'See the current CXO orbital information</a></p>'
-    line = line + '</body>\n'
-    line = line + '<html>\n'
+    web_template = _JINJA_ENV.get_template('ace_flux_data.jinja')
+    web_render = web_template.render(ace_flux_render = render, WEB_LINK= WEB_LINK)
 
     with open(f"{ACE_HTML_DIR}/ace_flux_data.html" , 'w') as fo:
-        fo.write(line)
-
+            fo.write(web_render)
 
 #-----------------------------------------------------------------------------
 
