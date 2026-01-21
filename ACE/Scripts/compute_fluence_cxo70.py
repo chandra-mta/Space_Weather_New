@@ -6,12 +6,20 @@
 :Maintainer: w. aaron (william.aaron@cfa.harvard.edu)
 :Last Updated: Mar 16, 2021
 
+# /// script
+# requires-python = ">3.12"
+# ///
+
+# /// testing
+# tested-ska-release = "2026.1"
+# ///
+
 """
 import os
 import sys
 import re
 import time
-import Chandra.Time
+from cxotime import CxoTime
 import argparse
 #
 #--- Define Directory Pathing
@@ -24,7 +32,7 @@ WEB_LINK = "cxc.cfa.harvard.edu/mta/RADIATION"
 #
 #--- current time
 #
-CURRENT_CHANDRA_TIME = Chandra.Time.DateTime().secs
+CURRENT_CHANDRA_TIME = CxoTime().secs
 
 #-----------------------------------------------------------------------------
 #-- compute_fluence_cxo70: create a html page displaying ace fluence when cxo is above 70kkm
@@ -88,7 +96,7 @@ def compute_fluence_cxo70():
         ltime = atemp[0] + ':' + atemp[1] + ':' + atemp[2] + ':' + atemp[3][0] + atemp[3][1] + ':'
         ltime = ltime    + atemp[3][2] + atemp[3][3] + ':00'
         ltime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(ltime, '%Y:%m:%d:%H:%M:%S'))
-        stime = int(Chandra.Time.DateTime(ltime).secs)
+        stime = int(CxoTime(ltime).secs)
 #
 #--- compute fluence between the span
 #
