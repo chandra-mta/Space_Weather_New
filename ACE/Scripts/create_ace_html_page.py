@@ -362,7 +362,7 @@ def create_ace_data_table(cdata, l_vals):
     summary_table = f"AVERAGE         {e38a:11.3f} {e175a:11.3f} {p56a:11.3f} {p130a:11.3f} {p5_p3a:11.3f} {p6_p3a:11.3f} {p337a:11.3f} {p761a:11.3f} {p1073a:11.3f}\n"
     summary_table += f"MINIMUM         {e38m:11.3f} {e175m:11.3f} {p56m:11.3f} {p130m:11.3f} {p5_p3m:11.3f} {p6_p3m:11.3f} {p337m:11.3f} {p761m:11.3f} {p1073m:11.3f}\n"
     summary_table += f"FLUENCE         {e38f:11.4e} {e175f:11.4e} {p56f:11.4e} {p130f:11.4e} {p5_p3f:11.4e} {p6_p3f:11.4e} {p337f:11.4e} {p761f:11.4e} {p1073f:11.4e}\n\n"
-    summary_table += f"SPECTRA         p3/p5       {p3_p5:11.3f} p3/p6       {p3_p6:11.3f} p5/p6       {p5_p6:11.3f} p6/p7       {p6_p7:11.3f} \n\n"
+    summary_table += f"SPECTRA               p3/p5 {p3_p5:11.3f}       p3/p6 {p3_p6:11.3f}       p5/p6 {p5_p6:11.3f}       p6/p7 {p6_p7:11.3f} \n\n"
     summary_table += f"*   This P3 channel is currently scaled from P5 data. P3* = P5 X  {P5_P3_SCALE:4.1f}\n"
     summary_table += f"**  This P3 channel is currently scaled from P6 data. P3** = P6 X  {P6_P3_SCALE:4.1f}\n"
     summary_table+= f"*** This P3 channel (not shown) is currently scaled from P7 data. P3*** = P7 X  {P7_P3_SCALE:4.1f}\n"
