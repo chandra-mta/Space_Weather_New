@@ -169,7 +169,7 @@ def read_coord_data():
     latgse = []
     longse = []
     for ent in data:
-        atemp = re.split('\s+', ent)
+        atemp = re.split(r'\s+', ent)
         atime = float(atemp[0])
         if atime < start:
             continue
@@ -209,7 +209,7 @@ def read_contact_data():
     dsn_start = []
     dsn_stop  = []
     for ent in data[2:]:
-        atemp = re.split('\s+', ent)
+        atemp = re.split(r'\s+', ent)
         if mcf.is_neumeric(atemp[4]):
             dsn_start.append(float(atemp[4]))
             dsn_stop.append(float(atemp[5]))
@@ -243,7 +243,7 @@ def read_region_data(time_list, cre=0):
     ctime  = []
     region = []
     for ent in data:
-        atemp = re.split('\s+', ent)
+        atemp = re.split(r'\s+', ent)
         rtime = float(atemp[0])
         if rtime < start:
             continue
@@ -354,7 +354,7 @@ def read_flux_model(kp):
         with open(f"{CRM3_DATA_DIR}/CRM3_p.dat{tail_list[k]}") as f:
             data = [line.strip() for line in f.readlines()]
         for ent in data:
-            atemp = re.split('\s+', ent)
+            atemp = re.split(r'\s+', ent)
             xtime = float(atemp[0])
             if xtime < start:
                 continue
@@ -402,7 +402,8 @@ def read_inst_list():
 #--- read instrument starting time table
 #
     ifile = '/proj/sot/acis/FLU-MON/FPHIST-2001.dat'
-    data  = mcf.read_data_file(ifile)
+    with open(ifile) as f:
+        data = [line.strip() for line in f.readlines()]
 #
 #--- create lists of starting time and stopping time for ACIS-I, ACIS-S, HRC-I, HRC-S 
 #--- set their positional index to 0, 1, 2, and 3, respectively
@@ -418,7 +419,7 @@ def read_inst_list():
 #
     klen  = len(data)
     for k in range(0, klen):
-        atemp = re.split('\s+', data[k])
+        atemp = re.split(r'\s+', data[k])
         try:
             ctime = Chandra.Time.DateTime(atemp[0]).secs
         except:
@@ -477,7 +478,8 @@ def read_otg_list():
     stop  = today_chandra_time + 10.0 * 86400.0
 
     ifile = '/proj/sot/acis/FLU-MON/GRATHIST-2001.dat'
-    data  = mcf.read_data_file(ifile)
+    with open(ifile) as f:
+        data = [line.strip() for line in f.readlines()]
     otg_start = [[], []]
     otg_stop  = [[], []]
 
@@ -486,7 +488,7 @@ def read_otg_list():
 #
 #--- check which otg is on (or off)
 #
-        atemp = re.split('\s+', ent)
+        atemp = re.split(r'\s+', ent)
         try:
             ctime = Chandra.Time.DateTime(atemp[0]).secs
         except:
