@@ -3,7 +3,11 @@
 **create_ace_html_page.py**: Read ACE data and update html page
 
 :Author: W. Aaron (william.aaron@cfa.harvard.edu)
-:Last Updated: Jul 01, 2025
+:Last Updated: Jan 21, 2026
+
+# /// testing
+# tested-ska-release = "2026.1"
+# ///
 """
 import os
 import sys
@@ -109,8 +113,6 @@ def create_ace_data_table(cdata, l_vals):
 #
 #--- for ease of read...
 #
-    ctime = cdata[0]                #--- Chandra Time
-    jtime = cdata[1]                #--- display time
     echk  = numpy.array(cdata[2])   #--- whether electron data is good 
     de1   = numpy.array(cdata[3])
     de4   = numpy.array(cdata[4])
@@ -129,7 +131,6 @@ def create_ace_data_table(cdata, l_vals):
 #--- pchk and p3
 #
         if pchk[k] == 0:
-            plast   = p3_last
             p3_diff = p3dat[k] - p3_last
             if p3dat[k] > 0 and p3_diff > 500000:
                 p3dat[k] = -999
@@ -256,12 +257,6 @@ def create_ace_data_table(cdata, l_vals):
         p6_p3a = 0
         p6_p3m = 0
 
-    if len(p7_p3_scaled) > 0:
-        p7_p3a = numpy.mean(numpy.array(p7_p3_scaled))
-        p7_p3m = numpy.min(numpy.array(p7_p3_scaled))
-    else:
-        p7_p3a = 0
-        p7_p3m = 0
 #
 #--- index to find good data
 #
@@ -330,7 +325,6 @@ def create_ace_data_table(cdata, l_vals):
     p1073f = p1073a * 7200.
     p5_p3f = p5_p3a * 7200.
     p6_p3f = p6_p3a * 7200.
-    p7_p3f = p7_p3a * 7200.
 #
 #--- compute spectral indcies
 #
@@ -350,9 +344,7 @@ def create_ace_data_table(cdata, l_vals):
         p6_p7  = p761a / p1073a
     else:
         p6_p7 = 0
-    if p1073a > 0:
-        p5_p7  = p337a / p1073a
-    else:
+    if p1073a <= 0:
         p337a = 0
 #
 #--- violation check
@@ -525,7 +517,6 @@ def convert_to_col_data(data):
     ptime = 0
     for ent in data:
         atemp = re.split(r'\s+', ent)
-        clen  = len(atemp)
 #
 #--- convert time in Chandra Time
 #
