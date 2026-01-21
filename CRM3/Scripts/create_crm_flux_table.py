@@ -5,6 +5,9 @@
 :Author: w. aaron (William.aaron@cfa.harvard.edu)
 :Last Updated: Aug 08, 2025
 
+# /// testing
+# tested-ska-release = "2026.1"
+# ///
 """
 
 import os
@@ -303,7 +306,7 @@ def read_ace(start_fetch):
         if val < 0:  #: Missing value.
             corrected_p3[i] = _valid
         elif 0 <= val < 1e-6:  #: Valid but nominally zero.
-            corrected_p3[i] == 0
+            corrected_p3[i] = 0
             _valid = 0
         else:
             corrected_p3[i] = val
