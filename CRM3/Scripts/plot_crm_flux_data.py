@@ -9,12 +9,11 @@
 """
 import sys
 import os
-import string
+import argparse
 import re
 import numpy
-import getopt
 import time
-import time
+import json
 import Chandra.Time
 import matplotlib as mpl
 if __name__ == '__main__':
@@ -22,24 +21,14 @@ if __name__ == '__main__':
 from pylab import *
 import matplotlib.pyplot       as plt
 import matplotlib.font_manager as font_manager
-import matplotlib.lines        as lines
 #
-#--- reading directory list
+# --- Define Directory Pathing
 #
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
-
-with open(path, 'r') as f:
-    data = [line.strip() for line in f.readlines()]
-
-for ent in data:
-    atemp = re.split(':', ent)
-    var  = atemp[1].strip()
-    line = atemp[0].strip()
-    exec("%s = %s" %(var, line))
-#for writing out files in test directory
-if (os.getenv('TEST') == 'TEST'):
-    os.system('mkdir -p TestOut')
-    test_out = os.getcwd() + '/TestOut'
+GSM_PLOT_DATA_DIR = "/data/mta4/Space_Weather/GSM_plots/Data"
+CRM3_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
+EPHEM_DATA_DIR = "/data/mta4/Space_Weather/EPHEM/Data"
+COMM_DATA_DIR = "/data/mta4/Space_Weather/Comm_data/Data"
+HTML_DIR = "/data/mta4/www/RADIATION/Orbit/Plots"
 #
 #--- append  pathes to private folders to a python directory
 #
@@ -48,14 +37,7 @@ sys.path.append('/data/mta4/Script/Python3.10/MTA/')
 #--- import several functions
 #
 import mta_common_functions as mcf
-#
-#--- temp writing file name
-#
-import random
-rtail  = int(time.time() * random.random())
-zspace = '/tmp/zspace' + str(rtail)
 
-data_dir = gsm_plot_dir + 'Data/'
 #
 #--- current time
 #
@@ -66,6 +48,12 @@ today_chandra_time   = Chandra.Time.DateTime(today).secs
 this_year            = int(float(time.strftime('%Y', time.gmtime())))
 this_doy             = int(float(time.strftime('%j', time.gmtime())))
 year_start           = Chandra.Time.DateTime(str(this_year) + ':001:00:00:00').secs
+
+def get_options(args=None):
+    parser = argparse.ArgumentParser(description="Plot CRM Flux")
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    opt = parser.parse_args(args)
+    return opt
 
 #--------------------------------------------------------------------------------
 #-- plot_crm_flux_data: create crm predicted flux plot                         --
@@ -86,7 +74,13 @@ def plot_crm_flux_data():
 #
 #--- read crm summary data table
 #
-    [kp, ace, fluence, afluence] = read_crmsummary()
+    with open(f"{CRM3_DATA_DIR}/CRMsummary.json") as f:
+        crm_summary = json.load(f)
+    kp = crm_summary.get('kp')
+    ace = crm_summary.get('ace_p3_flux')
+    fluence = crm_summary.get('corrected_crm_fluence')
+    afluence =  crm_summary.get('attenuated_crm_fluence')
+
 #
 #--- read orbital data
 #
@@ -146,33 +140,6 @@ def plot_crm_flux_data():
              otg_start, otg_stop, ftime_list, flux_atten, color_list, kp, atten=1)
 
 #--------------------------------------------------------------------------------
-#-- read_crmsummary: read data from CRMsummary.data file                      ---
-#--------------------------------------------------------------------------------
-
-def read_crmsummary():
-    """
-    read data from CRMsummary.data file
-    input: <crm3_dir>/Data/CRMsummary.dat
-    output: kp          --- kp value
-            ace         --- ace flux value
-            fluence     --- fluence
-            afluence    --- attenunated fluence
-    """
-    ifile = crm3_dir + 'Data/CRMsummary.dat'
-    data  = mcf.read_data_file(ifile)
-
-    atemp    = re.split(':', data[1])
-    kp       = float(atemp[1].strip())
-    atemp    = re.split(':', data[2])
-    ace      = float(atemp[1].strip())
-    atemp    = re.split(':', data[11])
-    fluence  = float(atemp[1].strip())
-    atemp    = re.split(':', data[12])
-    afluence = float(atemp[1].strip())
-
-    return [kp, ace, fluence, afluence]
-
-#--------------------------------------------------------------------------------
 #-- read_coord_data: read spherical gsm and dse data from ephem site           ---
 #--------------------------------------------------------------------------------
 
@@ -191,8 +158,8 @@ def read_coord_data():
 #
 #--- read data
 #
-    ifile = ephem_dir + 'Data/PE.EPH.gsme_spherical_short'
-    data  = mcf.read_data_file(ifile)
+    with open(f"{EPHEM_DATA_DIR}/PE.EPH.gsme_spherical_short") as f:
+        data = [line.strip() for line in f.readlines()]
     
     otime  = []
     radgsm = []
@@ -237,8 +204,8 @@ def read_contact_data():
     output: dsn_start   --- a list of contact start time
             dsn_stop    --- a list of contact end time
     """
-    infile = comm_dir + '/Data/comm_data'
-    data   = mcf.read_data_file(infile)
+    with open(f"{COMM_DATA_DIR}/comm_data") as f:
+        data = [line.strip() for line in f.readlines()]
     dsn_start = []
     dsn_stop  = []
     for ent in data[2:]:
@@ -271,8 +238,8 @@ def read_region_data(time_list, cre=0):
 #
 #--- read data 
 #
-    infile = crm3_dir + '/Data/CRM3_p.dat30'
-    data   = mcf.read_data_file(infile)
+    with open(f"{CRM3_DATA_DIR}/CRM3_p.dat30") as f:
+        data = [line.strip() for line in f.readlines()]
     ctime  = []
     region = []
     for ent in data:
@@ -384,8 +351,8 @@ def read_flux_model(kp):
 #--- read each of them and save the fluxes
 #
     for k in range(0, 11):
-        ifile = crm3_dir + 'Data/CRM3_p.dat' + tail_list[k]
-        data  = mcf.read_data_file(ifile)
+        with open(f"{CRM3_DATA_DIR}/CRM3_p.dat{tail_list[k]}") as f:
+            data = [line.strip() for line in f.readlines()]
         for ent in data:
             atemp = re.split('\s+', ent)
             xtime = float(atemp[0])
@@ -922,14 +889,11 @@ def plot_crm(otime, altitude, orbit_color_list, dsn_start, dsn_stop, inst_start,
 #--- save the plot in png format
 #
     if atten == 0:
-        outname = html_dir + 'Orbit/Plots/' + 'crmpl.png'
+        outname = 'crmpl.png'
     else:
-        outname = html_dir + 'Orbit/Plots/' + 'crmplatt.png'
-
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        outname = test_out + "/" + os.path.basename(outname)
-    plt.savefig(outname, format='png', dpi=300)
+        outname = 'crmplatt.png'
+    outfile = f"{HTML_DIR}/{outname}"
+    plt.savefig(outfile, format='png', dpi=300)
 
     plt.close('all')
 
@@ -983,5 +947,8 @@ def convert_to_doy(ctime):
 #--------------------------------------------------------------------------------
 
 if __name__ == "__main__":
-
+    opt = get_options()
+    if opt.mode == 'test':
+        HTML_DIR = f"{os.getcwd()}/test/_outTest"
+        os.makedirs(HTML_DIR, exist_ok = True)
     plot_crm_flux_data()
