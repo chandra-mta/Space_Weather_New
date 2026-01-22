@@ -90,12 +90,7 @@ def plot_crm_flux_data():
 #
 #--- convert them to predictive flux and attenuated flux
 #
-    try:
-        [flux, flux_atten] = create_attenuation_list(ftime_list, flux_list,\
-                                inst_start, inst_stop, otg_start, otg_stop,\
-                                ace, fluence, afluence, otime, altitude)
-    except:
-        exit(1)
+    [flux, flux_atten] = create_attenuation_list(ftime_list, flux_list, inst_start, inst_stop, otg_start, otg_stop, ace, fluence, afluence, otime, altitude)
 #
 #--- convert time into day of year
 #
@@ -440,7 +435,8 @@ def read_inst_list():
         atemp = re.split(r'\s+', data[k])
         try:
             ctime = CxoTime(atemp[0]).secs
-        except:
+        except ValueError:
+            #: Corruption in file
             continue
         if ctime < start:
             continue
@@ -509,7 +505,8 @@ def read_otg_list():
         atemp = re.split(r'\s+', ent)
         try:
             ctime = CxoTime(atemp[0]).secs
-        except:
+        except ValueError:
+            #: Corruption in file
             continue
         if ctime < start:
             continue
