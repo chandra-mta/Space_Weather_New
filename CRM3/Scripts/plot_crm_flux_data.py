@@ -7,7 +7,6 @@
 :Last Updated: Mar 16, 2021
 
 """
-import sys
 import os
 import argparse
 import re
@@ -20,7 +19,8 @@ if __name__ == '__main__':
 from pylab import *
 import matplotlib.pyplot       as plt
 import matplotlib.font_manager as font_manager
-from datetime import datetime, timezone
+from datetime import datetime, timezone, time, timedelta
+import kadi.events
 #
 # --- Define Directory Pathing
 #
@@ -29,14 +29,6 @@ CRM3_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
 EPHEM_DATA_DIR = "/data/mta4/Space_Weather/EPHEM/Data"
 COMM_DATA_DIR = "/data/mta4/Space_Weather/Comm_data/Data"
 HTML_DIR = "/data/mta4/www/RADIATION/Orbit/Plots"
-#
-#--- append  pathes to private folders to a python directory
-#
-sys.path.append('/data/mta4/Script/Python3.10/MTA/')
-#
-#--- import several functions
-#
-import mta_common_functions as mcf
 
 UTC_NOW = datetime.now(timezone.utc)
 TODAY_CHANDRA_TIME = round(CxoTime(UTC_NOW.replace(hour=0, minute=0, second=0, microsecond=0)).secs)
@@ -185,28 +177,61 @@ def read_coord_data():
 
     return [otime, radgsm, latgsm, longsm, radgse, latgse, longse]
 
-#--------------------------------------------------------------------------------
-#-- read_contact_data: ead DSN contact information                             --
-#--------------------------------------------------------------------------------
+def translate(dsn_comm):
+        """
+        Translate the Kadi Event DSN Comm query result into CxoTime
+        :NOTE: Take from msid_plotting.comm_check.translate() v0.4.0,
+            Consult MTA GitHub Codebase for future package implementation
+        """
+        support_start = CxoTime(dsn_comm.start)
+        support_stop = CxoTime(dsn_comm.stop)
+
+        #: Start
+        dt_start = support_start.datetime
+        track_start = CxoTime(
+            datetime.combine(
+                dt_start.date(), # type: ignore
+                time(hour=int(dsn_comm.bot[:2]), minute=int(dsn_comm.bot[2:])),
+            )
+        )
+
+        if track_start < support_start:  #: Time after midnight
+            track_start += timedelta(days=1)
+
+        #: Stop
+        dt_stop = support_stop.datetime
+        track_stop = CxoTime(
+            datetime.combine(
+                dt_stop.date(), # type: ignore
+                time(hour=int(dsn_comm.eot[:2]), minute=int(dsn_comm.eot[2:])),
+            )
+        )
+
+        if track_stop > support_stop:  #: Time before midnight
+            track_stop -= timedelta(days=1)
+
+        return {
+            'support_start': support_start,
+            'support_stop': support_stop,
+            'track_start': track_start,
+            'track_stop': track_stop
+        }
 
 def read_contact_data():
     """
-    read DSN contact information
-    input:  none but read from:
-            <comm_dir>/Data/comm_data
-    output: dsn_start   --- a list of contact start time
-            dsn_stop    --- a list of contact end time
+    read DSN contact information from kadi
+    :rtype: list
+    :return: dsn_start, dsn_stop
     """
-    with open(f"{COMM_DATA_DIR}/comm_data") as f:
-        data = [line.strip() for line in f.readlines()]
+    checktime = CxoTime()
+    dsn_query = kadi.events.dsn_comms.filter(start=checktime - timedelta(days=3), stop = checktime + timedelta(days=7))
     dsn_start = []
     dsn_stop  = []
-    for ent in data[2:]:
-        atemp = re.split(r'\s+', ent)
-        if mcf.is_neumeric(atemp[4]):
-            dsn_start.append(float(atemp[4]))
-            dsn_stop.append(float(atemp[5]))
-
+    for dsn_comm in dsn_query:
+        x = translate(dsn_comm)
+        dsn_start.append(round(x.get('track_start').secs)) # type: ignore
+        dsn_stop.append(round(x.get('track_stop').secs)) # type: ignore
+    
     return [dsn_start, dsn_stop]
 
 #--------------------------------------------------------------------------------
