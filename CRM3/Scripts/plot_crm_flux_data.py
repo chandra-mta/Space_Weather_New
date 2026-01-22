@@ -871,7 +871,7 @@ def plot_crm(otime, altitude, orbit_color_list, dsn_start, dsn_stop, inst_start,
 #
 #--- set the size of the plotting area in inch (width: 10.0in, height 2.08in x number of panels)
 #
-    fig = matplotlib.pyplot.gcf()
+    fig = plt.gcf()
     fig.set_size_inches(5.0, 5.0)
 #
 #--- save the plot in png format
