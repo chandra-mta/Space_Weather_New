@@ -4,68 +4,48 @@
 
 :Author: t. isobe  (tisobe@cfa.harvard.edu)
 :Maintainer: w. aaron (william.aaron@cfa.harvard.edu)
-:Last Updated: Mar 16, 2021
+:Last Updated: Jan 22, 2026
 
+# /// script
+# requires-python = ">=3.12"
+# ///
+
+# /// testing
+# tested-ska-release = "2026.1"
+# ///
 """
-import sys
 import os
-import string
+import argparse
 import re
 import numpy
-import getopt
-import time
-import time
-import Chandra.Time
+import json
+from cxotime import CxoTime
 import matplotlib as mpl
 if __name__ == '__main__':
     mpl.use('Agg')
 from pylab import *
 import matplotlib.pyplot       as plt
 import matplotlib.font_manager as font_manager
-import matplotlib.lines        as lines
+from datetime import datetime, timezone, time, timedelta
+import kadi.events
+import getpass
+import signal
 #
-#--- reading directory list
+# --- Define Directory Pathing
 #
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
+CRM3_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
+EPHEM_DATA_DIR = "/data/mta4/Space_Weather/EPHEM/Data"
+HTML_DIR = "/data/mta4/www/RADIATION/Orbit/Plots"
 
-with open(path, 'r') as f:
-    data = [line.strip() for line in f.readlines()]
+UTC_NOW = datetime.now(timezone.utc)
+TODAY_CHANDRA_TIME = round(CxoTime(UTC_NOW.replace(hour=0, minute=0, second=0, microsecond=0)).secs)
+YEAR_START = CxoTime(f"{UTC_NOW.year}:001:00:00:00").secs
 
-for ent in data:
-    atemp = re.split(':', ent)
-    var  = atemp[1].strip()
-    line = atemp[0].strip()
-    exec("%s = %s" %(var, line))
-#for writing out files in test directory
-if (os.getenv('TEST') == 'TEST'):
-    os.system('mkdir -p TestOut')
-    test_out = os.getcwd() + '/TestOut'
-#
-#--- append  pathes to private folders to a python directory
-#
-sys.path.append('/data/mta4/Script/Python3.10/MTA/')
-#
-#--- import several functions
-#
-import mta_common_functions as mcf
-#
-#--- temp writing file name
-#
-import random
-rtail  = int(time.time() * random.random())
-zspace = '/tmp/zspace' + str(rtail)
-
-data_dir = gsm_plot_dir + 'Data/'
-#
-#--- current time
-#
-current_time_date    = time.strftime('%Y:%j:%H:%M:%S', time.gmtime())
-current_chandra_time = Chandra.Time.DateTime(current_time_date).secs
-today                = time.strftime('%Y:%j:00:00:00', time.gmtime())
-today_chandra_time   = Chandra.Time.DateTime(today).secs
-this_year            = int(float(time.strftime('%Y', time.gmtime())))
-this_doy             = int(float(time.strftime('%j', time.gmtime())))
-year_start           = Chandra.Time.DateTime(str(this_year) + ':001:00:00:00').secs
+def get_options(args=None):
+    parser = argparse.ArgumentParser(description="Plot CRM Flux")
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    opt = parser.parse_args(args)
+    return opt
 
 #--------------------------------------------------------------------------------
 #-- plot_crm_flux_data: create crm predicted flux plot                         --
@@ -80,13 +60,19 @@ def plot_crm_flux_data():
             <crm3_dir>/Data/CRM3_p.dat30
             /proj/sot/acis/FLU-MON/FPHIST-2001.dat
             /proj/sot/acis/FLU-MON/GRATHIST-2001.dat
-    output: <html_dir>/Prbit/Plots/crmpl.png        --- extranal flux plot
-            <html_dir>/Prbit/Plots/crmplatt.png     --- attenuated flux plot
+    output: <html_dir>/Orbit/Plots/crmpl.png        --- external flux plot
+            <html_dir>/Orbit/Plots/crmplatt.png     --- attenuated flux plot
     """
 #
 #--- read crm summary data table
 #
-    [kp, ace, fluence, afluence] = read_crmsummary()
+    with open(f"{CRM3_DATA_DIR}/CRMsummary.json") as f:
+        crm_summary = json.load(f)
+    kp = crm_summary.get('kp')
+    ace = crm_summary.get('ace_p3_flux')
+    fluence = crm_summary.get('corrected_crm_fluence')
+    afluence =  crm_summary.get('attenuated_crm_fluence')
+
 #
 #--- read orbital data
 #
@@ -111,12 +97,7 @@ def plot_crm_flux_data():
 #
 #--- convert them to predictive flux and attenuated flux
 #
-    try:
-        [flux, flux_atten] = create_attenuation_list(ftime_list, flux_list,\
-                                inst_start, inst_stop, otg_start, otg_stop,\
-                                ace, fluence, afluence, otime, altitude)
-    except:
-        exit(1)
+    [flux, flux_atten] = create_attenuation_list(ftime_list, flux_list, inst_start, inst_stop, otg_start, otg_stop, ace, fluence, afluence, otime, altitude)
 #
 #--- convert time into day of year
 #
@@ -146,33 +127,6 @@ def plot_crm_flux_data():
              otg_start, otg_stop, ftime_list, flux_atten, color_list, kp, atten=1)
 
 #--------------------------------------------------------------------------------
-#-- read_crmsummary: read data from CRMsummary.data file                      ---
-#--------------------------------------------------------------------------------
-
-def read_crmsummary():
-    """
-    read data from CRMsummary.data file
-    input: <crm3_dir>/Data/CRMsummary.dat
-    output: kp          --- kp value
-            ace         --- ace flux value
-            fluence     --- fluence
-            afluence    --- attenunated fluence
-    """
-    ifile = crm3_dir + 'Data/CRMsummary.dat'
-    data  = mcf.read_data_file(ifile)
-
-    atemp    = re.split(':', data[1])
-    kp       = float(atemp[1].strip())
-    atemp    = re.split(':', data[2])
-    ace      = float(atemp[1].strip())
-    atemp    = re.split(':', data[11])
-    fluence  = float(atemp[1].strip())
-    atemp    = re.split(':', data[12])
-    afluence = float(atemp[1].strip())
-
-    return [kp, ace, fluence, afluence]
-
-#--------------------------------------------------------------------------------
 #-- read_coord_data: read spherical gsm and dse data from ephem site           ---
 #--------------------------------------------------------------------------------
 
@@ -186,13 +140,13 @@ def read_coord_data():
 #
 #--- set start and stop time
 #
-    start = today_chandra_time - 2.0 * 86400.
+    start = TODAY_CHANDRA_TIME - 2.0 * 86400.
     stop  = start + 10.0 * 86400.0
 #
 #--- read data
 #
-    ifile = ephem_dir + 'Data/PE.EPH.gsme_spherical_short'
-    data  = mcf.read_data_file(ifile)
+    with open(f"{EPHEM_DATA_DIR}/PE.EPH.gsme_spherical_short") as f:
+        data = [line.strip() for line in f.readlines()]
     
     otime  = []
     radgsm = []
@@ -202,7 +156,7 @@ def read_coord_data():
     latgse = []
     longse = []
     for ent in data:
-        atemp = re.split('\s+', ent)
+        atemp = re.split(r'\s+', ent)
         atime = float(atemp[0])
         if atime < start:
             continue
@@ -225,28 +179,61 @@ def read_coord_data():
 
     return [otime, radgsm, latgsm, longsm, radgse, latgse, longse]
 
-#--------------------------------------------------------------------------------
-#-- read_contact_data: ead DSN contact information                             --
-#--------------------------------------------------------------------------------
+def translate(dsn_comm):
+        """
+        Translate the Kadi Event DSN Comm query result into CxoTime
+        :NOTE: Take from msid_plotting.comm_check.translate() v0.4.0,
+            Consult MTA GitHub Codebase for future package implementation
+        """
+        support_start = CxoTime(dsn_comm.start)
+        support_stop = CxoTime(dsn_comm.stop)
+
+        #: Start
+        dt_start = support_start.datetime
+        track_start = CxoTime(
+            datetime.combine(
+                dt_start.date(), # type: ignore
+                time(hour=int(dsn_comm.bot[:2]), minute=int(dsn_comm.bot[2:])),
+            )
+        )
+
+        if track_start < support_start:  #: Time after midnight
+            track_start += timedelta(days=1)
+
+        #: Stop
+        dt_stop = support_stop.datetime
+        track_stop = CxoTime(
+            datetime.combine(
+                dt_stop.date(), # type: ignore
+                time(hour=int(dsn_comm.eot[:2]), minute=int(dsn_comm.eot[2:])),
+            )
+        )
+
+        if track_stop > support_stop:  #: Time before midnight
+            track_stop -= timedelta(days=1)
+
+        return {
+            'support_start': support_start,
+            'support_stop': support_stop,
+            'track_start': track_start,
+            'track_stop': track_stop
+        }
 
 def read_contact_data():
     """
-    read DSN contact information
-    input:  none but read from:
-            <comm_dir>/Data/comm_data
-    output: dsn_start   --- a list of contact start time
-            dsn_stop    --- a list of contact end time
+    read DSN contact information from kadi
+    :rtype: list
+    :return: dsn_start, dsn_stop
     """
-    infile = comm_dir + '/Data/comm_data'
-    data   = mcf.read_data_file(infile)
+    checktime = CxoTime()
+    dsn_query = kadi.events.dsn_comms.filter(start=checktime - timedelta(days=3), stop = checktime + timedelta(days=7))
     dsn_start = []
     dsn_stop  = []
-    for ent in data[2:]:
-        atemp = re.split('\s+', ent)
-        if mcf.is_neumeric(atemp[4]):
-            dsn_start.append(float(atemp[4]))
-            dsn_stop.append(float(atemp[5]))
-
+    for dsn_comm in dsn_query:
+        x = translate(dsn_comm)
+        dsn_start.append(round(x.get('track_start').secs)) # type: ignore
+        dsn_stop.append(round(x.get('track_stop').secs)) # type: ignore
+    
     return [dsn_start, dsn_stop]
 
 #--------------------------------------------------------------------------------
@@ -266,17 +253,17 @@ def read_region_data(time_list, cre=0):
 #
 #--- set start and stop time
 #
-    start = today_chandra_time - 2.0 * 86400.
+    start = TODAY_CHANDRA_TIME - 2.0 * 86400.
     stop  = start + 10.0 * 86400.0
 #
 #--- read data 
 #
-    infile = crm3_dir + '/Data/CRM3_p.dat30'
-    data   = mcf.read_data_file(infile)
+    with open(f"{CRM3_DATA_DIR}/CRM3_p.dat30") as f:
+        data = [line.strip() for line in f.readlines()]
     ctime  = []
     region = []
     for ent in data:
-        atemp = re.split('\s+', ent)
+        atemp = re.split(r'\s+', ent)
         rtime = float(atemp[0])
         if rtime < start:
             continue
@@ -371,7 +358,7 @@ def read_flux_model(kp):
 #
 #--- set start and stop time
 #
-    start = today_chandra_time -2.0 * 86400.
+    start = TODAY_CHANDRA_TIME -2.0 * 86400.
     stop  = start + 10.0 * 86400.0
 #
 #--- select 10 models + kp correspoinding flux
@@ -384,10 +371,10 @@ def read_flux_model(kp):
 #--- read each of them and save the fluxes
 #
     for k in range(0, 11):
-        ifile = crm3_dir + 'Data/CRM3_p.dat' + tail_list[k]
-        data  = mcf.read_data_file(ifile)
+        with open(f"{CRM3_DATA_DIR}/CRM3_p.dat{tail_list[k]}") as f:
+            data = [line.strip() for line in f.readlines()]
         for ent in data:
-            atemp = re.split('\s+', ent)
+            atemp = re.split(r'\s+', ent)
             xtime = float(atemp[0])
             if xtime < start:
                 continue
@@ -429,13 +416,14 @@ def read_inst_list():
 #
 #--- set start and stop time
 #
-    start = today_chandra_time -  3.0 * 86400.0
-    stop  = today_chandra_time + 10.0 * 86400.0
+    start = TODAY_CHANDRA_TIME -  3.0 * 86400.0
+    stop  = TODAY_CHANDRA_TIME + 10.0 * 86400.0
 #
 #--- read instrument starting time table
 #
     ifile = '/proj/sot/acis/FLU-MON/FPHIST-2001.dat'
-    data  = mcf.read_data_file(ifile)
+    with open(ifile) as f:
+        data = [line.strip() for line in f.readlines()]
 #
 #--- create lists of starting time and stopping time for ACIS-I, ACIS-S, HRC-I, HRC-S 
 #--- set their positional index to 0, 1, 2, and 3, respectively
@@ -451,10 +439,11 @@ def read_inst_list():
 #
     klen  = len(data)
     for k in range(0, klen):
-        atemp = re.split('\s+', data[k])
+        atemp = re.split(r'\s+', data[k])
         try:
-            ctime = Chandra.Time.DateTime(atemp[0]).secs
-        except:
+            ctime = CxoTime(atemp[0]).secs
+        except ValueError:
+            #: Corruption in file
             continue
         if ctime < start:
             continue
@@ -506,11 +495,12 @@ def read_otg_list():
 #
 #--- set start and stop time
 #
-    start = today_chandra_time -  3.0 * 86400.0
-    stop  = today_chandra_time + 10.0 * 86400.0
+    start = TODAY_CHANDRA_TIME -  3.0 * 86400.0
+    stop  = TODAY_CHANDRA_TIME + 10.0 * 86400.0
 
     ifile = '/proj/sot/acis/FLU-MON/GRATHIST-2001.dat'
-    data  = mcf.read_data_file(ifile)
+    with open(ifile) as f:
+        data = [line.strip() for line in f.readlines()]
     otg_start = [[], []]
     otg_stop  = [[], []]
 
@@ -519,10 +509,11 @@ def read_otg_list():
 #
 #--- check which otg is on (or off)
 #
-        atemp = re.split('\s+', ent)
+        atemp = re.split(r'\s+', ent)
         try:
-            ctime = Chandra.Time.DateTime(atemp[0]).secs
-        except:
+            ctime = CxoTime(atemp[0]).secs
+        except ValueError:
+            #: Corruption in file
             continue
         if ctime < start:
             continue
@@ -673,35 +664,6 @@ def create_attenuation_list(ftime_list, flux_list, inst_start, inst_stop, otg_st
 
     return [nfluxi, nfluxia]
 
-#--------------------------------------------------------------------------------
-#-- convert_to_ctime: convert <yyyy> <doy>.<fractional doy> to Chandra Time    --
-#--------------------------------------------------------------------------------
-
-def convert_to_ctime(year, fyday):
-    """
-    convert <yyyy> <doy>.<fractional doy> to Chandra Time
-    input:  year    --- year
-            fyday   --- fractional day of year
-    output: time in seconds from 1998.1.1
-    """
-    year  = str(year)
-
-    ydate = float(fyday)
-    yday  = int(ydate)
-    frc   = 24 * (ydate - yday)
-    hh    = int(frc)
-    frc   = 60 *(frc - hh)
-    mm    = int(frc)
-    ss    = 60 *(frc - mm)
-    ss    = int(ss)
-
-    ltime = year  + ':' + mcf.add_leading_zero(yday, 3) + ':' + mcf.add_leading_zero(hh)
-    ltime = ltime + ':' + mcf.add_leading_zero(mm)      + ':' + mcf.add_leading_zero(ss)
-
-    ctime = Chandra.Time.DateTime(ltime).secs
-    ctime = int(ctime)
-
-    return ctime
     
 #--------------------------------------------------------------------------------
 #-- plot_crm: plot predictive CRM fluence model                                --
@@ -730,8 +692,8 @@ def plot_crm(otime, altitude, orbit_color_list, dsn_start, dsn_stop, inst_start,
 #
 #--- set the plotting range.
 #
-    hh   = float(time.strftime("%H", time.gmtime()))
-    xmin = this_doy + hh / 24.0 
+
+    xmin = int(UTC_NOW.strftime('%j')) + UTC_NOW.hour/ 24.0
 #
 #--- there are 3 pannels with shared x axis
 #
@@ -916,20 +878,17 @@ def plot_crm(otime, altitude, orbit_color_list, dsn_start, dsn_stop, inst_start,
 #
 #--- set the size of the plotting area in inch (width: 10.0in, height 2.08in x number of panels)
 #
-    fig = matplotlib.pyplot.gcf()
+    fig = plt.gcf()
     fig.set_size_inches(5.0, 5.0)
 #
 #--- save the plot in png format
 #
     if atten == 0:
-        outname = html_dir + 'Orbit/Plots/' + 'crmpl.png'
+        outname = 'crmpl.png'
     else:
-        outname = html_dir + 'Orbit/Plots/' + 'crmplatt.png'
-
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        outname = test_out + "/" + os.path.basename(outname)
-    plt.savefig(outname, format='png', dpi=300)
+        outname = 'crmplatt.png'
+    outfile = f"{HTML_DIR}/{outname}"
+    plt.savefig(outfile, format='png', dpi=300)
 
     plt.close('all')
 
@@ -973,7 +932,7 @@ def convert_to_doy(ctime):
     """
     dtime = []
     for ent in ctime:
-        out = (ent - year_start) / 86400.0
+        out = (ent - YEAR_START) / 86400.0
         if out > 0:
             out += 1
         dtime.append(out)
@@ -983,5 +942,40 @@ def convert_to_doy(ctime):
 #--------------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    opt = get_options()
+    if opt.mode == 'test':
+        HTML_DIR = f"{os.getcwd()}/test/_outTest"
+        os.makedirs(HTML_DIR, exist_ok = True)
 
-    plot_crm_flux_data()
+        plot_crm_flux_data()
+    
+    elif opt.mode == 'flight':
+        #
+        # --- Create a lock file and exit strategy in case of race conditions.
+        #
+        name = os.path.basename(__file__).split(".")[0]
+        user = getpass.getuser()
+        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
+            with open(f"/tmp/{user}/{name}.lock") as f:
+                pid = int(f.readlines()[-1].strip())
+                #: Kill old stalling process and remove corresponding lock file.
+                os.remove(f"/tmp/{user}/{name}.lock")
+                try:
+                    os.kill(pid, signal.SIGTERM)
+                except ProcessLookupError:
+                    pass
+                #: Generate lock file for the current corresponding process
+                os.system(
+                    f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock"
+                )
+        else:
+            #: Previous script run must have completed successfully. Prepare lock file for this script run.
+            os.system(
+                f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock"
+            )
+        
+        plot_crm_flux_data()
+        #
+        # --- Remove lock file once process is completed.
+        #
+        os.system(f"rm /tmp/{user}/{name}.lock")
