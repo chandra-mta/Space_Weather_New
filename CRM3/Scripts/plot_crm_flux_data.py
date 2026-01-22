@@ -33,10 +33,8 @@ import signal
 #
 # --- Define Directory Pathing
 #
-GSM_PLOT_DATA_DIR = "/data/mta4/Space_Weather/GSM_plots/Data"
 CRM3_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
 EPHEM_DATA_DIR = "/data/mta4/Space_Weather/EPHEM/Data"
-COMM_DATA_DIR = "/data/mta4/Space_Weather/Comm_data/Data"
 HTML_DIR = "/data/mta4/www/RADIATION/Orbit/Plots"
 
 UTC_NOW = datetime.now(timezone.utc)
