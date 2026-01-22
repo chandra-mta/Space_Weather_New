@@ -12,15 +12,15 @@ import os
 import argparse
 import re
 import numpy
-import time
 import json
-import Chandra.Time
+from cxotime import CxoTime
 import matplotlib as mpl
 if __name__ == '__main__':
     mpl.use('Agg')
 from pylab import *
 import matplotlib.pyplot       as plt
 import matplotlib.font_manager as font_manager
+from datetime import datetime, timezone
 #
 # --- Define Directory Pathing
 #
@@ -38,16 +38,9 @@ sys.path.append('/data/mta4/Script/Python3.10/MTA/')
 #
 import mta_common_functions as mcf
 
-#
-#--- current time
-#
-current_time_date    = time.strftime('%Y:%j:%H:%M:%S', time.gmtime())
-current_chandra_time = Chandra.Time.DateTime(current_time_date).secs
-today                = time.strftime('%Y:%j:00:00:00', time.gmtime())
-today_chandra_time   = Chandra.Time.DateTime(today).secs
-this_year            = int(float(time.strftime('%Y', time.gmtime())))
-this_doy             = int(float(time.strftime('%j', time.gmtime())))
-year_start           = Chandra.Time.DateTime(str(this_year) + ':001:00:00:00').secs
+UTC_NOW = datetime.now(timezone.utc)
+TODAY_CHANDRA_TIME = round(CxoTime(UTC_NOW.replace(hour=0, minute=0, second=0, microsecond=0)).secs)
+YEAR_START = CxoTime(f"{UTC_NOW.year}:001:00:00:00").secs
 
 def get_options(args=None):
     parser = argparse.ArgumentParser(description="Plot CRM Flux")
@@ -68,8 +61,8 @@ def plot_crm_flux_data():
             <crm3_dir>/Data/CRM3_p.dat30
             /proj/sot/acis/FLU-MON/FPHIST-2001.dat
             /proj/sot/acis/FLU-MON/GRATHIST-2001.dat
-    output: <html_dir>/Prbit/Plots/crmpl.png        --- extranal flux plot
-            <html_dir>/Prbit/Plots/crmplatt.png     --- attenuated flux plot
+    output: <html_dir>/Orbit/Plots/crmpl.png        --- external flux plot
+            <html_dir>/Orbit/Plots/crmplatt.png     --- attenuated flux plot
     """
 #
 #--- read crm summary data table
@@ -153,7 +146,7 @@ def read_coord_data():
 #
 #--- set start and stop time
 #
-    start = today_chandra_time - 2.0 * 86400.
+    start = TODAY_CHANDRA_TIME - 2.0 * 86400.
     stop  = start + 10.0 * 86400.0
 #
 #--- read data
@@ -233,7 +226,7 @@ def read_region_data(time_list, cre=0):
 #
 #--- set start and stop time
 #
-    start = today_chandra_time - 2.0 * 86400.
+    start = TODAY_CHANDRA_TIME - 2.0 * 86400.
     stop  = start + 10.0 * 86400.0
 #
 #--- read data 
@@ -338,7 +331,7 @@ def read_flux_model(kp):
 #
 #--- set start and stop time
 #
-    start = today_chandra_time -2.0 * 86400.
+    start = TODAY_CHANDRA_TIME -2.0 * 86400.
     stop  = start + 10.0 * 86400.0
 #
 #--- select 10 models + kp correspoinding flux
@@ -396,8 +389,8 @@ def read_inst_list():
 #
 #--- set start and stop time
 #
-    start = today_chandra_time -  3.0 * 86400.0
-    stop  = today_chandra_time + 10.0 * 86400.0
+    start = TODAY_CHANDRA_TIME -  3.0 * 86400.0
+    stop  = TODAY_CHANDRA_TIME + 10.0 * 86400.0
 #
 #--- read instrument starting time table
 #
@@ -421,7 +414,7 @@ def read_inst_list():
     for k in range(0, klen):
         atemp = re.split(r'\s+', data[k])
         try:
-            ctime = Chandra.Time.DateTime(atemp[0]).secs
+            ctime = CxoTime(atemp[0]).secs
         except:
             continue
         if ctime < start:
@@ -474,8 +467,8 @@ def read_otg_list():
 #
 #--- set start and stop time
 #
-    start = today_chandra_time -  3.0 * 86400.0
-    stop  = today_chandra_time + 10.0 * 86400.0
+    start = TODAY_CHANDRA_TIME -  3.0 * 86400.0
+    stop  = TODAY_CHANDRA_TIME + 10.0 * 86400.0
 
     ifile = '/proj/sot/acis/FLU-MON/GRATHIST-2001.dat'
     with open(ifile) as f:
@@ -490,7 +483,7 @@ def read_otg_list():
 #
         atemp = re.split(r'\s+', ent)
         try:
-            ctime = Chandra.Time.DateTime(atemp[0]).secs
+            ctime = CxoTime(atemp[0]).secs
         except:
             continue
         if ctime < start:
@@ -670,8 +663,8 @@ def plot_crm(otime, altitude, orbit_color_list, dsn_start, dsn_stop, inst_start,
 #
 #--- set the plotting range.
 #
-    hh   = float(time.strftime("%H", time.gmtime()))
-    xmin = this_doy + hh / 24.0 
+
+    xmin = int(UTC_NOW.strftime('%j')) + UTC_NOW.hour/ 24.0
 #
 #--- there are 3 pannels with shared x axis
 #
@@ -910,7 +903,7 @@ def convert_to_doy(ctime):
     """
     dtime = []
     for ent in ctime:
-        out = (ent - year_start) / 86400.0
+        out = (ent - YEAR_START) / 86400.0
         if out > 0:
             out += 1
         dtime.append(out)
