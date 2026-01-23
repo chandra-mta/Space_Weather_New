@@ -9,32 +9,59 @@
 """
 import os
 import sys
+import json
 import re
-import subprocess
 import time
-
+import argparse
+import calendar
+from jinja2 import Environment, FileSystemLoader
+from datetime import datetime, timezone
 #
-#--- reading directory list
+# --- Define Directory Pathing
 #
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
+WEB_DIR = "/data/mta4/www/RADIATION/ACIS_Rad"
 
-with open(path, 'r') as f:
-    data = [line.strip() for line in f.readlines()]
-
-for ent in data:
-    atemp = re.split(':', ent)
-    var  = atemp[1].strip()
-    line = atemp[0].strip()
-    exec("%s = %s" %(var, line))
-
+UTC_NOW = datetime.now(timezone.utc)
+YEARS = [str(i) for i in range(UTC_NOW.year, 1999, -1)]
+MONTHS = [i for i in calendar.month_abbr[1:]]
 
 mon_list1 = ['031', '060', '091', '121', '152', '182', '213', '244', '274', '305', '335', '366']
 mon_list2 = ['031', '060', '090', '120', '151', '181', '212', '243', '273', '304', '334', '365']
 lmon_list = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun','Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
 fmon_list = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
-web_dir   = html_dir + 'ACIS_Rad/'
+#
+# --- Template Globals
+#
+_JINJA_ENV = Environment(loader = FileSystemLoader('Template', followlinks = True))
+
+def get_options(args=None):
+    parser = argparse.ArgumentParser(description="Update ACIS Radiation Correlation Pages")
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    opt = parser.parse_args(args)
+    return opt
+
+def render_index():
+    subhtmls = {}
+    for year in YEARS:
+        subhtmls[year] = {}
+        for i, month in enumerate(MONTHS):
+            #: Fill with a link to the subpage if we are path the target month.
+            #: Subtracted by two for both past month and different month enumeration.
+            if (int(year) < UTC_NOW.year) or (i <= UTC_NOW.month - 2):
+                subhtmls[year][month] = f'<a href="./Html/{month.lower()}{year[2:]}.html">{month.upper()}{year[2:]}</a>'    
+    index_template = _JINJA_ENV.get_template('index.jinja')
+    index_render = index_template.render(subhtmls=subhtmls,
+                                         years=YEARS,
+                                         months=MONTHS)
+    with open(f"{WEB_DIR}/index.html", 'w') as f:
+        f.write(index_render)
+
+def render_year():
+    pass
+
+def render_month():
+    pass
 
 #----------------------------------------------------------------------------------------------------------
 #--  print_html: create and/or update radiation related html page                                       ---
@@ -54,15 +81,6 @@ def print_html(year, mon):
         mon   = int(atemp[1])
         day   = int(atemp[2])
         yday  = int(atemp[3])
-#
-#--- find out the last month
-#
-#        cyear = year
-#        lmon      = mon -1
-#        if lmon < 1:
-#            lmon  = 12
-#            cyear = year -1
-
 #
 #--- for the case year and mon are given
 #
@@ -204,8 +222,7 @@ def print_index_html():
 #
 #--- now write out the page
 #
-    out = web_dir + 'index.html'
-    with open(out, 'w') as fo:
+    with open(f"{WEB_DIR}/index.html", 'w') as fo:
         fo.write(line)
 
 #----------------------------------------------------------------------------------------------------------
@@ -238,17 +255,27 @@ def isLeapYear(year):
 #----------------------------------------------------------------------------------------------------------
 
 if __name__ == "__main__":
-#
-#--- if you provide year and month (in format of 2015 3), it will create the html pages for that month. 
-#
-    if len(sys.argv) == 2:
-        year = argv[1]
-        mon  = argv[2]
-    else:
-        year = ''
-        mon  = ''
-    print_html(year, mon)
-#
-#--- index page is always written up to this month of this year
-#
-    print_index_html()
+
+    opt = get_options()
+
+    if opt.mode == 'test':
+        WEB_DIR = f"{os.getcwd()}/test/_outTest"
+        os.makedirs(WEB_DIR, exist_ok = True)
+        os.makedirs(f"{WEB_DIR}/Html", exist_ok = True)
+        os.makedirs(f"{WEB_DIR}/Plot", exist_ok = True)
+    
+    render_index()
+# #
+# #--- if you provide year and month (in format of 2015 3), it will create the html pages for that month. 
+# #
+#     if len(sys.argv) == 2:
+#         year = argv[1]
+#         mon  = argv[2]
+#     else:
+#         year = ''
+#         mon  = ''
+#     print_html(year, mon)
+# #
+# #--- index page is always written up to this month of this year
+# #
+#     print_index_html()
