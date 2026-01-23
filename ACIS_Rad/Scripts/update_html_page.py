@@ -16,13 +16,15 @@ import argparse
 import calendar
 from jinja2 import Environment, FileSystemLoader
 from datetime import datetime, timezone
+from dateutil.relativedelta import relativedelta
 #
 # --- Define Directory Pathing
 #
 WEB_DIR = "/data/mta4/www/RADIATION/ACIS_Rad"
 
 UTC_NOW = datetime.now(timezone.utc)
-YEARS = [str(i) for i in range(UTC_NOW.year, 1999, -1)]
+UTC_LAST_MONTH = UTC_NOW + relativedelta(months=-1)
+YEARS = [str(i) for i in range(UTC_LAST_MONTH.year, 1999, -1)]
 MONTHS = [i for i in calendar.month_abbr[1:]]
 
 mon_list1 = ['031', '060', '091', '121', '152', '182', '213', '244', '274', '305', '335', '366']
@@ -47,8 +49,8 @@ def render_index():
         subhtmls[year] = {}
         for i, month in enumerate(MONTHS):
             #: Fill with a link to the subpage if we are path the target month.
-            #: Subtracted by two for both past month and different month enumeration.
-            if (int(year) < UTC_NOW.year) or (i <= UTC_NOW.month - 2):
+            #: Subtracted by one for different month enumeration.
+            if (int(year) < UTC_LAST_MONTH.year) or (i <= UTC_LAST_MONTH.month - 1):
                 subhtmls[year][month] = f'<a href="./Html/{month.lower()}{year[2:]}.html">{month.upper()}{year[2:]}</a>'    
     index_template = _JINJA_ENV.get_template('index.jinja')
     index_render = index_template.render(subhtmls=subhtmls,
@@ -57,11 +59,23 @@ def render_index():
     with open(f"{WEB_DIR}/index.html", 'w') as f:
         f.write(index_render)
 
-def render_year():
+def render_year(year):
     pass
 
-def render_month():
-    pass
+def render_month(year : str, month : str):
+    """Generate the Monthly ACIS Radiation Correlation Pages
+
+    :param year: Year of the ACIS Radiation Correlation
+    :type year: str
+    :param month: Month of the ACIS Radiation Correlation
+    :type month: str
+
+    """
+    month_template = _JINJA_ENV.get_template('month.jinja')
+    month_render = month_template.render(year = year,
+                                         month = month)
+    with open(f"{WEB_DIR}/Html/{month.lower()}{year[2:]}.html", 'w') as f:
+        f.write(month_render)
 
 #----------------------------------------------------------------------------------------------------------
 #--  print_html: create and/or update radiation related html page                                       ---
@@ -124,18 +138,6 @@ def print_html(year, mon):
     with open(year_html, 'w') as fo:
         fo.write(data)
 #
-#--- read monthly html page template
-#
-    with open('./Template/monthly_template', 'r') as f:
-        data = f.read()
-
-    data = data.replace('$#FYEAR#$', str(year))
-    data = data.replace('$#UMON#$',umon )
-    data = data.replace('$#MONYEAR#$', monyear)
-
-    with open(mon_html, 'w') as fo:
-        fo.write(data)
-#
 #--- read rad_time html page template
 #
     with open('./Template/rad_time_template', 'r') as f:
@@ -148,82 +150,6 @@ def print_html(year, mon):
     with  open(rad_html, 'w') as fo:
         fo.write(data)
 
-
-#----------------------------------------------------------------------------------------------------------
-#--  print_index:html: update index.html page                                                           ---
-#----------------------------------------------------------------------------------------------------------
-
-def print_index_html():
-    """
-    create and/or update radiation related html page
-    """
-#
-#--- find today's date
-#
-    today = time.strftime("%Y:%m:%d:%j", time.gmtime())
-    atemp = re.split(':', today)
-    year  = int(atemp[0])
-    mon   = int(atemp[1])
-    day   = int(atemp[2])
-    yday  = int(atemp[3])
-#
-#--- read header part and the first part of the index page
-#
-    with open('./Template/index_top', 'r') as f:
-        line = f.read()
-#
-#--- start creating a link table
-#
-    line = line + '<table border=1 cellpadding=10 cellspacing=2>\n'
-    #line = line + '<tr>\n'
-    #line = line + '<td colspan=13>\n'
-    #line = line + '<table border=1 width=100%>\n'
-    #line = line + '<tr><th> <a href="./Html/all.html" style="font-size:120%">Mission since JAN2000</a></th></tr>\n'
-    #line = line + '</table>\n'
-    #line = line + '</td>\n'
-    #line = line + '</tr>\n'
-
-    line = line + '<tr>'
-    line = line + '<th>Year</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th>\n'
-    line = line + '<th>Jul</th><th>Aug</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dec</th>\n'
-    line = line + '</tr>\n'
-    for eyear in range(year, 1999, -1):
-        line = line + '<tr>\n' 
-        line = line + '<th>' + str(eyear) + '</th>\n'
-
-        lyear    = str(eyear)
-        syear    = lyear[2] + lyear[3]
-
-        for emon in range(1, 13):
-            lmon     = lmon_list[emon -1]
-            monyear  = lmon.lower() + syear
-            cmonyear = monyear.upper()
-
-            #if eyear == year and emon > mon:
-            if eyear == year and emon > mon-1:
-                line = line +  '<td>' + cmonyear + '</td>\n'
-            else:
-                line = line + '<td><a href="./Html/' + monyear + '.html">'+ cmonyear + '</a></td>\n'
-
-        line = line + '</tr>\n\n'
-
-    line  = line + '</table>\n'
-#
-#--- table finished. add a closing part
-#
-    line  = line + '<div style="padding-top: 15px"></div>\n'
-    line  = line + '<hr />'
-    line  = line + '<div style="padding-top: 15px"></div>\n'
-    line  = line + '<p>If you have any questions about this page, please contact '
-    line  = line + '<a href="mailto:swolk@cfa.harvard.edu">swolk@cfa.harvard.edu</a>\n'
-    line  = line + "<script>\n\tsetTimeout('location.reload()',300000)</script>\n"
-
-    line  = line + '</body</html>\n'
-#
-#--- now write out the page
-#
-    with open(f"{WEB_DIR}/index.html", 'w') as fo:
-        fo.write(line)
 
 #----------------------------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------
@@ -265,6 +191,10 @@ if __name__ == "__main__":
         os.makedirs(f"{WEB_DIR}/Plot", exist_ok = True)
     
     render_index()
+    render_month(
+        year = str(UTC_LAST_MONTH.year),
+        month = MONTHS[UTC_LAST_MONTH.month - 1]
+    )
 # #
 # #--- if you provide year and month (in format of 2015 3), it will create the html pages for that month. 
 # #
