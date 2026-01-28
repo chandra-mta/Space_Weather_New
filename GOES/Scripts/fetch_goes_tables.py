@@ -5,10 +5,14 @@
 :Author: W. Aaron (william.aaron@cfa.harvard.edu)
 :Last Updated: Jul 21, 2025
 
+# /// testing
+# tested-ska-release = "2026.1"
+# ///
 """
 import os
 import json
-import urllib
+import urllib.request
+import urllib.error
 import argparse
 from astropy.table import Table
 import numpy as np
@@ -108,7 +112,7 @@ def rerun(func):
     _freq = 3
     _errors = (json.decoder.JSONDecodeError, urllib.error.URLError)
     def wrapper_func(*args,**kwargs):
-        _last_exception = None
+        _last_exception = Exception()
         for i in range(_freq):
             try:
                 return func(*args, **kwargs)
@@ -138,7 +142,7 @@ def json2table(jlink):
     data = Table(data)
     return data
 
-def reorient_particle_table(table, gen_column = 'energy', column_list = None):
+def reorient_particle_table(table, gen_column = 'energy', column_list = None) -> Table:
     """
     Take a particle table with multiple time tag entires (one for each energy).
     This is the default for SWPC data products. Then reorient to single time entries with flux for each column
