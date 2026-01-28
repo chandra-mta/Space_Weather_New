@@ -6,6 +6,16 @@
 :Maintainer: W. Aaron (william.aaron@cfa.harvard.edu)
 :Last Updated: Feb 18, 2025
 
+# /// script
+# requires-python = ">3.12"
+# dependencies = [
+#   "file_readers>=0.1",
+# ]
+# ///
+
+# /// testing
+# tested-ska-release = "2026.1"
+# ///
 """
 import os
 import sys
