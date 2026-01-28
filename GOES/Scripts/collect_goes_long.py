@@ -134,8 +134,6 @@ if __name__ == "__main__":
     if args.mode == "test":
         OUT_DATA_DIR = f"{os.getcwd()}/test/_outTest"
         os.makedirs(OUT_DATA_DIR, exist_ok=True)
-        #if os.path.isfile(f"{OUT_DATA_DIR}/goes_data_r.txt"):
-        #    GOES_DATA_DIR = OUT_DATA_DIR
         collect_goes_long()
     else:
         #
