@@ -14,7 +14,7 @@ import json
 import urllib.request
 import urllib.error
 import argparse
-from astropy.table import Table
+from astropy.table import Table, Column, join
 import numpy as np
 from time import sleep
 from cxotime import CxoTime
@@ -27,6 +27,9 @@ GOES_DATA_DIR = '/data/mta4/Space_Weather/GOES/Data'
 DIFF_PROTONS_LINK = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json'
 INTG_PROTONS_LINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-protons-3-day.json'
 INTG_ELECTRONS_LINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-3-day.json'
+XLINK = 'https://services.swpc.noaa.gov/json/goes/primary/xray-flares-7-day.json'
+EVENTLINK = "https://services.swpc.noaa.gov/json/edited_events.json"
+
 
 DIFF_COLS = ['P1', 'P2A', 'P2B', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8A', 'P8B', 'P8C', 'P9', 'P10']
 INTG_COLS = ['>=1 MeV', '>=5 MeV', '>=10 MeV', '>=30 MeV', '>=50 MeV', '>=60 MeV', '>=100 MeV', '>=500 MeV']
@@ -35,6 +38,10 @@ DIFF_PROTON_UNIT = "protons/(cm^2*s*sr*MeV)"
 INTG_PROTON_UNIT = "protons/(cm^2*s*sr)"
 INTG_ELECTRON_UNIT = "protons/(cm^2*s*sr)"
 CXONOW = CxoTime()
+
+def main():
+    fetch_goes_tables()
+    make_xray_table()
 
 def fetch_goes_tables():
     """
@@ -104,6 +111,45 @@ def fetch_goes_tables():
     x.write(x_filename, overwrite = True, format='ascii.ecsv', delimiter=',')
     y.write(y_filename, overwrite = True, format='ascii.ecsv', delimiter=',')
     z.write(z_filename, overwrite = True, format='ascii.ecsv', delimiter=',')
+
+def make_xray_table():
+    """
+    Pull X-ray events from SWPC and save webpage table to file
+    
+    :NOTE: This is written slightly differently compared to the other GOES pages to benefit form astropy functionality
+    """
+    flare_table = json2table(XLINK)
+    event_table = json2table(EVENTLINK)
+    #
+    # --- Flare table contains the all observed x-ray events by GOES
+    # --- The full events table is filtered to provide active region of these flares
+    #
+    sel = np.zeros(len(event_table), dtype=bool)
+    for idx, row in enumerate(event_table):
+        for flare_row in flare_table:
+            if row['begin_datetime'] == flare_row['time_tag'][:-1] and row['observatory'] == f"G{flare_row['satellite']}":
+                sel[idx] = True
+    #
+    # --- With the correctly selected events, further refine in order to concatenate data tables.
+    #
+    flare_matching_events = event_table[sel]
+    flare_matching_events.rename_column('begin_datetime','time_tag')
+    flare_matching_events['time_tag'] = [f"{x}Z" for x in flare_matching_events['time_tag']]
+
+    if len(flare_table) == 0 and len(flare_matching_events) == 0:
+        #: No x-ray events. Maintain metadata but write empty table.
+        flare_table.add_column(Column(name = 'region', dtype=np.dtype('O')))
+    else:
+        flare_table = join(flare_table, flare_matching_events['time_tag', 'region'], join_type='left')
+    #
+    # --- Event might not list the AR (Listed as None), or it might not match with flare_table (Listed as np.ma.masked)
+    #
+    flare_table['region'] = flare_table['region'].tolist()
+    #
+    #--- Save table to GOES Data
+    #
+    filename = f'{GOES_DATA_DIR}/goes_flares.ecsv'
+    flare_table.write(filename, overwrite = True, format='ascii.ecsv', delimiter = ',')
 
 def rerun(func):
     """
@@ -180,7 +226,7 @@ if __name__ == "__main__":
             GOES_DATA_DIR = f"{os.getcwd()}/test/_outTest"
         os.makedirs(GOES_DATA_DIR, exist_ok=True)
 
-        fetch_goes_tables()
+        main()
 
     elif args.mode == "flight":
 #
@@ -203,7 +249,7 @@ if __name__ == "__main__":
             #Previous script run must have completed successfully. Prepare lock file for this script run.
             os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
         
-        fetch_goes_tables()
+        main()
 #
 #--- Remove lock file once process is completed
 #
