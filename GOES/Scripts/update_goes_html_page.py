@@ -34,8 +34,6 @@ ADMIN = ['mtadude@cfa.harvard.edu']
 DLINK = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-1-day.json'
 ILINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json'
 ELINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-1-day.json'
-XLINK = 'https://services.swpc.noaa.gov/json/goes/primary/xray-flares-7-day.json'
-EVENTLINK = "https://services.swpc.noaa.gov/json/edited_events.json"
 
 #
 # --- Energy Designations
@@ -84,7 +82,7 @@ def update_goes_html_page():
 
     diff_table = make_diff_table() #: Generate and save two hour differential table.
     intg_table = make_intg_table() #: Generate and save two hour integral table.
-    xray_table = make_xray_table(XLINK, EVENTLINK) #: Generate and save GOES 7 day XRAY table.
+    xray_table = make_xray_table() #: Generate webpage GOES X-ray table.
 
     #
     # --- Pull and Render Jinja Template
@@ -346,55 +344,20 @@ def make_intg_table():
 
     return line
     
-def make_xray_table(xlink, eventlink):
+def make_xray_table():
     """
-    Pull X-ray events from SWPC and save webpage table to file
-    
-    :NOTE: This is written slightly differently compared to the other GOES pages to benefit form astropy functionality
+    Generate webpage table
     """
-    flare_table = Table(rows=_read_json(xlink))
+    flare_table = ascii.read(f"{GOES_DATA_DIR}/goes_flares.ecsv")
     #: Only select and compare noteworthy flares
     sel = flare_table['max_class'] > 'M1'
     flare_table = flare_table[sel]
-    event_table = Table(rows=_read_json(eventlink))
-    #
-    # --- Flare table contains the notable observed x-ray events by GOES
-    # --- The full events table is filtered to provide active region of these flares
-    #
-    sel = np.zeros(len(event_table), dtype=bool)
-    for idx, row in enumerate(event_table):
-        for flare_row in flare_table:
-            if row['begin_datetime'] == flare_row['time_tag'][:-1] and row['observatory'] == f"G{flare_row['satellite']}":
-                sel[idx] = True
-    #
-    # --- With the correctly selected events, further refine in order to concatenate data tables.
-    #
-    flare_matching_events = event_table[sel]
-    flare_matching_events.rename_column('begin_datetime','time_tag')
-    flare_matching_events['time_tag'] = [f"{x}Z" for x in flare_matching_events['time_tag']]
-    #
-    # --- If no flares are present which match the needed criteria, then we return an empty string
-    # --- and we don't overwrite the data storage of previous flare table.
-    #
-    if len(flare_table) == 0 and len(flare_matching_events) == 0:
+    
+    if len(flare_table) == 0:
         table = "<p style='font-size:15px;color: #e74c3c;'><b>No notable flares</b></p>"
         table += "<table id='flare_table' class='display'><thead><tr><th>Time at Maximum</th><th>Maximum Class</th><th>Region</th></tr></thead>"
         table += "</table>"
     else:
-        flare_table = join(flare_table, flare_matching_events['time_tag', 'region'], join_type='left')
-        #
-        # --- Event might not list the AR (Listed as None), or it might not match with flare_table (Listed as np.ma.masked)
-        # --- Make Mapping uniform and create class_letter column
-        #
-        flare_table['region'] = flare_table['region'].tolist()
-        #
-        #--- Save table to GOES Data
-        #
-        ascii.write(flare_table,
-                format='csv',
-                output=f'{GOES_DATA_DIR}/flare_table_7_days.csv',
-                overwrite=True,
-            )
         #
         # --- Generate html table for webpage.
         #
