@@ -9,6 +9,9 @@
     - https://sdo.gsfc.nasa.gov/data/rules.php
     - https://sdo.gsfc.nasa.gov/assets/docs/HMI_M.ColorTable.pdf
 
+# /// testing
+# tested-ska-release = "2026.1"
+# ///
 """
 import os
 import argparse
