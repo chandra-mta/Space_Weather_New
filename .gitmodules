@@ -1,0 +1,3 @@
+[submodule "file_readers"]
+	path = file_readers
+	url = git@github.com:chandra-mta/file_readers.git

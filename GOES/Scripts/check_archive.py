@@ -5,6 +5,9 @@
 :Author: W. Aaron (william.aaron@cfa.harvard.edu)
 :Last Updated: Feb 20, 2025
 
+# /// testing
+# tested-ska-release = "2026.1"
+# ///
 """
 import os
 import sys

@@ -5,12 +5,16 @@
 :Author: W. Aaron (william.aaron@cfa.harvard.edu)
 :Last Updated: Jul 21, 2025
 
+# /// testing
+# tested-ska-release = "2026.1"
+# ///
 """
 import os
 import json
-import urllib
+import urllib.request
+import urllib.error
 import argparse
-from astropy.table import Table
+from astropy.table import Table, Column, join
 import numpy as np
 from time import sleep
 from cxotime import CxoTime
@@ -23,6 +27,9 @@ GOES_DATA_DIR = '/data/mta4/Space_Weather/GOES/Data'
 DIFF_PROTONS_LINK = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json'
 INTG_PROTONS_LINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-protons-3-day.json'
 INTG_ELECTRONS_LINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-3-day.json'
+XLINK = 'https://services.swpc.noaa.gov/json/goes/primary/xray-flares-7-day.json'
+EVENTLINK = "https://services.swpc.noaa.gov/json/edited_events.json"
+
 
 DIFF_COLS = ['P1', 'P2A', 'P2B', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8A', 'P8B', 'P8C', 'P9', 'P10']
 INTG_COLS = ['>=1 MeV', '>=5 MeV', '>=10 MeV', '>=30 MeV', '>=50 MeV', '>=60 MeV', '>=100 MeV', '>=500 MeV']
@@ -31,6 +38,10 @@ DIFF_PROTON_UNIT = "protons/(cm^2*s*sr*MeV)"
 INTG_PROTON_UNIT = "protons/(cm^2*s*sr)"
 INTG_ELECTRON_UNIT = "protons/(cm^2*s*sr)"
 CXONOW = CxoTime()
+
+def main():
+    fetch_goes_tables()
+    make_xray_table()
 
 def fetch_goes_tables():
     """
@@ -101,6 +112,69 @@ def fetch_goes_tables():
     y.write(y_filename, overwrite = True, format='ascii.ecsv', delimiter=',')
     z.write(z_filename, overwrite = True, format='ascii.ecsv', delimiter=',')
 
+def make_xray_table():
+    """
+    Pull X-ray events from SWPC and save webpage table to file
+    """
+    flare_table = json2table(XLINK)
+    event_table = json2table(EVENTLINK)
+    #
+    # --- Flare table contains the all observed x-ray events by GOES
+    # --- The full events table is filtered to provide active region of these flares
+    #
+    sel = np.zeros(len(event_table), dtype=bool)
+    for idx, row in enumerate(event_table):
+        for flare_row in flare_table:
+            if row['begin_datetime'] == flare_row['time_tag'][:-1] and row['observatory'] == f"G{flare_row['satellite']}":
+                sel[idx] = True
+    #
+    # --- With the correctly selected events, further refine in order to concatenate data tables.
+    #
+    flare_matching_events = event_table[sel]
+    flare_matching_events.rename_column('begin_datetime','time_tag')
+    flare_matching_events['time_tag'] = [f"{x}Z" for x in flare_matching_events['time_tag']]
+
+    if len(flare_table) == 0 and len(flare_matching_events) == 0:
+        #: No x-ray events. Maintain metadata but write empty table.
+        flare_table.add_column(Column(name = 'region', dtype=np.dtype('O')))
+    else:
+        flare_table = join(flare_table, flare_matching_events['time_tag', 'region'], join_type='left')
+    #
+    # --- Event might not list the AR (Listed as None), or it might not match with flare_table (Listed as np.ma.masked)
+    #
+    flare_table['region'] = flare_table['region'].tolist()
+    #: Apply metadata
+    filename = f'{GOES_DATA_DIR}/goes_flares.ecsv'
+    flare_table['max_xrlong'].format = ".5e"
+    flare_table['max_xrlong'].unit = "W/m^2*s"
+    flare_table['current_int_xrlong'].format = ".5e"
+    flare_table['current_int_xrlong'].unit = "W/m^2"
+    flare_table['max_ratio'].format = ".5e"
+
+    flare_table.meta["description"] = (
+        "X-ray flare fluxes and classifications from the GOES-R series satellite. The begin time of an X-ray event is defined as the first minute, in a sequence of 4 minutes, of steep monotonic increase in 0.1-0.8 nm flux. The X-ray event maximum is taken as the minute of the peak X-ray flux. The end time is the time when the flux level decays to a point halfway between the maximum flux and the pre-flare background level. The max_xrlong column consists of the peak flux. The current_int_xrlong is the integrated flux. A flare source region column is included in this table as determined from the SWPC events table. https://www.swpc.noaa.gov/products/goes-x-ray-flux."
+    )
+    flare_table.meta['sources'] = [
+        {
+            'origin_link': XLINK,
+            'origin_script': os.path.abspath(__file__),
+            'update_time': CXONOW.date,
+            'mta_owned_origin': False,
+            'output_file': filename
+        },
+        {
+            'origin_link': EVENTLINK,
+            'origin_script': os.path.abspath(__file__),
+            'update_time': CXONOW.date,
+            'mta_owned_origin': False,
+            'output_file': filename
+        }
+    ]
+    #
+    #--- Save table to GOES Data
+    #
+    flare_table.write(filename, overwrite = True, format='ascii.ecsv', delimiter = ',')
+
 def rerun(func):
     """
     Function decorator which sleeps and reruns the provided function upon encountering a set of errors.
@@ -108,7 +182,7 @@ def rerun(func):
     _freq = 3
     _errors = (json.decoder.JSONDecodeError, urllib.error.URLError)
     def wrapper_func(*args,**kwargs):
-        _last_exception = None
+        _last_exception = Exception()
         for i in range(_freq):
             try:
                 return func(*args, **kwargs)
@@ -138,7 +212,7 @@ def json2table(jlink):
     data = Table(data)
     return data
 
-def reorient_particle_table(table, gen_column = 'energy', column_list = None):
+def reorient_particle_table(table, gen_column = 'energy', column_list = None) -> Table:
     """
     Take a particle table with multiple time tag entires (one for each energy).
     This is the default for SWPC data products. Then reorient to single time entries with flux for each column
@@ -176,7 +250,7 @@ if __name__ == "__main__":
             GOES_DATA_DIR = f"{os.getcwd()}/test/_outTest"
         os.makedirs(GOES_DATA_DIR, exist_ok=True)
 
-        fetch_goes_tables()
+        main()
 
     elif args.mode == "flight":
 #
@@ -199,7 +273,7 @@ if __name__ == "__main__":
             #Previous script run must have completed successfully. Prepare lock file for this script run.
             os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
         
-        fetch_goes_tables()
+        main()
 #
 #--- Remove lock file once process is completed
 #

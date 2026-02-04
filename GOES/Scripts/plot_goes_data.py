@@ -3,14 +3,18 @@
 **plot_goes_data.py**: Get and plot goes data.
 
 :Author: w. aaron (william.aaron@cfa.harvard.edu)
-:Last Updated: Jul 7, 2025
+:Last Updated: Jan 29, 2026
 
+# /// testing
+# tested-ska-release = "2026.1"
+# ///
 """
 import sys
 import os
 import json
 from time import sleep
 import urllib.request
+import urllib.error
 from astropy.table import Table
 from datetime import datetime
 import matplotlib as mpl
