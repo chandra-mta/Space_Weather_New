@@ -3,8 +3,11 @@
 **update_goes_html_page.py**: Update goes differential protons html page.
 
 :Author: W. Aaron (william.aaron@cfa.harvard.edu)
-:Last Updated: Feb 18, 2025
+:Last Updated: Feb 04, 2026
 
+# /// testing
+# tested-ska-release = "2026.1"
+# ///
 """
 import os
 import signal
@@ -18,7 +21,6 @@ import traceback
 import getpass
 from jinja2 import Environment, FileSystemLoader
 from astropy.io import ascii
-from astropy.table import Table, join
 #
 #--- Define Directory Pathing
 #
