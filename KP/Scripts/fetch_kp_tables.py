@@ -4,7 +4,7 @@
 **fetch_kp_tables.py**: Fetch KP index forecast tables and data from SWPC NOAA
 
 :Author: W. Aaron (william.aaron@cfa.harvard.edu)
-:Last Updated: Jul 24, 2025
+:Last Updated: Feb 09, 2026
 
 
 :NOTE:
@@ -14,12 +14,18 @@
     - https://spaceweather.gfz.de/products-data/forecasts/forecast-kp-index
     - https://www.swpc.noaa.gov/products/planetary-k-index
     - https://www.swpc.noaa.gov/sites/default/files/images/u2/TheK-index.pdf
+
+# /// testing
+# tested-ska-release = "2026.1"
+# ///
+    
 """
 import os
 import json
 from time import sleep
 from datetime import datetime, timedelta
-import urllib
+import urllib.request
+import urllib.error
 from astropy.table import Table
 from cxotime import CxoTime
 import argparse
@@ -77,7 +83,7 @@ def rerun(func):
     _freq = 3
     _errors = (json.decoder.JSONDecodeError, urllib.error.URLError)
     def wrapper_func(*args,**kwargs):
-        _last_exception = None
+        _last_exception = Exception()
         for i in range(_freq):
             try:
                 return func(*args, **kwargs)
