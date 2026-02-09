@@ -7,16 +7,19 @@
 
 :TODO: Change customized file format for data sets fetched to generate summary. Should be a commonly used standard.
 
+# /// testing
+# tested-ska-release = "2026.1"
+# ///
 """
 import sys
 import os
 from astropy.table import Table
-from datetime import datetime
 from time import sleep
 import numpy as np
 from cxotime import CxoTime
 from kadi.events import rad_zones
-import urllib
+import urllib.request
+import urllib.error
 import json
 from django.db import close_old_connections, utils
 import argparse
@@ -60,7 +63,7 @@ def rerun(func):
     _freq = 3
     _errors = (json.decoder.JSONDecodeError, urllib.error.URLError)
     def wrapper_func(*args,**kwargs):
-        _last_exception = None
+        _last_exception = Exception()
         for i in range(_freq):
             try:
                 return func(*args, **kwargs)
@@ -78,7 +81,7 @@ def reconnect(func):
     _freq = 2
     _errors = (utils.OperationalError)
     def wrapper_func(*args,**kwargs):
-        _last_exception = None
+        _last_exception = Exception()
         for i in range(_freq):
             try:
                 return func(*args, **kwargs)
