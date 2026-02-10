@@ -31,6 +31,8 @@ from cxotime import CxoTime
 import argparse
 import getpass
 import signal
+import numpy as np
+import file_readers as fr
 #
 # --- Define Directory Pathing
 #
@@ -41,6 +43,22 @@ KP_DATA_DIR = "/data/mta4/Space_Weather/KP/Data"
 SOURCE_SWPC = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json"
 SOURCE_IAGA = "https://www-app3.gfz-potsdam.de/kp_index/qlyymm.tab"
 CXONOW = CxoTime()
+
+HEADER = """# Prepared by Helmholtz Centre Potsdam.
+# See: https://www.gfz-potsdam.de/en/kp-index/ 
+#
+# Units: Predicted Index 0-9 in Kp units
+#
+# Solar Wind Source: See: ttps://www.gfz-potsdam.de/en/kp-index/
+# The value -1 in the report indicates missing data.
+#
+#                      USAF 3 hours Wing Kp Geomagnetic Activity Index
+#
+#                        3-hour         3-hour        3-hour         3-hour     
+# UT Date   Time      Predicted Time  Predicted    Predicted Time  Predicted   USAF Est.
+# YR MO DA  HHMM      YR MO DA  HHMM    Index      YR MO DA  HHMM    Index        Kp    
+#---------------------------------------------------------------------------------------
+"""
 
 def fetch_kp_tables():
     """
@@ -75,6 +93,8 @@ def fetch_kp_tables():
         }
     ]
     iaga_kp.write(iaga_filename, overwrite=True, delimiter=',')
+
+    write_legacy_files(swpc_kp)
 
 def rerun(func):
     """
@@ -176,6 +196,62 @@ def fetch_IAGA_KP():
             kp.append(_translate(entry))
     
     return Table([time_tag, kp], names = ('time_tag', 'kp'))
+
+
+def write_legacy_files(swpc_kp):
+    """
+    Function to write the legacy formats of KP index data file used by other scripts.
+    Note that these use cases should be deprecated in favor of using the ECSV format.
+    """
+    
+    def _format_sol(row):
+        cxo = CxoTime(row['time_tag'])
+        ldate = cxo.datetime.strftime("%Y %m %d %H%M")
+        kval = round(row['kp'],1)
+        line = f"{ldate}\t\t{ldate}\t\t{kval}\t\t\t{ldate}\t\t{kval}\t\t{kval}\n"
+        return line
+    
+    #: Only write up to the current time block, either observed or estimated.
+    past_archive = f"{KP_DATA_DIR}/k_index_data_past"
+    past_archive_line = fr.get_last_text_line(past_archive)
+    start = CxoTime(int(past_archive_line.split('\t')[0]))
+    stop = CxoTime()
+    sel = np.logical_and(start <= CxoTime(swpc_kp['time_tag'].data), CxoTime(swpc_kp['time_tag'].data) <= stop)
+    append_past_archive = ''
+    append_past_solar = ''
+    for row in swpc_kp[sel]:
+        _time = int(CxoTime(row['time_tag']).secs)
+        append_past_archive += f"{_time}\t{round(row['kp'],1)}\n"
+        append_past_solar += _format_sol(row)
+    
+    with open(past_archive,'a') as f:
+        f.write(append_past_archive)
+    with open(f"{KP_DATA_DIR}/solar_wind_data_past.txt",'a') as f:
+        f.write(append_past_solar)
+    
+    #: Of the most recent data, write the most recent entry if one exists to update
+    if len(swpc_kp[sel]) > 0:
+        current_entry = swpc_kp[sel][-1]
+        line = _format_sol(current_entry)
+        with open(f"{KP_DATA_DIR}/kp.dat",'w') as f:
+            f.write(HEADER+line)
+    
+    #: Now write the forecast archive.
+    forecast_archive = f"{KP_DATA_DIR}/k_index_data"
+    forecast_archive_line = fr.get_last_text_line(forecast_archive)
+    start = CxoTime(int(past_archive_line.split('\t')[0]))
+    sel = start <= CxoTime(swpc_kp['time_tag'].data)
+    append_forecast_archive = ''
+    append_forecast_solar = ''
+    for row in swpc_kp[sel]:
+        _time = int(CxoTime(row['time_tag']).secs)
+        append_forecast_archive += f"{_time}\t{round(row['kp'],1)}\n"
+        append_forecast_solar += _format_sol(row)
+    
+    with open(forecast_archive,'a') as f:
+        f.write(append_forecast_archive)
+    with open(f"{KP_DATA_DIR}/solar_wind_data.txt",'a') as f:
+        f.write(append_forecast_solar)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
