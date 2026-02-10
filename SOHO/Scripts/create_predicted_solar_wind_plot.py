@@ -18,7 +18,7 @@ import json
 import Chandra.Time
 from astropy.table import Table
 import astropy.units as u
-
+import argparse
 import matplotlib as mpl
 if __name__ == '__main__':
     mpl.use('Agg')
@@ -27,36 +27,11 @@ import matplotlib.pyplot as plt
 import matplotlib.font_manager as font_manager
 
 #
-#--- reading directory list
+# --- Define Directory Pathing
 #
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
+EPHEM_DATA_DIR = "/data/mta4/Space_Weather/EPHEM/Data"
+SOHO_PLOT_DIR = "/data/mta4/www/RADIATION/SOHO/Plot"
 
-with open(path, 'r') as f:
-    data = [line.strip() for line in f.readlines()]
-
-for ent in data:
-    atemp = re.split(':', ent)
-    var  = atemp[1].strip()
-    line = atemp[0].strip()
-    exec("%s = %s" %(var, line))
-#for writing out files in test directory
-if (os.getenv('TEST') == 'TEST'):
-    os.system('mkdir -p TestOut')
-    test_out = os.getcwd() + '/TestOut'
-#
-#--- append  pathes to private folders to a python directory
-#
-sys.path.append('/data/mta/Script/Python3.10/MTA/')
-#
-#--- import several functions
-#
-import mta_common_functions as mcf
-#
-#--- temp writing file name
-#
-import random
-rtail  = int(time.time() * random.random())
-zspace = '/tmp/zspace' + str(rtail)
 #
 #--- current time
 #
@@ -71,9 +46,11 @@ year_start           = Chandra.Time.DateTime(str(this_year) + ':001:00:00:00').s
 swepam = 'https://services.swpc.noaa.gov/json/ace/swepam/ace_swepam_1h.json'
 mtof = f"https://l1.umd.edu/data/{this_year}_CELIAS_Proton_Monitor_5min.zip"
 
-#-------------------------------------------------------------------------
-#-- create_predicted_solar_wind_plot: create predicted soloar wind speed and density plot
-#-------------------------------------------------------------------------
+def get_options(args=None):
+    parser = argparse.ArgumentParser(description="Plot Solar Wind Predictions")
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    opt = parser.parse_args(args)
+    return opt
 
 def create_predicted_solar_wind_plot():
     """
@@ -81,8 +58,8 @@ def create_predicted_solar_wind_plot():
     input:  none but read from:
             ftp://ftp.swpc.noaa.gov/pub/lists/ace2
             http://umtof.umd.edu/pm/crn/archive/
-            <ephem_dir>/Data/PE.EPH.gsme_spherical
-    ouptut: <orbit_dir>/Plots/solwind.png
+            <ephem_data_dir>/PE.EPH.gsme_spherical
+    output: <soho_plot_dir>/solwin.png
     """
 #
 #-- ace swepam data
@@ -230,15 +207,16 @@ def read_gsme_data():
     """
     read gsme data 
     input: none, but read from:
-        <ephem_dir>/Data/PE.EPH.gsme_spherical
+        <ephem_data_dir>/PE.EPH.gsme_spherical
     output: time    --- a list of time in day of year
             alt     --- a list of altitude
             lon     --- a list of longitude
             lat     --- a list of latitude
     """
 
-    ifile = ephem_dir + 'Data/PE.EPH.gsme_spherical'
-    data  = mcf.read_data_file(ifile)
+    ifile = f"{EPHEM_DATA_DIR}/PE.EPH.gsme_spherical"
+    with open(ifile) as f:
+        data = [line.strip() for line in f.readlines()]
 
     time  = []
     alt   = []
@@ -547,7 +525,7 @@ def create_plot(otime, alt, lon, lat, dtime,\
             mden1   --- a list of soho particle density 1st order
             adenu1  --- a list of ace particle density uncertainty 1st order
             mdenu1  --- a list of soho particle density uncertainty 1st order
-    putput: <orbit_dir>/Plots/solwin.png
+    putput: <soho_plot_dir>/solwin.png
     """
     plt.close('all')
 #
@@ -708,21 +686,11 @@ def create_plot(otime, alt, lon, lat, dtime,\
 #
     fig = matplotlib.pyplot.gcf()
     fig.set_size_inches(5.0, 8.0)
-#
-#--- save the plot in png format
-#
-    outname = html_dir + 'Orbit/Plots/solwin.png'
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        outname = test_out + "/" + os.path.basename(outname)
-    plt.savefig(outname, format='png', dpi=300)
+
+    outfile = f"{SOHO_PLOT_DIR}/solwin.png"
+    plt.savefig(outfile, format='png', dpi=300)
 
     plt.close('all')
-#
-#--- copy to SOHO directory
-#
-    cmd = 'cp -f ' + outname + ' ' + html_dir + 'SOHO/Plot/solwin.png'
-    os.system(cmd)
 
 #--------------------------------------------------------------------------
 #-- convert_to_doy: convert to chandra time to day of year of this year  --
@@ -745,5 +713,10 @@ def convert_to_doy(ctime):
 #-------------------------------------------------------------------------
 
 if __name__ == '__main__':
-
+    
+    opt = get_options()
+    if opt.mode == 'test':
+        SOHO_PLOT_DIR = f"{os.getcwd()}/test/_outTest"
+        os.makedirs(SOHO_PLOT_DIR, exist_ok = True)
+    
     create_predicted_solar_wind_plot()
