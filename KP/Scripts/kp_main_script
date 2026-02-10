@@ -1,9 +1,3 @@
 cd /data/mta4/Space_Weather/KP/Scripts
-#: Prototype KP Data Table Fetch
+
 /data/mta4/Space_Weather/KP/Scripts/fetch_kp_tables.py -m flight
-#: Live Running
-/data/mta4/Space_Weather/KP/Scripts/update_k_index.py
-/data/mta4/Space_Weather/KP/Scripts/get_kp.py
-/data/mta4/Space_Weather/KP/Scripts/update_solor_wind_data.py
-
-
