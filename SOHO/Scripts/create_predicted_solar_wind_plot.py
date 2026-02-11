@@ -11,11 +11,7 @@ import io
 import os
 import requests
 import zipfile
-import re
 import time
-import urllib.request
-import json
-import Chandra.Time
 from cxotime import CxoTime
 from datetime import timedelta
 from astropy.table import Table, vstack
@@ -37,11 +33,9 @@ SOHO_PLOT_DIR = "/data/mta4/www/RADIATION/SOHO/Plot"
 #
 #--- current time
 #
-current_time_date    = time.strftime('%Y:%j:%H:%M:%S', time.gmtime())
-current_chandra_time = Chandra.Time.DateTime(current_time_date).secs
 this_year            = int(float(time.strftime('%Y', time.gmtime())))
 this_doy             = int(float(time.strftime('%j', time.gmtime())))
-year_start           = Chandra.Time.DateTime(str(this_year) + ':001:00:00:00').secs
+year_start           = CxoTime(str(this_year) + ':001:00:00:00').secs
 
 NOW = CxoTime()
 #
@@ -105,11 +99,11 @@ def download_swepam():
             speed   --- dictionary of solar wind speed; key chandra time in hr unit
     """
 #
-#--- read soloar wind data from json site
+#--- read solar wind data from json site
 #
-    with urllib.request.urlopen(swepam) as url:
-        data = json.loads(url.read().decode())
 
+    r = requests.get(swepam)
+    data = r.json()
     time_list = []
     density   = {}
     speed     = {}
@@ -124,12 +118,11 @@ def download_swepam():
 #--- time format is <yyyy><ddd><hh>
 #
         ltime = time.strftime('%Y:%j:%H:00:00', time.strptime(ent['time_tag'], '%Y-%m-%dT%H:%M:%S'))
-        ltime = int(Chandra.Time.DateTime(ltime).secs / 3600.)
+        ltime = int(CxoTime(ltime).secs / 3600.)
 
-        try:
-            dval = float(ent['dens'])
-            sval = float(ent['speed'])
-        except:
+        dval = ent.get('dens')
+        sval = ent.get('speed')
+        if dval is None or sval is None:
             continue
 
         time_list.append(ltime)
@@ -270,7 +263,7 @@ def read_gsme_data():
     lon   = []
     lat   = []
     for ent in data:
-        atemp = re.split('\s+', ent)
+        atemp = ent.split()
         ctime = float(atemp[0])
         time.append(convert_to_doy(ctime))
         alt.append(float(atemp[1]))
@@ -430,7 +423,7 @@ def create_prediction(adend, aspdd,  mdend, mspdd):
 #
 #--- convert current Chandra Time into hour unit
 #
-    key0 = int(current_chandra_time / 3600.0)
+    key0 = int(NOW.secs / 3600.0)
 #
 #--- create 30 day prediction in 1hr step
 #
