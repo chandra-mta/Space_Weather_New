@@ -6,6 +6,9 @@
 :Maintainer: W. Aaron (william.aaron@cfa.harvard.edu)
 :Last Updated: Mar 16, 2021
 
+# /// testing
+# tested-ska-release = "2026.1"
+# ///
 """
 import io
 import os
