@@ -6,74 +6,52 @@
 :Maintainer: W. Aaron (william.aaron@cfa.harvard.edu)
 :Last Updated: Mar 16, 2021
 
+# /// testing
+# tested-ska-release = "2026.1"
+# ///
 """
-import sys
+import io
 import os
 import requests
 import zipfile
-import re
 import time
-import urllib.request
-import json
-import Chandra.Time
-from astropy.table import Table
-import astropy.units as u
-
+from cxotime import CxoTime
+from datetime import timedelta
+from astropy.table import Table, vstack
+import numpy as np
+import argparse
 import matplotlib as mpl
 if __name__ == '__main__':
     mpl.use('Agg')
-from pylab import *
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as font_manager
-
+import math
 #
-#--- reading directory list
+# --- Define Directory Pathing
 #
-path = '/data/mta4/Space_Weather/house_keeping/dir_list'
-
-with open(path, 'r') as f:
-    data = [line.strip() for line in f.readlines()]
-
-for ent in data:
-    atemp = re.split(':', ent)
-    var  = atemp[1].strip()
-    line = atemp[0].strip()
-    exec("%s = %s" %(var, line))
-#for writing out files in test directory
-if (os.getenv('TEST') == 'TEST'):
-    os.system('mkdir -p TestOut')
-    test_out = os.getcwd() + '/TestOut'
-#
-#--- append  pathes to private folders to a python directory
-#
-sys.path.append('/data/mta/Script/Python3.10/MTA/')
-#
-#--- import several functions
-#
-import mta_common_functions as mcf
-#
-#--- temp writing file name
-#
-import random
-rtail  = int(time.time() * random.random())
-zspace = '/tmp/zspace' + str(rtail)
+EPHEM_DATA_DIR = "/data/mta4/Space_Weather/EPHEM/Data"
+SOHO_DATA_DIR = "/data/mta4/Space_Weather/SOHO/Data"
+SOHO_PLOT_DIR = "/data/mta4/www/RADIATION/SOHO/Plot"
+ORBIT_PLOT_DIR = "/data/mta4/www/RADIATION/Orbit/Plot"
 #
 #--- current time
 #
-current_time_date    = time.strftime('%Y:%j:%H:%M:%S', time.gmtime())
-current_chandra_time = Chandra.Time.DateTime(current_time_date).secs
 this_year            = int(float(time.strftime('%Y', time.gmtime())))
 this_doy             = int(float(time.strftime('%j', time.gmtime())))
-year_start           = Chandra.Time.DateTime(str(this_year) + ':001:00:00:00').secs
+year_start           = CxoTime(str(this_year) + ':001:00:00:00').secs
+
+NOW = CxoTime()
 #
 #--- data sources
 #
-swepam = 'https://services.swpc.noaa.gov/json/ace/swepam/ace_swepam_1h.json'
-mtof = f"https://l1.umd.edu/data/{this_year}_CELIAS_Proton_Monitor_5min.zip"
+SWEPAM_LINK = 'https://services.swpc.noaa.gov/json/ace/swepam/ace_swepam_1h.json'
+MTOF_LINK = f"https://l1.umd.edu/data/{NOW.datetime.year}_CELIAS_Proton_Monitor_5min.zip"
 
-#-------------------------------------------------------------------------
-#-- create_predicted_solar_wind_plot: create predicted soloar wind speed and density plot
-#-------------------------------------------------------------------------
+def get_options(args=None):
+    parser = argparse.ArgumentParser(description="Plot Solar Wind Predictions")
+    parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    opt = parser.parse_args(args)
+    return opt
 
 def create_predicted_solar_wind_plot():
     """
@@ -81,8 +59,8 @@ def create_predicted_solar_wind_plot():
     input:  none but read from:
             ftp://ftp.swpc.noaa.gov/pub/lists/ace2
             http://umtof.umd.edu/pm/crn/archive/
-            <ephem_dir>/Data/PE.EPH.gsme_spherical
-    ouptut: <orbit_dir>/Plots/solwind.png
+            <ephem_data_dir>/PE.EPH.gsme_spherical
+    output: <soho_plot_dir>/solwin.png
     """
 #
 #-- ace swepam data
@@ -91,7 +69,8 @@ def create_predicted_solar_wind_plot():
 #
 #--- soho mtof data
 #
-    [mtime_list, mdensity, mspped] = download_mtof()
+    download_mtof(MTOF_LINK) #: Run to update the current year archive.
+    [mtime_list, mdensity, mspped] = mtof_dataset()
 #
 #--- orbital information
 #
@@ -123,11 +102,11 @@ def download_swepam():
             speed   --- dictionary of solar wind speed; key chandra time in hr unit
     """
 #
-#--- read soloar wind data from json site
+#--- read solar wind data from json site
 #
-    with urllib.request.urlopen(swepam) as url:
-        data = json.loads(url.read().decode())
 
+    r = requests.get(SWEPAM_LINK)
+    data = r.json()
     time_list = []
     density   = {}
     speed     = {}
@@ -142,12 +121,11 @@ def download_swepam():
 #--- time format is <yyyy><ddd><hh>
 #
         ltime = time.strftime('%Y:%j:%H:00:00', time.strptime(ent['time_tag'], '%Y-%m-%dT%H:%M:%S'))
-        ltime = int(Chandra.Time.DateTime(ltime).secs / 3600.)
+        ltime = int(CxoTime(ltime).secs / 3600.)
 
-        try:
-            dval = float(ent['dens'])
-            sval = float(ent['speed'])
-        except:
+        dval = ent.get('dens')
+        sval = ent.get('speed')
+        if dval is None or sval is None:
             continue
 
         time_list.append(ltime)
@@ -160,66 +138,108 @@ def download_swepam():
     return [time_list,  density, speed]
 
 
-#-------------------------------------------------------------------------
-#-- download_mtof: download soho mtof data from html site              ---
-#-------------------------------------------------------------------------
-
-def download_mtof():
-    """    
-    download soho mtof data from html site
-    input: none but read from:
-            http://umtof.umd.edu/pm/crn/archive/
-    output: time_list   --- a list of time in chandra time in hr unit
-            density     --- dictionary of particle density; key chandra time in hr unit
-            speed       --- dictionary of solar wind speed; key chandra time in hr unit
+def download_mtof(link):
     """
+    Download SOHO CELIAS MTOF zipped data from University of Maryland,
+    then write data text file to archive directory.
 
-    r = requests.get(mtof, allow_redirects=True)
-    open('mtof.zip', 'wb').write(r.content)
+    :File In: https://l1.umd.edu/data/<this_year>_CELIAS_Proton_Monitor_5min.zip
+    :File Out: <SOHO_DATA_DIR>/<this_year>_CELIAS_Proton_Monitor_5min.txt
+    """
+    r = requests.get(link, allow_redirects=True)
+    #: Load the web-requested zipped binary data currently in memory into
+    #: a io.BytesIO instance for a file-like interface.
+    #: Then python.zipfile can unzip the file-like interface.
+    with zipfile.ZipFile(io.BytesIO(r.content)) as z:
+        z.extractall(f"{SOHO_DATA_DIR}")
 
-    with zipfile.ZipFile('mtof.zip', 'r') as f:
-        f.extractall('mtof')
-    os.remove("mtof.zip")
-
-    with open("mtof/2023_CELIAS_Proton_Monitor_5min.txt", 'r') as f:
+def read_mtof(file : str):
+    """
+    Read the SOHO CELIAS MTOF archive data.
+    
+    :File In: <SOHO_DATA_DIR>/<this_year>_CELIAS_Proton_Monitor_5min.txt
+    :returns: Table of SOHO CELIAS MTOF Data
+    """
+    names = ['speed', 'np', 'vth', 'ns', 'vhe','gse_x', 'gse_y', 'gse_z', 'range', 'hglat', 'hglong', 'crne']
+    with open(file) as f:
         lines = f.readlines()
+    
+    rows = []
+    for d in lines:
+        #: Keep only list items that start with a digit
+        if d[0].isdigit():
+            d.strip()
+            row_items = d.split()
+            
+            timestring = f"20{row_items[0]}:{row_items[3]}"
+            data = row_items[4:]
+            
+            row = {names[i]:float(data[i]) for i in range(12)}
+            row['datetime'] = timestring
+            
+            rows.append(row)
+            
+    t = Table(rows=rows,
+             names=['datetime'] + names)
+    
+    return t
 
-    # keep only list items that start with a digit
-    ok = [line[0].isdigit() for line in lines]
-    data = np.array(lines)[ok]
+def select_mtof():
 
-    t = Table(names=('yy', 'mon', 'dd', 'doy', 'speed', 'np', 'vth', 'ns', 'vhe',
-                     'gse_x', 'gse_y', 'gse_z', 'range', 'hglat', 'hglong', 'crne'),
-              dtype=(float, str, float, str, float, float, float, float, float,
-                     float, float, float, float, float, float, float))
+    table = read_mtof(f"{SOHO_DATA_DIR}/{NOW.datetime.year}_CELIAS_Proton_Monitor_5min.txt")
+    #: Pull the last 110 days. If we are in the start of the year, pull previous archive
+    if len(table) < 31680:
+        if not os.path.isfile(f"{SOHO_DATA_DIR}/{NOW.datetime.year - 1}_CELIAS_Proton_Monitor_5min.txt"):
+            link = MTOF_LINK.replace(str(NOW.datetime.year),str(NOW.datetime.year-1))
+            download_mtof(link)
+        previous_table = read_mtof(f"{SOHO_DATA_DIR}/{NOW.datetime.year - 1}_CELIAS_Proton_Monitor_5min.txt")
+        table = vstack([previous_table, table])
+    
+    #: Select the last 110 days
+    start = NOW - timedelta(days=110)
+    start = start.date.split('.')[0]
+    sel = table['datetime'] >= start
+    return table[sel]
 
-    for d in data[-31680:]: # 110 days of data with 5 min bins
-        d.strip()
-        row_items = d.split()
-        t.add_row(row_items)
+def aggregate_mtof():
+    
+    table = select_mtof()
+    
+    #: Group by hour in CxoTime
+    time_int = CxoTime(table['datetime'].data).secs // 3600
+    table.add_column(time_int,name='time_int')
+    #table['time_int'].unit = u.hr
+    table_by_time_int = table.group_by('time_int')
+    
+    #: Aggregate by hour and calculate media
+    table_by_time_int.remove_column('datetime') #: Cannot aggregate strings. Remove to suppress warning.
+    table_median = table_by_time_int.groups.aggregate(np.median)
+    
+    return table_median
 
-    time = [f"{str(int(2000 + x['yy']))}:{x['doy']}" for x in t]
-    time = [Chandra.Time.DateTime(tt).secs / 3600 for tt in time] # in hours
+def mtof_dataset():
+    """    
+    Read the SOHO CELIAS MTOF archive data.
+    
+    :File In: <SOHO_DATA_DIR>/<this_year>_CELIAS_Proton_Monitor_5min.txt
 
-    # Only one entry for each int(time)
-    t['time_int'] = [int(x) for x in time]
-    t['time_int'].unit = u.hr
-    t_by_time_int = t.group_by('time_int')
-
-    # Remove mon and doy columns, type str, before aggregation
-    t_by_time_int.remove_columns(['mon', 'doy'])
-    t_median = t_by_time_int.groups.aggregate(np.median)
+    :return:    time_list   --- a list of time in chandra time in hr unit
+                density     --- dictionary of particle density; key chandra time in hr unit
+                speed       --- dictionary of solar wind speed; key chandra time in hr unit
+    """
+    
+    table_median = aggregate_mtof()
 
     # Format required by TI's code: a dictionary with a key being Chandra.Time in hours
     density = {}
-    for dd, tt in zip(t_median['np'], t_median['time_int']):
+    for dd, tt in zip(table_median['np'], table_median['time_int']):
         density[tt] = dd
 
     speed = {}
-    for ss, tt in zip(t_median['speed'], t_median['time_int']):
+    for ss, tt in zip(table_median['speed'], table_median['time_int']):
         speed[tt] = ss
 
-    return list(t_median['time_int']), density, speed
+    return list(table_median['time_int']), density, speed
 
 
 #-------------------------------------------------------------------------
@@ -230,22 +250,23 @@ def read_gsme_data():
     """
     read gsme data 
     input: none, but read from:
-        <ephem_dir>/Data/PE.EPH.gsme_spherical
+        <ephem_data_dir>/PE.EPH.gsme_spherical
     output: time    --- a list of time in day of year
             alt     --- a list of altitude
             lon     --- a list of longitude
             lat     --- a list of latitude
     """
 
-    ifile = ephem_dir + 'Data/PE.EPH.gsme_spherical'
-    data  = mcf.read_data_file(ifile)
+    ifile = f"{EPHEM_DATA_DIR}/PE.EPH.gsme_spherical"
+    with open(ifile) as f:
+        data = [line.strip() for line in f.readlines()]
 
     time  = []
     alt   = []
     lon   = []
     lat   = []
     for ent in data:
-        atemp = re.split('\s+', ent)
+        atemp = ent.split()
         ctime = float(atemp[0])
         time.append(convert_to_doy(ctime))
         alt.append(float(atemp[1]))
@@ -405,7 +426,7 @@ def create_prediction(adend, aspdd,  mdend, mspdd):
 #
 #--- convert current Chandra Time into hour unit
 #
-    key0 = int(current_chandra_time / 3600.0)
+    key0 = int(NOW.secs / 3600.0)
 #
 #--- create 30 day prediction in 1hr step
 #
@@ -497,20 +518,20 @@ def create_prediction(adend, aspdd,  mdend, mspdd):
     nmdens1 -= 1
     nmspds1 -= 1
     try:
-        adens = "%.1f,%.1f" % (math.sqrt(adens0/nadens0), math.sqrt(adens1/nadens1))
-    except:
+        adens = f"{math.sqrt(adens0/nadens0):.1f},{math.sqrt(adens1/nadens1):.1f}"
+    except (ValueError, ZeroDivisionError):
         adens = '0.0, 0.0'
     try:
-        aspds = "%d,%d"     % (math.sqrt(aspds0/naspds0), math.sqrt(aspds1/naspds1))
-    except:
+        aspds = f"{math.sqrt(aspds0/naspds0):.1f},{math.sqrt(aspds1/naspds1):.1f}"
+    except (ValueError, ZeroDivisionError):
         aspds = '0, 0'
     try:
-        mdens = "%.1f,%.1f" % (math.sqrt(mdens0/nmdens0), math.sqrt(mdens1/nmdens1))
-    except:
+        mdens = f"{math.sqrt(mdens0/nmdens0):.1f},{math.sqrt(mdens1/nmdens1):.1f}"
+    except (ValueError, ZeroDivisionError):
         mdens = '0.0, 0,0'
     try:
-        mspds = "%d,%d"     % (math.sqrt(mspds0/nmspds0), math.sqrt(mspds1/nmspds1))
-    except:
+        mspds = f"{math.sqrt(mspds0/nmspds0):.1f},{math.sqrt(mspds1/nmspds1):.1f}"
+    except (ValueError, ZeroDivisionError):
         mspds = '0, 0'
 
     return [dtime, aspd0, mspd0, aspdu0, mspdu0, aden0, mden0, adenu0, mdenu0,\
@@ -547,7 +568,7 @@ def create_plot(otime, alt, lon, lat, dtime,\
             mden1   --- a list of soho particle density 1st order
             adenu1  --- a list of ace particle density uncertainty 1st order
             mdenu1  --- a list of soho particle density uncertainty 1st order
-    putput: <orbit_dir>/Plots/solwin.png
+    putput: <soho_plot_dir>/solwin.png
     """
     plt.close('all')
 #
@@ -706,23 +727,13 @@ def create_plot(otime, alt, lon, lat, dtime,\
 #
 #--- set the size of the plotting area in inch
 #
-    fig = matplotlib.pyplot.gcf()
+    fig = plt.gcf()
     fig.set_size_inches(5.0, 8.0)
-#
-#--- save the plot in png format
-#
-    outname = html_dir + 'Orbit/Plots/solwin.png'
-    #for writing out files in test directory
-    if (os.getenv('TEST') == 'TEST'):
-        outname = test_out + "/" + os.path.basename(outname)
-    plt.savefig(outname, format='png', dpi=300)
 
+    outfile = f"{SOHO_PLOT_DIR}/solwin.png"
+    plt.savefig(outfile, format='png', dpi=300)
+    os.system(f"convert {outfile} -trim {outfile}")
     plt.close('all')
-#
-#--- copy to SOHO directory
-#
-    cmd = 'cp -f ' + outname + ' ' + html_dir + 'SOHO/Plot/solwin.png'
-    os.system(cmd)
 
 #--------------------------------------------------------------------------
 #-- convert_to_doy: convert to chandra time to day of year of this year  --
@@ -745,5 +756,15 @@ def convert_to_doy(ctime):
 #-------------------------------------------------------------------------
 
 if __name__ == '__main__':
-
+    
+    opt = get_options()
+    if opt.mode == 'test':
+        SOHO_PLOT_DIR = f"{os.getcwd()}/test/_outTest/Plots"
+        SOHO_DATA_DIR = f"{os.getcwd()}/test/_outTest/Data"
+        os.makedirs(SOHO_PLOT_DIR, exist_ok = True)
+        os.makedirs(SOHO_DATA_DIR, exist_ok = True)
+    
     create_predicted_solar_wind_plot()
+
+    if opt.mode == 'flight':
+        os.system(f"cp {SOHO_PLOT_DIR}/solwin.png {ORBIT_PLOT_DIR}/solwin.png")
