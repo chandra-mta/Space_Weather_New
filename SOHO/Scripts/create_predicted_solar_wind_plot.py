@@ -22,7 +22,7 @@ if __name__ == '__main__':
     mpl.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as font_manager
-
+import math
 #
 # --- Define Directory Pathing
 #
@@ -41,7 +41,7 @@ NOW = CxoTime()
 #
 #--- data sources
 #
-swepam = 'https://services.swpc.noaa.gov/json/ace/swepam/ace_swepam_1h.json'
+SWEPAM_LINK = 'https://services.swpc.noaa.gov/json/ace/swepam/ace_swepam_1h.json'
 MTOF_LINK = f"https://l1.umd.edu/data/{NOW.datetime.year}_CELIAS_Proton_Monitor_5min.zip"
 
 def get_options(args=None):
@@ -102,7 +102,7 @@ def download_swepam():
 #--- read solar wind data from json site
 #
 
-    r = requests.get(swepam)
+    r = requests.get(SWEPAM_LINK)
     data = r.json()
     time_list = []
     density   = {}
@@ -515,20 +515,20 @@ def create_prediction(adend, aspdd,  mdend, mspdd):
     nmdens1 -= 1
     nmspds1 -= 1
     try:
-        adens = "%.1f,%.1f" % (math.sqrt(adens0/nadens0), math.sqrt(adens1/nadens1))
-    except:
+        adens = f"{math.sqrt(adens0/nadens0):.1f},{math.sqrt(adens1/nadens1):.1f}"
+    except (ValueError, ZeroDivisionError):
         adens = '0.0, 0.0'
     try:
-        aspds = "%d,%d"     % (math.sqrt(aspds0/naspds0), math.sqrt(aspds1/naspds1))
-    except:
+        aspds = f"{math.sqrt(aspds0/naspds0):.1f},{math.sqrt(aspds1/naspds1):.1f}"
+    except (ValueError, ZeroDivisionError):
         aspds = '0, 0'
     try:
-        mdens = "%.1f,%.1f" % (math.sqrt(mdens0/nmdens0), math.sqrt(mdens1/nmdens1))
-    except:
+        mdens = f"{math.sqrt(mdens0/nmdens0):.1f},{math.sqrt(mdens1/nmdens1):.1f}"
+    except (ValueError, ZeroDivisionError):
         mdens = '0.0, 0,0'
     try:
-        mspds = "%d,%d"     % (math.sqrt(mspds0/nmspds0), math.sqrt(mspds1/nmspds1))
-    except:
+        mspds = f"{math.sqrt(mspds0/nmspds0):.1f},{math.sqrt(mspds1/nmspds1):.1f}"
+    except (ValueError, ZeroDivisionError):
         mspds = '0, 0'
 
     return [dtime, aspd0, mspd0, aspdu0, mspdu0, aden0, mden0, adenu0, mdenu0,\
