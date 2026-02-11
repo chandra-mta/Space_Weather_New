@@ -29,7 +29,7 @@ import math
 EPHEM_DATA_DIR = "/data/mta4/Space_Weather/EPHEM/Data"
 SOHO_DATA_DIR = "/data/mta4/Space_Weather/SOHO/Data"
 SOHO_PLOT_DIR = "/data/mta4/www/RADIATION/SOHO/Plot"
-
+ORBIT_PLOT_DIR = "/data/mta4/www/RADIATION/Orbit/Plot"
 #
 #--- current time
 #
@@ -729,7 +729,7 @@ def create_plot(otime, alt, lon, lat, dtime,\
 
     outfile = f"{SOHO_PLOT_DIR}/solwin.png"
     plt.savefig(outfile, format='png', dpi=300)
-
+    os.system(f"convert {outfile} -trim {outfile}")
     plt.close('all')
 
 #--------------------------------------------------------------------------
@@ -762,3 +762,6 @@ if __name__ == '__main__':
         os.makedirs(SOHO_DATA_DIR, exist_ok = True)
     
     create_predicted_solar_wind_plot()
+
+    if opt.mode == 'flight':
+        os.system(f"cp {SOHO_PLOT_DIR}/solwin.png {ORBIT_PLOT_DIR}/solwin.png")
