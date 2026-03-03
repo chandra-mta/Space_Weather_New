@@ -1,0 +1,9 @@
+{
+    "KP": {
+        "runtime": "ska3-flight",
+        "dependencies": {
+            "ska3-flight": ">=2026.1",
+            "file_readers": ">=0.1.0"
+        }
+    }
+}
