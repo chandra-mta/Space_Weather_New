@@ -1,4 +1,4 @@
-#!/proj/sot/ska3/flight/bin/python
+#! /usr/bin/env python
 """
 **update_ace_data_files.py**: update ace related data files
 
@@ -28,10 +28,11 @@ import argparse
 #
 #--- Define Directory Pathing
 #
-ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
+SPACE_WEATHER = os.getenv('SPACE_WEATHER', "/data/mta4/Space_Weather")
+ACE_DATA_DIR = os.path.join(SPACE_WEATHER, "ACE", "Data")
 OUT_ACE_DATA_DIR = ACE_DATA_DIR
-EPHEM_DIR = "/data/mta4/Space_Weather/EPHEM"
-KP_DIR = "/data/mta4/Space_Weather/KP"
+EPHEM_DATA_DIR = os.path.join(SPACE_WEATHER, "EPHEM", "Data")
+KP_DATA_DIR = os.path.join(SPACE_WEATHER, "KP", "Data")
 #
 #--- ftp address
 #
@@ -67,8 +68,8 @@ def update_ace_data_files():
     update ace related data files
     input: none but read from:
             ftp: 'https://services.swpc.noaa.gov/text/ace-epam.txt'
-            <ephem_dir>/Data/PE.EPH.gsme_spherical
-            <kp_dir>/Data/k_index_data_past
+            <ephem_data_dir>/PE.EPH.gsme_spherical
+            <kp_data_dir>/k_index_data_past
     output: <ace_data_dir>/ace.archive
             <ace_data_dir>/ace_12h_archive
             <ace_data_dir>/ace_7day_archive
@@ -333,7 +334,7 @@ def find_reset_time():
             <ephem_dir>/Data/PE.EPH.gsme_spherical
     output: reset_time  --- a list of reset times in seconds from 1998.1.1
     """
-    ifile = f"{EPHEM_DIR}/Data/PE.EPH.gsme_spherical"
+    ifile = os.path.join(EPHEM_DATA_DIR, "PE.EPH.gsme_spherical")
     with open(ifile) as f:
         data = [line.strip() for line in f.readlines()]
     stime = []
@@ -568,8 +569,7 @@ def update_ace_archive(updated_data, head):
             line = line + line_adjust(updated_data[13][m])
             line = line + '\n'
 
-    ofile = f"{OUT_ACE_DATA_DIR}/ace.archive"
-    
+    ofile = os.path.join(OUT_ACE_DATA_DIR, "ace.archive")
     with open(ofile, 'w') as fo:
         fo.write(line)
 
@@ -644,8 +644,8 @@ def update_long_term_data(ndata):
             line = line + line_adjust(ndata[10][m])
             line = line + '%7.2f' % ndata[11][m]
             line = line + '\n'
-    
-    with open(f"{OUT_ACE_DATA_DIR}/longterm/ace_data.txt", 'a') as fo:
+    lfile = os.path.join(OUT_ACE_DATA_DIR, "longterm", "ace_data.txt")
+    with open(lfile, 'a') as fo:
         fo.write(line)
 
 #-----------------------------------------------------------------------------
@@ -836,9 +836,8 @@ def updat_fluace_data_file(data_set, header,  c_start):
     line = line + line_adjust(fpch5)
     line = line + '%10d' % tacc
     line = line + '\n'
-    
-    ofile = f"{OUT_ACE_DATA_DIR}/fluace.dat"
-    
+
+    ofile = os.path.join(OUT_ACE_DATA_DIR, "fluace.dat")    
     with open(ofile, 'w') as fo:
         fo.write(line)
 
@@ -875,7 +874,7 @@ def update_kp_data_file():
 #
 #--- read kp data   
 #
-    ifile = f"{KP_DIR}/Data/k_index_data_past"
+    ifile = os.path.join(KP_DATA_DIR, "k_index_data_past")
     with open(ifile) as f:
         data = [line.strip() for line in f.readlines()]
     
@@ -895,8 +894,7 @@ def update_kp_data_file():
     line  = line  + ldate + '\t\t' + kval + '\t\t' + kval + '\n'
     line  = head + line
     
-    ofile = f"{OUT_ACE_DATA_DIR}/kp.dat"
-
+    ofile = os.path.join(OUT_ACE_DATA_DIR, "kp.dat")
     with open(ofile, 'w') as fo:
         fo.write(line)
 
@@ -936,13 +934,13 @@ if __name__ == "__main__":
         if args.path:
             OUT_ACE_DATA_DIR = args.path
         else:
-            OUT_ACE_DATA_DIR = f"{os.getcwd()}/test/_outTest"
-        os.makedirs(f"{OUT_ACE_DATA_DIR}/longterm", exist_ok = True)
+            OUT_ACE_DATA_DIR = os.path.join(os.getcwd(), "test", "_outTest")
+        os.makedirs(os.path.join(OUT_ACE_DATA_DIR, "longterm"), exist_ok = True)
         print(f"OUT_ACE_DATA_DIR: {OUT_ACE_DATA_DIR}")
-        if not os.path.isfile(f"{OUT_ACE_DATA_DIR}/ace_12h_archive"):
+        if not os.path.isfile(os.path.join(OUT_ACE_DATA_DIR, "ace_12h_archive")):
             os.system(f"cp {ACE_DATA_DIR}/ace_12h_archive {OUT_ACE_DATA_DIR}/ace_12h_archive")
             print(f"Ran: cp {ACE_DATA_DIR}/ace_12h_archive {OUT_ACE_DATA_DIR}/ace_12h_archive")
-        if not os.path.isfile(f"{OUT_ACE_DATA_DIR}/ace_7day_archive"):
+        if not os.path.isfile(os.path.join(OUT_ACE_DATA_DIR, "ace_7day_archive")):
             os.system(f"cp {ACE_DATA_DIR}/ace_7day_archive {OUT_ACE_DATA_DIR}/ace_7day_archive")
             print(f"Ran: cp {ACE_DATA_DIR}/ace_7day_archive {OUT_ACE_DATA_DIR}/ace_7day_archive")
         update_ace_data_files()
