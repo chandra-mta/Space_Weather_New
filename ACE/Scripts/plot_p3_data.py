@@ -21,7 +21,7 @@ import matplotlib as mpl
 from calendar import isleap
 import argparse
 import signal
-
+from pathlib import Path
 import psutil
 
 if __name__ == '__main__':
@@ -32,10 +32,10 @@ import matplotlib.font_manager as font_manager
 #
 #--- Define Directory Pathing
 #
-SPACE_WEATHER = os.environ.get('SPACE_WEATHER', "/data/mta4/Space_Weather")
-SPACE_WEATHER_WEB = os.environ.get('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION")
-ACE_DATA_DIR = os.path.join(SPACE_WEATHER, "ACE", "Data")
-ACE_PLOT_DIR = os.path.join(SPACE_WEATHER_WEB, "ACE", "Plots")
+SPACE_WEATHER = Path(os.getenv('SPACE_WEATHER', "/data/mta4/Space_Weather"))
+SPACE_WEATHER_WEB = Path(os.getenv('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION"))
+ACE_DATA_DIR : Path = SPACE_WEATHER / "ACE" / "Data"
+ACE_PLOT_DIR : Path = SPACE_WEATHER_WEB / "ACE" / "Plots"
 
 #
 #--- other setting
@@ -62,7 +62,7 @@ def plot_p3_data():
 #
 #--- read data and save in column array data format
 #
-    ifile = os.path.join(ACE_DATA_DIR, "ace_7day_archive")
+    ifile = ACE_DATA_DIR / "ace_7day_archive"
     with open(ifile) as f:
         data = [line.strip() for line in f.readlines()]
     adata = convert_to_arrays(data)
@@ -255,7 +255,7 @@ def plot_data(ndata):
 #
 #--- save the plot in png format
 #
-    outname = os.path.join(ACE_PLOT_DIR, 'mta_ace_plot_P3.png')
+    outname = ACE_PLOT_DIR / 'mta_ace_plot_P3.png'
     plt.tight_layout()
     plt.savefig(outname, format='png', dpi=300)
 
@@ -277,21 +277,21 @@ if __name__ == "__main__":
 #--- Path output to same location as unit tests
 #
         if args.data:
-            ACE_DATA_DIR = args.data
+            ACE_DATA_DIR = Path(args.data)
         else:
-            ACE_DATA_DIR = os.path.join(os.getcwd(), 'test', '_outTest')
+            ACE_DATA_DIR = Path(os.getcwd(), 'test', '_outTest')
 
         if args.path:
             ACE_PLOT_DIR = args.path
         else:
-            ACE_PLOT_DIR = os.path.join(os.getcwd(), 'test', '_outTest', 'Plots')
+            ACE_PLOT_DIR = Path(os.getcwd(), 'test', '_outTest', 'Plots')
         os.makedirs(ACE_PLOT_DIR, exist_ok = True)
         plot_p3_data()
     elif args.mode == "flight":
         #: Create a lock file and exit strategy in case of race conditions.
         name = os.path.basename(__file__).split(".")[0]
         user = os.getenv("USER", "mta")
-        lock = os.path.join("/tmp", user, f"{name}.lock")
+        lock = Path("/tmp", user, f"{name}.lock")
 
         #: If lock file exists, read the pid and kill the process, then remove the lock file
         if os.path.isfile(lock):
