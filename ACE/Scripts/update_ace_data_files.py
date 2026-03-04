@@ -193,7 +193,7 @@ def read_past_ace_data():
             fluen   --- fluence
             head    --- a list of header part
     """
-    ifile = f"{ACE_DATA_DIR}/ace.archive"
+    ifile = os.path.join(ACE_DATA_DIR, "ace.archive")
     with open(ifile) as f:
         data = [line.strip() for line in f.readlines()]
 #
@@ -936,13 +936,14 @@ if __name__ == "__main__":
         else:
             OUT_ACE_DATA_DIR = os.path.join(os.getcwd(), "test", "_outTest")
         os.makedirs(os.path.join(OUT_ACE_DATA_DIR, "longterm"), exist_ok = True)
-        print(f"OUT_ACE_DATA_DIR: {OUT_ACE_DATA_DIR}")
-        if not os.path.isfile(os.path.join(OUT_ACE_DATA_DIR, "ace_12h_archive")):
-            os.system(f"cp {ACE_DATA_DIR}/ace_12h_archive {OUT_ACE_DATA_DIR}/ace_12h_archive")
-            print(f"Ran: cp {ACE_DATA_DIR}/ace_12h_archive {OUT_ACE_DATA_DIR}/ace_12h_archive")
-        if not os.path.isfile(os.path.join(OUT_ACE_DATA_DIR, "ace_7day_archive")):
-            os.system(f"cp {ACE_DATA_DIR}/ace_7day_archive {OUT_ACE_DATA_DIR}/ace_7day_archive")
-            print(f"Ran: cp {ACE_DATA_DIR}/ace_7day_archive {OUT_ACE_DATA_DIR}/ace_7day_archive")
+
+        _12h_archive = os.path.join(OUT_ACE_DATA_DIR, "ace_12h_archive")
+        _7day_archive = os.path.join(OUT_ACE_DATA_DIR, "ace_7day_archive")
+        if not os.path.isfile(_12h_archive):
+            shutil.copyfile(os.path.join(ACE_DATA_DIR, "ace_12h_archive"), _12h_archive)
+        if not os.path.isfile(_7day_archive):
+            shutil.copyfile(os.path.join(ACE_DATA_DIR, "ace_7day_archive"), _7day_archive)
+
         update_ace_data_files()
     elif args.mode == "flight":
 #
