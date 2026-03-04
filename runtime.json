@@ -4,6 +4,27 @@
         "dependencies": {
             "ska3-flight": ">=2026.1",
             "file_readers": ">=0.1.0"
+        },
+        "cron": {
+            "primary": {
+                "variables" :{
+                "SPACE_WEATHER": "/data/mta4/Space_Weather",
+                "ENV_FLIGHT": "/proj/sot/ska3/flight"
+                },
+                "machine": "mta@boba-v",
+                "command": "cd ${SPACE_WEATHER}/KP/Scripts; ${ENV_FLIGHT}/bin/skare python fetch_kp_tables.py -m flight",
+                "log_file": "${HOME}/Logs/kp_index_update.cron"
+            },
+            "secondary":{
+                "variables" :{
+                "SPACE_WEATHER": "/data/mta/Script/Space_Weather",
+                "ENV_FLIGHT": "/proj/sot/ska3/flight"
+                },
+                "machine": "mta@r2d2-v",
+                "command": "cd ${SPACE_WEATHER}/KP/Scripts; ${ENV_FLIGHT}/bin/skare python fetch_kp_tables.py -m flight",
+                "log_file": "${HOME}/Logs/kp_index_update_mirror.cron"
+            }
+
         }
     }
 }
