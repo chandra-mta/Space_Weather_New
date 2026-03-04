@@ -277,7 +277,7 @@ def read_ace_table_data(data):
 #--- save time part in a string format (YR MO DA  HHMM    Day    Day)
 #
         ftime = atemp[0] + ' '  + atemp[1] + ' ' + atemp[2] + '  ' + atemp[3]
-        ftime = ftime    + '%8d%8d' % (float(atemp[4]), float(atemp[5]))
+        ftime = f"{ftime}{float(atemp[4]):8.0f}{float(atemp[5]):8.0f}"
 
         atime.append(stime)
         jtime.append(ftime)
@@ -554,20 +554,20 @@ def update_ace_archive(updated_data, head):
     for k in range(0, dlen):
         m = dlen - k -1
         if updated_data[0][m] > cut:
-            line = line + updated_data[1][m]
-            line = line + '%3d'   % updated_data[2][m]
-            line = line + line_adjust(updated_data[3][m])
-            line = line + line_adjust(updated_data[4][m])
-            line = line + '%3d'   % updated_data[5][m]
-            line = line + line_adjust(updated_data[6][m])
-            line = line + line_adjust(updated_data[7][m])
-            line = line + line_adjust(updated_data[8][m])
-            line = line + line_adjust(updated_data[9][m])
-            line = line + line_adjust(updated_data[10][m])
-            line = line + '%7.2f' % updated_data[11][m]
-            line = line + line_adjust(updated_data[12][m])
-            line = line + line_adjust(updated_data[13][m])
-            line = line + '\n'
+            line += updated_data[1][m]
+            line += f"{updated_data[2][m]:3.0f}"
+            line += line_adjust(updated_data[3][m])
+            line += line_adjust(updated_data[4][m])
+            line += f"{updated_data[5][m]:3.0f}"
+            line += line_adjust(updated_data[6][m])
+            line += line_adjust(updated_data[7][m])
+            line += line_adjust(updated_data[8][m])
+            line += line_adjust(updated_data[9][m])
+            line += line_adjust(updated_data[10][m])
+            line += f"{updated_data[11][m]:7.2f}"
+            line += line_adjust(updated_data[12][m])
+            line += line_adjust(updated_data[13][m])
+            line += '\n'
 
     ofile = os.path.join(OUT_ACE_DATA_DIR, "ace.archive")
     with open(ofile, 'w') as fo:
@@ -632,18 +632,18 @@ def update_long_term_data(ndata):
             if ndata[2][m] != 0 or ndata[5][m] != 0:
                 continue
 
-            line = line + ndata[1][m]
-            line = line + '%3d'   % ndata[2][m]
-            line = line + line_adjust(ndata[3][m])
-            line = line + line_adjust(ndata[4][m])
-            line = line + '%3d'   % ndata[5][m]
-            line = line + line_adjust(ndata[6][m])
-            line = line + line_adjust(ndata[7][m])
-            line = line + line_adjust(ndata[8][m])
-            line = line + line_adjust(ndata[9][m])
-            line = line + line_adjust(ndata[10][m])
-            line = line + '%7.2f' % ndata[11][m]
-            line = line + '\n'
+            line += ndata[1][m]
+            line += f"{ndata[2][m]:3.0f}"
+            line += line_adjust(ndata[3][m])
+            line += line_adjust(ndata[4][m])
+            line += f"{ndata[5][m]:3.0f}"
+            line += line_adjust(ndata[6][m])
+            line += line_adjust(ndata[7][m])
+            line += line_adjust(ndata[8][m])
+            line += line_adjust(ndata[9][m])
+            line += line_adjust(ndata[10][m])
+            line += f"{ndata[11][m]:7.2f}"
+            line += '\n'
     lfile = os.path.join(OUT_ACE_DATA_DIR, "longterm", "ace_data.txt")
     with open(lfile, 'a') as fo:
         fo.write(line)
@@ -686,18 +686,18 @@ def create_new_table(dfile, ndata, tstart, cut):
 #--- append the newest data 
 #
     for m in range(0, len(ndata[0])):
-        line = line + ndata[1][m]
-        line = line + '%3d'   % ndata[2][m]
-        line = line + line_adjust(ndata[3][m])
-        line = line + line_adjust(ndata[4][m])
-        line = line + '%3d'   % ndata[5][m]
-        line = line + line_adjust(ndata[6][m])
-        line = line + line_adjust(ndata[7][m])
-        line = line + line_adjust(ndata[8][m])
-        line = line + line_adjust(ndata[9][m])
-        line = line + line_adjust(ndata[10][m])
-        line = line + '%7.2f' % ndata[11][m]
-        line = line + '\n'
+        line += ndata[1][m]
+        line += f"{ndata[2][m]:3.0f}"
+        line += line_adjust(ndata[3][m])
+        line += line_adjust(ndata[4][m])
+        line += f"{ndata[5][m]:3.0f}"
+        line += line_adjust(ndata[6][m])
+        line += line_adjust(ndata[7][m])
+        line += line_adjust(ndata[8][m])
+        line += line_adjust(ndata[9][m])
+        line += line_adjust(ndata[10][m])
+        line += f"{ndata[11][m]:7.2f}"
+        line += '\n'
 
     with open(dfile, 'w') as fo:
         fo.write(line)
@@ -708,9 +708,9 @@ def create_new_table(dfile, ndata, tstart, cut):
 
 def line_adjust(ent):
     if ent < 0.0:
-        line = ' %.2e' % ent
+        line = f" {ent: .2e}"
     else:
-        line = '  %.2e' % ent
+        line = f"  {ent: .2e}"
     return line
 
 #-----------------------------------------------------------------------------
@@ -807,35 +807,35 @@ def update_fluace_data_file(data_set, header,  c_start):
             continue
 
         if data_set[2][m] == 0:
-            line = line + data_set[1][m]
-            line = line + '%3d'   % data_set[2][m]
-            line = line + line_adjust(data_set[3][m])
-            line = line + line_adjust(data_set[4][m])
-            line = line + '%3d'   % data_set[5][m]
-            line = line + line_adjust(data_set[6][m])
-            line = line + line_adjust(data_set[7][m])
-            line = line + line_adjust(data_set[8][m])
-            line = line + line_adjust(data_set[9][m])
-            line = line + line_adjust(data_set[10][m])
-            line = line + '%7.2f' % data_set[11][m]
-            line = line + '\n'
+            line += data_set[1][m]
+            line += f"{data_set[2][m]:3.0f}"
+            line += line_adjust(data_set[3][m])
+            line += line_adjust(data_set[4][m])
+            line += f"{data_set[5][m]:3.0f}"
+            line += line_adjust(data_set[6][m])
+            line += line_adjust(data_set[7][m])
+            line += line_adjust(data_set[8][m])
+            line += line_adjust(data_set[9][m])
+            line += line_adjust(data_set[10][m])
+            line += f"{data_set[11][m]:7.2f}"
+            line += '\n'
             break
 #
 #--- then fluence data part
 #
-    line = line + 'Fluence data...' + ' '* 95 + 'Int Time(s)\n'
-    line = line + data_set[1][-1]
-    line = line + '  -'
-    line = line + line_adjust(fech1)
-    line = line + line_adjust(fech2)
-    line = line + '  -'
-    line = line + line_adjust(fpch1)
-    line = line + line_adjust(fpch2)
-    line = line + line_adjust(fpch3)
-    line = line + line_adjust(fpch4)
-    line = line + line_adjust(fpch5)
-    line = line + '%10d' % tacc
-    line = line + '\n'
+    line += 'Fluence data...' + ' '* 95 + 'Int Time(s)\n'
+    line += data_set[1][-1]
+    line += '  -'
+    line += line_adjust(fech1)
+    line += line_adjust(fech2)
+    line += '  -'
+    line += line_adjust(fpch1)
+    line += line_adjust(fpch2)
+    line += line_adjust(fpch3)
+    line += line_adjust(fpch4)
+    line += line_adjust(fpch5)
+    line += f"{tacc:10.0f}"
+    line += '\n'
 
     ofile = os.path.join(OUT_ACE_DATA_DIR, "fluace.dat")    
     with open(ofile, 'w') as fo:
