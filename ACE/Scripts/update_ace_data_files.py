@@ -115,7 +115,7 @@ def update_ace_data_files():
 #
 #---- update fluace.dat
 #
-    updat_fluace_data_file(combined_data, chead, collection_start)
+    update_fluace_data_file(combined_data, chead, collection_start)
 #
 #--- update kp.dat
 #
@@ -261,11 +261,11 @@ def read_ace_table_data(data):
             head.append(ent)
             continue
         try:
-            temp = float(ent[0])
-        except:
+            float(ent[0])
+        except ValueError:
             continue
 
-        atemp = re.split(r'\s+', ent)
+        atemp = ent.split()
         clen  = len(atemp)
 #
 #--- convert time in Chandra Time
@@ -340,7 +340,7 @@ def find_reset_time():
     stime = []
     alt   = []
     for ent in data:
-        atemp = re.split(r'\s+', ent)
+        atemp = ent.split()
         stime.append(float(atemp[0]))
         alt.append(float(atemp[1]))
 
@@ -614,7 +614,7 @@ def update_long_term_data(ndata):
     """
     dfile = f"{ACE_DATA_DIR}/longterm/ace_data.txt"
     last_line = subprocess.check_output(f"tail -n 1 {dfile}", shell=True, executable='/bin/csh').decode()
-    atemp = re.split(r'\s+', last_line)
+    atemp = last_line.split()
 #
 #--- convert time in Chandra Time
 #
@@ -669,7 +669,7 @@ def create_new_table(dfile, ndata, tstart, cut):
 
     line = ''
     for ent in odata:
-        atemp = re.split(r'\s+', ent)
+        atemp = ent.split()
 #
 #--- convert time in Chandra Time
 #
@@ -774,10 +774,10 @@ def compute_latest_fluence(data_set, c_start):
     return [fech1, fech2, fpch1, fpch2, fpch3, fpch4, fpch5, tacc]
 
 #-----------------------------------------------------------------------------
-#-- updat_fluace_data_file: fluace data file                                --
+#-- update_fluace_data_file: fluace data file                                --
 #-----------------------------------------------------------------------------
 
-def updat_fluace_data_file(data_set, header,  c_start):
+def update_fluace_data_file(data_set, header,  c_start):
     """
     update fluace data file
     input:  data_set---  a list of lists of data
@@ -877,18 +877,12 @@ def update_kp_data_file():
     ifile = os.path.join(KP_DATA_DIR, "k_index_data_past")
     with open(ifile) as f:
         data = [line.strip() for line in f.readlines()]
-    
-    atemp = re.split(r'\s+', data[-1])
+
+    atemp = data[-1].split()
     ltime = float(atemp[0])
     kval  = atemp[1]
     
-    ltime = CxoTime(ltime).date
-    mc= re.search(r'\.', ltime)
-    if mc is not None:
-        btemp = re.split(r'\.', ltime)
-        ltime = btemp[0]
-    
-    ldate = datetime.strptime(ltime, '%Y:%j:%H:%M:%S').strftime("%Y %m %d %H%M")
+    ldate = CxoTime(ltime).datetime.strftime("%Y %m %d %H%M") # type: ignore
     
     line  = ldate + '\t\t' + ldate + '\t\t' + kval + '\t\t\t' 
     line  = line  + ldate + '\t\t' + kval + '\t\t' + kval + '\n'
@@ -905,7 +899,7 @@ def rerun(func):
     _freq = 3
     _errors = (urllib.error.URLError)
     def wrapper_func(*args,**kwargs):
-        _last_exception = None
+        _last_exception = Exception()
         for i in range(_freq):
             try:
                 return func(*args, **kwargs)
@@ -927,7 +921,6 @@ if __name__ == "__main__":
 #--- Determine if running in test mode and change pathing if so
 #
     if args.mode == "test":
-        print("Running In Test Mode.")
 #
 #--- Path output to same location as unit tests
 #
