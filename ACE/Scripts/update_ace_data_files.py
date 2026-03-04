@@ -26,15 +26,15 @@ import urllib.request
 import urllib.error
 import argparse
 import psutil
-
+from pathlib import Path
 #
 #--- Define Directory Pathing
 #
-SPACE_WEATHER = os.getenv('SPACE_WEATHER', "/data/mta4/Space_Weather")
-ACE_DATA_DIR = os.path.join(SPACE_WEATHER, "ACE", "Data")
-OUT_ACE_DATA_DIR = ACE_DATA_DIR
-EPHEM_DATA_DIR = os.path.join(SPACE_WEATHER, "EPHEM", "Data")
-KP_DATA_DIR = os.path.join(SPACE_WEATHER, "KP", "Data")
+SPACE_WEATHER = Path(os.getenv('SPACE_WEATHER', "/data/mta4/Space_Weather"))
+ACE_DATA_DIR : Path = SPACE_WEATHER / "ACE" / "Data"
+OUT_ACE_DATA_DIR : Path = ACE_DATA_DIR
+EPHEM_DATA_DIR : Path = SPACE_WEATHER / "EPHEM" / "Data"
+KP_DATA_DIR : Path = SPACE_WEATHER / "KP" / "Data"
 #
 #--- ftp address
 #
@@ -195,7 +195,7 @@ def read_past_ace_data():
             fluen   --- fluence
             head    --- a list of header part
     """
-    ifile = os.path.join(ACE_DATA_DIR, "ace.archive")
+    ifile = ACE_DATA_DIR /"ace.archive"
     with open(ifile) as f:
         data = [line.strip() for line in f.readlines()]
 #
@@ -336,7 +336,7 @@ def find_reset_time():
             <ephem_dir>/Data/PE.EPH.gsme_spherical
     output: reset_time  --- a list of reset times in seconds from 1998.1.1
     """
-    ifile = os.path.join(EPHEM_DATA_DIR, "PE.EPH.gsme_spherical")
+    ifile = EPHEM_DATA_DIR / "PE.EPH.gsme_spherical"
     with open(ifile) as f:
         data = [line.strip() for line in f.readlines()]
     stime = []
@@ -571,7 +571,7 @@ def update_ace_archive(updated_data, head):
             line += line_adjust(updated_data[13][m])
             line += '\n'
 
-    ofile = os.path.join(OUT_ACE_DATA_DIR, "ace.archive")
+    ofile = OUT_ACE_DATA_DIR / "ace.archive"
     with open(ofile, 'w') as fo:
         fo.write(line)
 
@@ -594,13 +594,13 @@ def update_secondary_archive_files(ndata):
 #
 #--- 12hr data set
 #
-    dfile = f"{OUT_ACE_DATA_DIR}/ace_12h_archive"
+    dfile = OUT_ACE_DATA_DIR / "ace_12h_archive"
     cut    = tstop  - 43200.0
     create_new_table(dfile, ndata, tstart, cut)
 #
 #--- 7 day data set
 #
-    dfile = f"{OUT_ACE_DATA_DIR}/ace_7day_archive"
+    dfile = OUT_ACE_DATA_DIR / "ace_7day_archive"
     cut    = tstop  - 7 * 86400.0
     create_new_table(dfile, ndata, tstart, cut)
 
@@ -614,7 +614,7 @@ def update_long_term_data(ndata):
     input:  ndata   --- a list of lists of new data
     output: <ace_data_dir>/longterm/ace_data.txt
     """
-    dfile = f"{ACE_DATA_DIR}/longterm/ace_data.txt"
+    dfile = ACE_DATA_DIR / "longterm" / "ace_data.txt"
     last_line = subprocess.check_output(f"tail -n 1 {dfile}", shell=True, executable='/bin/csh').decode()
     atemp = last_line.split()
 #
@@ -646,7 +646,7 @@ def update_long_term_data(ndata):
             line += line_adjust(ndata[10][m])
             line += f"{ndata[11][m]:7.2f}"
             line += '\n'
-    lfile = os.path.join(OUT_ACE_DATA_DIR, "longterm", "ace_data.txt")
+    lfile = OUT_ACE_DATA_DIR / "longterm" / "ace_data.txt"
     with open(lfile, 'a') as fo:
         fo.write(line)
 
@@ -839,7 +839,7 @@ def update_fluace_data_file(data_set, header,  c_start):
     line += f"{tacc:10.0f}"
     line += '\n'
 
-    ofile = os.path.join(OUT_ACE_DATA_DIR, "fluace.dat")    
+    ofile = OUT_ACE_DATA_DIR / "fluace.dat"
     with open(ofile, 'w') as fo:
         fo.write(line)
 
@@ -876,7 +876,7 @@ def update_kp_data_file():
 #
 #--- read kp data   
 #
-    ifile = os.path.join(KP_DATA_DIR, "k_index_data_past")
+    ifile = KP_DATA_DIR / "k_index_data_past"
     with open(ifile) as f:
         data = [line.strip() for line in f.readlines()]
 
@@ -890,7 +890,7 @@ def update_kp_data_file():
     line  = line  + ldate + '\t\t' + kval + '\t\t' + kval + '\n'
     line  = head + line
     
-    ofile = os.path.join(OUT_ACE_DATA_DIR, "kp.dat")
+    ofile = OUT_ACE_DATA_DIR / "kp.dat"
     with open(ofile, 'w') as fo:
         fo.write(line)
 
@@ -927,24 +927,24 @@ if __name__ == "__main__":
 #--- Path output to same location as unit tests
 #
         if args.path:
-            OUT_ACE_DATA_DIR = args.path
+            OUT_ACE_DATA_DIR = Path(args.path)
         else:
-            OUT_ACE_DATA_DIR = os.path.join(os.getcwd(), "test", "_outTest")
-        os.makedirs(os.path.join(OUT_ACE_DATA_DIR, "longterm"), exist_ok = True)
+            OUT_ACE_DATA_DIR = Path(os.getcwd(), "test", '_outTest')
+        os.makedirs(OUT_ACE_DATA_DIR / "longterm", exist_ok = True)
 
-        _12h_archive = os.path.join(OUT_ACE_DATA_DIR, "ace_12h_archive")
-        _7day_archive = os.path.join(OUT_ACE_DATA_DIR, "ace_7day_archive")
+        _12h_archive = OUT_ACE_DATA_DIR / "ace_12h_archive"
+        _7day_archive = OUT_ACE_DATA_DIR / "ace_7day_archive"
         if not os.path.isfile(_12h_archive):
-            shutil.copyfile(os.path.join(ACE_DATA_DIR, "ace_12h_archive"), _12h_archive)
+            shutil.copyfile(ACE_DATA_DIR / "ace_12h_archive", _12h_archive)
         if not os.path.isfile(_7day_archive):
-            shutil.copyfile(os.path.join(ACE_DATA_DIR, "ace_7day_archive"), _7day_archive)
+            shutil.copyfile(ACE_DATA_DIR / "ace_7day_archive", _7day_archive)
 
         update_ace_data_files()
     elif args.mode == "flight":
         #: Create a lock file and exit strategy in case of race conditions.
         name = os.path.basename(__file__).split(".")[0]
         user = os.getenv("USER", "mta")
-        lock = os.path.join("/tmp", user, f"{name}.lock")
+        lock = Path("/tmp", user, f"{name}.lock")
 
         #: If lock file exists, read the pid and kill the process, then remove the lock file
         if os.path.isfile(lock):
