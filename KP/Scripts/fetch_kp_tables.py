@@ -27,9 +27,9 @@ import urllib.error
 from astropy.table import Table
 from cxotime import CxoTime
 import argparse
-import getpass
 import signal
 import numpy as np
+import psutil
 import file_readers as fr
 #
 # --- Define Directory Pathing
@@ -264,32 +264,30 @@ if __name__ == "__main__":
         else:
             KP_DATA_DIR = os.path.join(os.getcwd(), "test", "_outTest")
         os.makedirs(KP_DATA_DIR, exist_ok=True)
-
+        
         fetch_kp_tables()
 
-    elif args.mode == "flight":
-#
-#--- Create a lock file and exit strategy in case of race conditions
-#
+    elif args.mode == 'flight':
+    #: Create a lock file and exit strategy in case of stall.
         name = os.path.basename(__file__).split(".")[0]
-        user = getpass.getuser()
-        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
-            with open(f"/tmp/{user}/{name}.lock") as f:
-                pid = int(f.readlines()[-1].strip())
-                #Kill old stalling process and remove corresponding lock file.
-                os.remove(f"/tmp/{user}/{name}.lock")
-                try:
-                    os.kill(pid,signal.SIGTERM)
-                except ProcessLookupError:
-                    pass
-                #Generate lock file for the current corresponding process
-                os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
-        else:
-            #Previous script run must have completed successfully. Prepare lock file for this script run.
-            os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
+        user = os.getenv("USER", "mta")
+        lock = os.path.join("/tmp", user, f"{name}.lock")
+
+        #: If lock file exists, read the pid and kill the process, then remove the lock file
+        if os.path.isfile(lock):
+            with open(lock) as f:
+                pid = int(f.read().strip())
+            if psutil.pid_exists(pid):
+                os.kill(pid, signal.SIGTERM)
+            os.remove(lock)
+        
+        #: Lock file with current pid
+        pid = os.getpid()
+        os.makedirs(os.path.dirname(lock), exist_ok = True)
+        with open(lock, 'w') as f:
+            f.write(str(pid))
 
         fetch_kp_tables()
-#
-#--- Remove lock file once process is completed
-#
-        os.system(f"rm /tmp/{user}/{name}.lock")
+
+        #: Remove lock file once process is completed
+        os.remove(lock)
