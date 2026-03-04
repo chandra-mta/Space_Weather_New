@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 """
 **fetch_kp_tables.py**: Fetch KP index forecast tables and data from SWPC NOAA
 
@@ -33,7 +34,8 @@ import file_readers as fr
 #
 # --- Define Directory Pathing
 #
-KP_DATA_DIR = "/data/mta4/Space_Weather/KP/Data"
+SPACE_WEATHER = os.getenv('SPACE_WEATHER', "/data/mta4/Space_Weather")
+KP_DATA_DIR = os.path.join(SPACE_WEATHER, "KP", "Data")
 #
 # --- Globals
 #
@@ -67,7 +69,7 @@ def fetch_kp_tables():
     swpc_kp = fetch_SWPC_KP()
     iaga_kp = fetch_IAGA_KP()
 
-    swpc_filename = f"{KP_DATA_DIR}/kp_swpc.ecsv"
+    swpc_filename = os.path.join(KP_DATA_DIR, "kp_swpc.ecsv")
     swpc_kp.meta['description'] = "Forecast of the planetary KP index as sourced from the SWPC. Includes observed, estimated, and predicted values. https://www.swpc.noaa.gov/products/planetary-k-index." # type: ignore
     swpc_kp.meta['sources'] = [ # type: ignore
         {'origin_link': SOURCE_SWPC,
@@ -79,7 +81,7 @@ def fetch_kp_tables():
     ]
     swpc_kp.write(swpc_filename, overwrite=True, delimiter=',')
 
-    iaga_filename = f"{KP_DATA_DIR}/kp_iaga.ecsv"
+    iaga_filename = os.path.join(KP_DATA_DIR, "kp_iaga.ecsv")
     iaga_kp.meta['description'] = "Observations of the planetary KP index as compiled by the IAGA. https://www-app3.gfz-potsdam.de/kp_index/qlyymm.html." # type: ignore
     iaga_kp.meta['sources'] = [ # type: ignore
         {'origin_link': SOURCE_IAGA,
@@ -209,7 +211,7 @@ def write_legacy_files(swpc_kp):
         return line
     
     #: Only write up to the current time block, either observed or estimated.
-    past_archive = f"{KP_DATA_DIR}/k_index_data_past"
+    past_archive = os.path.join(KP_DATA_DIR, "k_index_data_past")
     past_archive_line = fr.get_last_text_line(past_archive) # type: ignore
     start = CxoTime(int(past_archive_line.split('\t')[0]))
     stop = CxoTime()
@@ -223,18 +225,18 @@ def write_legacy_files(swpc_kp):
     
     with open(past_archive,'a') as f:
         f.write(append_past_archive)
-    with open(f"{KP_DATA_DIR}/solar_wind_data_past.txt",'a') as f:
+    with open(os.path.join(KP_DATA_DIR, "solar_wind_data_past.txt"),'a') as f:
         f.write(append_past_solar)
     
     #: Of the most recent data, write the most recent entry if one exists to update
     if len(swpc_kp[sel]) > 0:
         current_entry = swpc_kp[sel][-1]
         line = _format_sol(current_entry)
-        with open(f"{KP_DATA_DIR}/kp.dat",'w') as f:
+        with open(os.path.join(KP_DATA_DIR, "kp.dat"),'w') as f:
             f.write(HEADER+line)
     
     #: Now write the forecast archive.
-    forecast_archive = f"{KP_DATA_DIR}/k_index_data"
+    forecast_archive = os.path.join(KP_DATA_DIR, "k_index_data")
     forecast_archive_line = fr.get_last_text_line(forecast_archive) # type: ignore
     start = CxoTime(int(forecast_archive_line.split('\t')[0]))
     sel = start <= CxoTime(swpc_kp['time_tag'].data)
@@ -247,7 +249,7 @@ def write_legacy_files(swpc_kp):
     
     with open(forecast_archive,'a') as f:
         f.write(append_forecast_archive)
-    with open(f"{KP_DATA_DIR}/solar_wind_data.txt",'a') as f:
+    with open(os.path.join(KP_DATA_DIR, "solar_wind_data.txt"),'a') as f:
         f.write(append_forecast_solar)
 
 if __name__ == "__main__":
@@ -260,7 +262,7 @@ if __name__ == "__main__":
         if args.path:
             KP_DATA_DIR = args.path
         else:
-            KP_DATA_DIR = f"{os.getcwd()}/test/_outTest"
+            KP_DATA_DIR = os.path.join(os.getcwd(), "test", "_outTest")
         os.makedirs(KP_DATA_DIR, exist_ok=True)
 
         fetch_kp_tables()
