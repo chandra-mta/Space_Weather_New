@@ -13,14 +13,24 @@
 # tested-ska-release = "2026.1"
 # ///
 """
+from datetime import timedelta
+from email.mime.text import MIMEText
 import os
-import sys
-import re
-import time
+import shutil
+import signal
+from subprocess import PIPE, Popen
+import traceback
 import numpy
 from cxotime import CxoTime
 import argparse
 from jinja2 import Environment, FileSystemLoader
+from pathlib import Path
+import psutil
+#: third-party libraries used for image downloading and manipulation
+import requests
+from PIL import Image, ImageOps
+import io
+
 #
 #---Define Directory Pathing
 #
@@ -30,7 +40,7 @@ ACE_DATA_DIR : Path = SPACE_WEATHER / "ACE" / "Data"
 ACE_HTML_DIR : Path = SPACE_WEATHER_WEB / "ACE"
 ACE_PLOT_DIR : Path = SPACE_WEATHER_WEB / "ACE" / "Plots"
 SCRIPT_DIR : Path = Path(__file__).parent
-HOUSE_KEEPING : Path = SCRIPT_DIR / "house_keeping"
+HOUSE_KEEPING : Path = SCRIPT_DIR.parent.parent/ "house_keeping"
 TEMPLATE_DIR : Path = SCRIPT_DIR / 'Template'
 
 name = os.path.basename(__file__).split(".")[0]
@@ -392,9 +402,9 @@ def ace_invalid_spec(speci, speci_lim):
 #--- check whether the mail is recently sent out
 #
     out = TMP_DIR / 'prot_spec_violate'
-    if os.path.isfile(out):
-        cmd = 'date >> ' + out
-        os.system(cmd)
+    if out.is_file():
+        with open(out,'a') as f:
+            f.write(f"{CxoTime().date}\n")
 #
 #--- if not, send the warning email
 #
@@ -414,66 +424,44 @@ def ace_invalid_spec(speci, speci_lim):
             fo.write(line)
 
 def send_mail(subject, content, address):
+    """Send Emails
+
+    :param subject: Subject line
+    :type subject: str
+    :param content: Email content as string
+    :type content: str
+    :param address: Email address of the recipient
+    :type address: str
+    """
+    msg = MIMEText(content)
+    msg['Subject'] = subject
+    msg['To'] = address
+
     if TESTMAIL:
-        print(f"Test Mode, interrupting following email.\n\
-              Subject: {subject}\n\
-              Address: {address}\n\
-              Content: {content}\n")
+        print(msg)
     else:
-        os.system(f"echo '{content}' | mailx -s '{subject}' {address}")
+        p = Popen(["/sbin/sendmail", "-t", "-oi"], stdin=PIPE)
+        p.communicate(msg.as_bytes())
 
-def convert_to_stime(year, yday):
-
-    atemp = re.split(r'\.', yday)
-    frac  = float(f"0.{atemp[1]}") 
-    val   = 24 * frac
-    hh    = int(val)
-    diff  = val - hh
-    val   = 60 * diff
-    mm    = int(val)
-    diff  = val - mm
-    ss    = int(60 *diff)
-
-    htime = f"{year:04}:{atemp[0]:03}:{hh:02}:{mm:02}:{ss:02}"
-    stime = CxoTime(htime).secs 
-
-    return stime
 
 def download_img(file, chg=1):
     """
-    down load an image from web site
-    input:  file    --- image file address
-            chg     --- if >0, reverse the color
-    output: <plot_dir>/<name of the image>
+    Download ACE plots from SWPC
     """
-#
-#--- get the name of output img file name
-#
+
     ofile = os.path.basename(file)
     oimg = ACE_PLOT_DIR / ofile
 
-#
-#--- download the img
-#
-    #cmd   = 'lynx -source ' + file + '>' + oimg
     try:
-        cmd  = 'wget -q -O' + oimg + ' ' + file
-        os.system(cmd)
-    except:
-        mc   = re.search('gif', oimg)
-        if mc is not None:
-            cmd = f"cp {HOUSE_KEEPING}/no_plot.gif {oimg}"
-        else:
-            cmd = f"cp {HOUSE_KEEPING}/no_data.png {oimg}"
-        os.system(cmd)
-
-        return
-#
-#--- reverse the color of the image
-#
-    if chg == 1:
-        cmd   = 'convert -negate ' +  oimg + ' ' + oimg
-        os.system(cmd)
+        resp = requests.get(file, timeout=30)
+        resp.raise_for_status()
+        img = Image.open(io.BytesIO(resp.content))
+        img = ImageOps.invert(img.convert('RGB'))
+        img.save(oimg)
+    except Exception:
+        traceback.print_exc()
+        #: network or decoding failure, use placeholder
+        shutil.copyfile(HOUSE_KEEPING / 'no_plot.gif', oimg)
 
 def convert_to_col_data(data):
     """
