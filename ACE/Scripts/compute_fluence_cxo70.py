@@ -1,4 +1,4 @@
-#!/proj/sot/ska3/flight/bin/python
+#! /usr/bin/env python
 """
 **compute_fluence_cxo70.py**: create a html page displaying ace fluence when cxo is above 70kkm
 
@@ -31,9 +31,11 @@ _JINJA_ENV = Environment(loader = FileSystemLoader('Template', followlinks = Tru
 #
 #--- Define Directory Pathing
 #
-EPHEM_DIR = "/data/mta4/Space_Weather/EPHEM"
-ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
-ACE_HTML_DIR = "/data/mta4/www/RADIATION/ACE"
+SPACE_WEATHER = Path(os.getenv("Space_Weather", "/data/mta4/Space_Weather"))
+SPACE_WEATHER_WEB = Path(os.environ.get('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION"))
+ACE_DATA_DIR : Path = SPACE_WEATHER / "ACE" / "Data"
+ACE_HTML_DIR : Path = SPACE_WEATHER_WEB / "ACE"
+EPHEM_DATA_DIR : Path = SPACE_WEATHER / "EPHEM" / "Data"
 WEB_LINK = "cxc.cfa.harvard.edu/mta/RADIATION"
 
 #
@@ -56,7 +58,8 @@ def compute_fluence_cxo70():
 #
 #--- read orbital info
 #
-    with open(f"{EPHEM_DIR}/Data/PE.EPH.gsme_spherical") as f:
+    _spherical = EPHEM_DATA_DIR / "PE.EPH.gsme_spherical"
+    with open(f"{_spherical}") as f:
         data = [line.strip() for line in f.readlines()]
     data  = data[::-1]
     start = 0
@@ -84,7 +87,8 @@ def compute_fluence_cxo70():
 #
 #--- read ace data
 #
-    with open(f"{ACE_DATA_DIR}/ace_7day_archive") as f:
+    _archive = ACE_DATA_DIR / "ace_7day_archive"
+    with open(f"{_archive}") as f:
         data = [line.strip() for line in f.readlines()]
     ftime  = "NA"
     e1     = 0.0
@@ -159,7 +163,8 @@ def compute_fluence_cxo70():
 
     template = _JINJA_ENV.get_template('ace_flux.jinja')
     render = template.render(ace_flux = ace_flux, ace_flux_70kkm = ace_flux_70kkm)
-    with open(f"{ACE_HTML_DIR}/ace_flux.dat", 'w') as fo:
+    _flux = ACE_HTML_DIR / "ace_flux.dat"
+    with open(f"{_flux}", 'w') as fo:
         fo.write(render)
 #
 #--- create the html page
@@ -167,7 +172,8 @@ def compute_fluence_cxo70():
     web_template = _JINJA_ENV.get_template('ace_flux_data.jinja')
     web_render = web_template.render(ace_flux_render = render, WEB_LINK= WEB_LINK)
 
-    with open(f"{ACE_HTML_DIR}/ace_flux_data.html" , 'w') as fo:
+    _html = ACE_HTML_DIR / "ace_flux_data.html"
+    with open(f"{_html}" , 'w') as fo:
             fo.write(web_render)
 
 #-----------------------------------------------------------------------------
@@ -182,18 +188,15 @@ if __name__ == '__main__':
 #--- Determine if running in test mode and change pathing if so
 #
     if args.mode == "test":
-        print("Running In Test Mode.")
         if args.data:
-            ACE_DATA_DIR = args.data
+            ACE_DATA_DIR = Path(args.data)
         else:
-            ACE_DATA_DIR = f"{os.getcwd()}/test/_outTest"
+            ACE_DATA_DIR = Path(os.getcwd(), "test", "_outTest")
         if args.web:
-            ACE_HTML_DIR = args.web
+            ACE_HTML_DIR = Path(args.web)
         else:
-            ACE_HTML_DIR = f"{os.getcwd()}/test/_outTest"
+            ACE_HTML_DIR = Path(os.getcwd(), "test", "_outTest")
         os.makedirs(ACE_HTML_DIR, exist_ok = True)
-        print(f"ACE_DATA_DIR: {ACE_DATA_DIR}")
-        print(f"ACE_HTML_DIR: {ACE_HTML_DIR}")
         compute_fluence_cxo70()
     elif args.mode == "flight":
 #
