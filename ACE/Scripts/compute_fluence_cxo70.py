@@ -17,7 +17,6 @@
 """
 import os
 import signal
-import sys
 from cxotime import CxoTime
 import argparse
 from pathlib import Path
@@ -37,8 +36,6 @@ SPACE_WEATHER_WEB = Path(os.environ.get('SPACE_WEATHER_WEB', "/data/mta4/www/RAD
 ACE_DATA_DIR : Path = SPACE_WEATHER / "ACE" / "Data"
 ACE_HTML_DIR : Path = SPACE_WEATHER_WEB / "ACE"
 EPHEM_DATA_DIR : Path = SPACE_WEATHER / "EPHEM" / "Data"
-WEB_LINK = "cxc.cfa.harvard.edu/mta/RADIATION"
-
 #
 #--- current time
 #
@@ -166,7 +163,7 @@ def compute_fluence_cxo70():
 #--- create the html page
 #
     web_template = _JINJA_ENV.get_template('ace_flux_data.jinja')
-    web_render = web_template.render(ace_flux_render = render, WEB_LINK= WEB_LINK)
+    web_render = web_template.render(ace_flux_render = render)
 
     _html = ACE_HTML_DIR / "ace_flux_data.html"
     with open(f"{_html}" , 'w') as fo:
