@@ -41,7 +41,6 @@ ACE_HTML_DIR : Path = SPACE_WEATHER_WEB / "ACE"
 ACE_PLOT_DIR : Path = SPACE_WEATHER_WEB / "ACE" / "Plots"
 SCRIPT_DIR : Path = Path(__file__).parent
 HOUSE_KEEPING : Path = SCRIPT_DIR.parent.parent/ "house_keeping"
-TEMPLATE_DIR : Path = SCRIPT_DIR / 'Template'
 
 name = os.path.basename(__file__).split(".")[0]
 user = os.getenv("USER", "mta")
@@ -562,7 +561,6 @@ if __name__ == "__main__":
 #
 #--- Path output to same location as unit tests
 #
-        TEMPLATE_DIR = Path(os.getcwd(), "Template")
         TMP_DIR =  Path(os.getcwd(), "test", "_outTest")
         if args.data:
             ACE_DATA_DIR = Path(args.data)

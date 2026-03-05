@@ -16,12 +16,13 @@
 
 """
 import os
+import signal
 import sys
-import re
-import time
 from cxotime import CxoTime
 import argparse
+from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
+import psutil
 
 #
 # --- Template Globals
@@ -68,12 +69,12 @@ def compute_fluence_cxo70():
 #
     stop  = 0
     for ent in data:
-        atemp = re.split(r'\s+', ent)
+        atemp = ent.split()
         stime = float(atemp[0])
 #
 #--- make sure that the span is before the curren time
 #
-        if stime > CURRENT_CHANDRA_TIME:
+        if stime > CURRENT_CHANDRA_TIME: # type: ignore
             continue
 
         alt   = float(atemp[1])
@@ -101,20 +102,15 @@ def compute_fluence_cxo70():
     cstart = 0.0
     cstop  = 0.0
     for ent in data:
-        atemp = re.split(r'\s+', ent)
-#
-#--- convert time in Chandra Time
-#
-        ltime = atemp[0] + ':' + atemp[1] + ':' + atemp[2] + ':' + atemp[3][0] + atemp[3][1] + ':'
-        ltime = ltime    + atemp[3][2] + atemp[3][3] + ':00'
-        ltime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(ltime, '%Y:%m:%d:%H:%M:%S'))
-        stime = int(CxoTime(ltime).secs)
+        atemp = ent.split()
+        #: convert time in Chandra Time   
+        stime = CxoTime(f"{atemp[0]}-{atemp[1]}-{atemp[2]}T{atemp[3][0]}{atemp[3][1]}:{atemp[3][2]}{atemp[3][3]}:00").secs #: isot format input.
 #
 #--- compute fluence between the span
 #
-        if stime < start:
+        if stime < start: # type: ignore
             continue
-        elif stime > stop:
+        elif stime > stop: # type: ignore
             break
         else:
             ind1 = float(atemp[6])
@@ -159,7 +155,7 @@ def compute_fluence_cxo70():
 # --- Render ace_flux jinja template
 #
     ace_flux = data[-1]
-    ace_flux_70kkm = f"{ftime}  -{e1:10.2e}{e2:10.2e}  -{p1:10.2e}{p2:10.2e}{p3:10.2e}{p4:10.2e}{p5:10.2e}{cstop - cstart:8.0f}"
+    ace_flux_70kkm = f"{ftime}  -{e1:10.2e}{e2:10.2e}  -{p1:10.2e}{p2:10.2e}{p3:10.2e}{p4:10.2e}{p5:10.2e}{cstop - cstart:8.0f}" # type: ignore
 
     template = _JINJA_ENV.get_template('ace_flux.jinja')
     render = template.render(ace_flux = ace_flux, ace_flux_70kkm = ace_flux_70kkm)
@@ -199,18 +195,26 @@ if __name__ == '__main__':
         os.makedirs(ACE_HTML_DIR, exist_ok = True)
         compute_fluence_cxo70()
     elif args.mode == "flight":
-#
-#--- Create a lock file and exit strategy in case of race conditions.
-#
-        import getpass
+        #: Create a lock file and exit strategy in case of race conditions.
         name = os.path.basename(__file__).split(".")[0]
-        user = getpass.getuser()
-        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
-            sys.exit(f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog.")
-        else:
-            os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
+        user = os.getenv("USER", "mta")
+        lock = Path("/tmp", user, f"{name}.lock")
+
+        #: If lock file exists, read the pid and kill the process, then remove the lock file
+        if os.path.isfile(lock):
+            with open(lock) as f:
+                pid = int(f.read().strip())
+            if psutil.pid_exists(pid):
+                os.kill(pid, signal.SIGTERM)
+            os.remove(lock)
+        
+        #: Lock file with current pid
+        pid = os.getpid()
+        os.makedirs(os.path.dirname(lock), exist_ok = True)
+        with open(lock, 'w') as f:
+            f.write(str(pid))
+
         compute_fluence_cxo70()
-#
-#--- Remove lock file once process is completed
-#
-        os.system(f"rm /tmp/{user}/{name}.lock")
+
+        #: Remove lock file once process is completed
+        os.remove(lock)
