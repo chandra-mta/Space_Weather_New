@@ -1,4 +1,4 @@
-#!/proj/sot/ska3/flight/bin/python
+#!/usr/bin/env python
 """
 **collect_goes_long.py**: Collect GOES data for the long term use
 
@@ -9,7 +9,7 @@
 # /// script
 # requires-python = ">3.12"
 # dependencies = [
-#   "file_readers>=0.1",
+#   "file_readers=0.1",
 # ]
 # ///
 
@@ -18,18 +18,19 @@
 # ///
 """
 import os
-import sys
+import signal
 from cxotime import CxoTime
-import json
 import argparse
-import traceback
 from astropy.io import ascii
 import file_readers as fr
+from pathlib import Path
+import psutil
 #
 # --- Define directory pathing
 #
-GOES_DATA_DIR = "/data/mta4/Space_Weather/GOES/Data"
-OUT_DATA_DIR = "/data/mta4/Space_Weather/GOES/Data"
+SPACE_WEATHER = Path(os.getenv('SPACE_WEATHER', "/data/mta4/Space_Weather"))
+GOES_DATA_DIR : Path = SPACE_WEATHER / "GOES" / "Data"
+OUT_GOES_DATA_DIR : Path = SPACE_WEATHER / "GOES" / "Data"
 
 _ARCHIVE_COLS = (
     'P1',
@@ -47,30 +48,31 @@ _ARCHIVE_COLS = (
     'P10',
 )
 
-
 def collect_goes_long():
     """Collect GOES data for the long term use
 
-    :Web Link: https://services.swpc.noaa.gov/json/goes/primary/differential-protons-7-day.json
-    :File Out: <data_dir>/goes_data_r.txt
+    :File In: <goes_data_dir>/goes_data_r.txt
+    :File Out: <out_goes_data_dir>/goes_data_r.txt
                 Time P1  P2A P2B P3  P4  P5  P6  P7  P8A P8B P8C P9  P10 HRC Proxy
     """
     #
     # --- find the last entry time
     #
-    last_line = fr.get_last_text_line(f"{GOES_DATA_DIR}/goes_data_r.txt")
+    archive_file = GOES_DATA_DIR / "goes_data_r.txt"
+    last_line = fr.get_last_text_line(str(archive_file)) # type: ignore
     cutoff = CxoTime(last_line.split()[0])
     #
     # --- extract proton data
     #
-    goes_table = ascii.read(f"{GOES_DATA_DIR}/goes_differential_protons.ecsv")
-    cxotime = CxoTime(goes_table['time_tag'].data)
-    goes_table.add_column(cxotime, name = 'cxotime')
+    proton_data_file = GOES_DATA_DIR / "goes_differential_protons.ecsv"
+    goes_table = ascii.read(str(proton_data_file))
+    cxotime = CxoTime(goes_table['time_tag'].data) # type: ignore
+    goes_table.add_column(cxotime, name = 'cxotime') # type: ignore
     #
     # --- Select new data lines
     #
-    sel = goes_table['cxotime'] > cutoff
-    subtable = goes_table[sel]
+    sel = goes_table['cxotime'] > cutoff # type: ignore
+    subtable = goes_table[sel] # type: ignore
     #
     # --- compute hrc proxy
     #
@@ -85,15 +87,15 @@ def collect_goes_long():
     line =''
     for row in subtable:
         line += format_archive_line(row)
-    
-    with open(f"{OUT_DATA_DIR}/goes_data_r.txt", 'a') as f:
+    out_archive_file = OUT_GOES_DATA_DIR / "goes_data_r.txt"
+    with open(out_archive_file, 'a') as f:
         f.write(line)
 
 
 def compute_hrc(row):
     """
     :NOTE: The HRC Proxy was calculated based on GOES channel flux rates in MeV units.
-        The MTA GOES data sets use MeV units accoridngly, but documentation of GOES uses KeV.
+        The MTA GOES data sets use MeV units accordingly, but documentation of GOES uses KeV.
         This proxy equation for the GOES-R series was put in use as of 2021:125:06:05:00.
     
     P5 = 11.64 - 23.27 MeV
@@ -132,8 +134,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.mode == "test":
-        OUT_DATA_DIR = f"{os.getcwd()}/test/_outTest"
-        os.makedirs(OUT_DATA_DIR, exist_ok=True)
+        
+        if args.path:
+            OUT_GOES_DATA_DIR = Path(args.path)
+        else:
+            OUT_GOES_DATA_DIR = Path(os.getcwd(), "test", "_outTest")
+        os.makedirs(OUT_GOES_DATA_DIR, exist_ok=True)
         collect_goes_long()
     else:
         #
