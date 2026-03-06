@@ -1,0 +1,2 @@
+A test run of the ACE alerts must operate on manufactured data values with the msot up-to-date time values.
+The two test archive files are examples, and the Jupyter Notebook is a convenience notebook for generating and up-to-date test file.
