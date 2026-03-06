@@ -142,25 +142,26 @@ if __name__ == "__main__":
         os.makedirs(OUT_GOES_DATA_DIR, exist_ok=True)
         collect_goes_long()
     else:
-        #
-        # --- Create a lock file and exit strategy in case of race conditions
-        #
-        import getpass
-
+        #: Create a lock file and exit strategy in case of stall.
         name = os.path.basename(__file__).split(".")[0]
-        user = getpass.getuser()
-        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
-            sys.exit(
-                f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog."
-            )
-        else:
-            os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
+        user = os.getenv("USER", "mta")
+        lock = Path("/tmp", user, f"{name}.lock")
 
-        try:
-            collect_goes_long()
-        except json.decoder.JSONDecodeError:
-            traceback.print_exc() #: Record issue with downloaded JSON and finish.
-        #
-        # --- Remove lock file once process is completed
-        #
-        os.system(f"rm /tmp/{user}/{name}.lock")
+        #: If lock file exists, read the pid and kill the process, then remove the lock file
+        if os.path.isfile(lock):
+            with open(lock) as f:
+                pid = int(f.read().strip())
+            if psutil.pid_exists(pid):
+                os.kill(pid, signal.SIGTERM)
+            os.remove(lock)
+        
+        #: Lock file with current pid
+        pid = os.getpid()
+        os.makedirs(lock.parent, exist_ok = True)
+        with open(lock, 'w') as f:
+            f.write(str(pid))
+
+        collect_goes_long()
+
+        #: Remove lock file once process is completed
+        os.remove(lock)
