@@ -20,11 +20,10 @@ import urllib.error
 import json
 import numpy as np
 import argparse
-import traceback
-import getpass
 from jinja2 import Environment, FileSystemLoader
 from astropy.io import ascii
 from pathlib import Path
+import psutil
 #
 #--- Define Directory Pathing
 #
@@ -639,32 +638,26 @@ if __name__ == "__main__":
 
         update_goes_html_page()
     elif args.mode == "flight":
-#
-#--- Create a lock file and exit strategy in case of race conditions
-#
+        #: Create a lock file and exit strategy in case of stall.
         name = os.path.basename(__file__).split(".")[0]
-        user = getpass.getuser()
-        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
-            notification = f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. " 
-            notification += "Check calling scripts/cronjob/cronlog. Killing old process."
-            #Email alert if the script stalls out, since HRC alerting depends on output
-            send_mail(f"Stalled Script: {name}", notification, ADMIN)
-            with open(f"/tmp/{user}/{name}.lock") as f:
-                pid = int(f.readlines()[-1].strip())
-            #Kill old stalling process and remove corresponding lock file.
-            os.remove(f"/tmp/{user}/{name}.lock")
-            os.kill(pid,signal.SIGTERM)
-            #Generate lock file for the current corresponding process
-            os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
-        else:
-            #Previous script run must have completed successfully. Prepare lock file for this script run.
-            os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
+        user = os.getenv("USER", "mta")
+        lock = Path("/tmp", user, f"{name}.lock")
 
-        try:
-            update_goes_html_page()
-        except:  # noqa: E722
-            traceback.print_exc()
-#
-#--- Remove lock file once process is completed
-#
-        os.system(f"rm /tmp/{user}/{name}.lock")
+        #: If lock file exists, read the pid and kill the process, then remove the lock file
+        if os.path.isfile(lock):
+            notification = f"Lock file exists as {lock} Process already running/errored out. Check calling scripts/cronjob/cronlog. Killing old process." 
+            send_mail(f"Stalled Script: {name}", notification, ADMIN)
+            with open(lock) as f:
+                pid = int(f.read().strip())
+            if psutil.pid_exists(pid):
+                os.kill(pid, signal.SIGTERM)
+            os.remove(lock)
+        
+        #: Lock file with current pid
+        pid = os.getpid()
+        os.makedirs(lock.parent, exist_ok = True)
+        with open(lock, 'w') as f:
+            f.write(str(pid))
+        update_goes_html_page()
+        #: Remove lock file once process is completed
+        os.remove(lock)
