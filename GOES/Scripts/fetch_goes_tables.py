@@ -1,4 +1,4 @@
-#!/proj/sot/ska3/flight/bin/python
+#!/usr/bin/env python
 """
 **fetch_goes_tables.py**: Fetch GOES particle tables and data from SWPC NOAA
 
@@ -20,10 +20,13 @@ from time import sleep
 from cxotime import CxoTime
 import getpass
 import signal
+from pathlib import Path
 #
 # --- Define Directory Pathing
 #
-GOES_DATA_DIR = '/data/mta4/Space_Weather/GOES/Data'
+SPACE_WEATHER = Path(os.getenv('SPACE_WEATHER', "/data/mta4/Space_Weather"))
+GOES_DATA_DIR : Path = SPACE_WEATHER / "GOES" / "Data"
+
 DIFF_PROTONS_LINK = 'https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json'
 INTG_PROTONS_LINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-protons-3-day.json'
 INTG_ELECTRONS_LINK = 'https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-3-day.json'
@@ -75,7 +78,7 @@ def fetch_goes_tables():
 #
 # --- Write table file metadata
 #
-    x_filename = f"{GOES_DATA_DIR}/goes_differential_protons.ecsv"
+    x_filename = GOES_DATA_DIR / "goes_differential_protons.ecsv"
     x.meta['description'] = "Differential directional proton fluxes reported in 13 energy bands between 1.02 MeV and 404 MeV from the GOES-R series satellite. https://www.spaceweather.gov/products/goes-proton-flux."
     x.meta['sources'] = [
         {
@@ -83,10 +86,10 @@ def fetch_goes_tables():
             'origin_script': os.path.abspath(__file__),
             'update_time': CXONOW.date,
             'mta_owned_origin': False,
-            'output_file': x_filename
+            'output_file': str(x_filename)
         }
     ]
-    y_filename = f"{GOES_DATA_DIR}/goes_integral_protons.ecsv"
+    y_filename = GOES_DATA_DIR / "goes_integral_protons.ecsv"
     y.meta['description'] = "Integral proton fluxes reported in 8 energy thresholds between ≥1 and ≥500 MeV from the GOES-R series satellite. https://www.spaceweather.gov/products/goes-proton-flux."
     y.meta['sources'] = [
         {
@@ -94,10 +97,10 @@ def fetch_goes_tables():
             'origin_script': os.path.abspath(__file__),
             'update_time': CXONOW.date,
             'mta_owned_origin': False,
-            'output_file': y_filename
+            'output_file': str(y_filename)
         }
     ]
-    z_filename = f"{GOES_DATA_DIR}/goes_integral_electrons.ecsv"
+    z_filename = GOES_DATA_DIR / "goes_integral_electrons.ecsv"
     z.meta['description'] = "Integral electron fluxes for ≥2 MeV from the GOES-R series satellite. https://www.spaceweather.gov/products/goes-electron-flux."
     z.meta['sources'] = [
         {
@@ -105,7 +108,7 @@ def fetch_goes_tables():
             'origin_script': os.path.abspath(__file__),
             'update_time': CXONOW.date,
             'mta_owned_origin': False,
-            'output_file': z_filename
+            'output_file': str(z_filename)
         }
     ]
     x.write(x_filename, overwrite = True, format='ascii.ecsv', delimiter=',')
@@ -144,7 +147,7 @@ def make_xray_table():
     #
     flare_table['region'] = flare_table['region'].tolist()
     #: Apply metadata
-    filename = f'{GOES_DATA_DIR}/goes_flares.ecsv'
+    filename = GOES_DATA_DIR / "goes_flares.ecsv"
     flare_table['max_xrlong'].format = ".5e"
     flare_table['max_xrlong'].unit = "W/m^2*s"
     flare_table['current_int_xrlong'].format = ".5e"
@@ -160,14 +163,14 @@ def make_xray_table():
             'origin_script': os.path.abspath(__file__),
             'update_time': CXONOW.date,
             'mta_owned_origin': False,
-            'output_file': filename
+            'output_file': str(filename)
         },
         {
             'origin_link': EVENTLINK,
             'origin_script': os.path.abspath(__file__),
             'update_time': CXONOW.date,
             'mta_owned_origin': False,
-            'output_file': filename
+            'output_file': str(filename)
         }
     ]
     #
@@ -245,9 +248,9 @@ if __name__ == "__main__":
 
     if args.mode == 'test':
         if args.path:
-            GOES_DATA_DIR = args.path
+            GOES_DATA_DIR = Path(args.path)
         else:
-            GOES_DATA_DIR = f"{os.getcwd()}/test/_outTest"
+            GOES_DATA_DIR = Path(os.getcwd(), 'test', '_outTest')
         os.makedirs(GOES_DATA_DIR, exist_ok=True)
 
         main()
