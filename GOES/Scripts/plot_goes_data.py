@@ -16,6 +16,7 @@ from time import sleep
 import urllib.request
 import urllib.error
 from astropy.table import Table
+from astropy.io import ascii
 from datetime import datetime
 import matplotlib as mpl
 import numpy as np
@@ -35,7 +36,6 @@ SPACE_WEATHER = Path(os.getenv("Space_Weather", "/data/mta4/Space_Weather"))
 SPACE_WEATHER_WEB = Path(os.environ.get('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION"))
 GOES_DATA_DIR : Path = SPACE_WEATHER / "GOES" / "Data"
 GOES_PLOT_DIR : Path = SPACE_WEATHER_WEB / "GOES" / "Plots"
-
 #
 # --- JSON data web links
 #
@@ -121,6 +121,61 @@ OFFSET_TICK_FORMATTING = [
     "%H:%M",  #: min
     "%H:%M",  #: seconds
 ]
+
+def main():
+
+    #: Read the data files
+    _diff_file = GOES_DATA_DIR / "goes_differential_protons.ecsv"
+    _intg_file = GOES_DATA_DIR / "goes_integral_protons.ecsv"
+    diff_table = ascii.read(_diff_file)
+    intg_table = ascii.read(_intg_file)
+    #: Format the differential plotting dictionary
+    lines = []
+    for info in DIFF_GROUP_SELECTION:
+        avg = group_avg(diff_table, info)
+        lines.append(avg)
+
+    times = [datetime.strptime(x, ISO_FORMATTING) for x in diff_table['time_tag']]
+    diff_data_dict = {"times": times, "lines": lines}
+    #
+    # --- Define extra plotting variables
+    #
+    diff_data_dict["units"] = "p/cm2-s-sr-MeV"
+    diff_data_dict["title"] = "Proton Flux (Differential)"
+    diff_data_dict["labels"] = [
+        f"{x.min}-{x.max} Mev" for x in DIFF_GROUP_SELECTION
+    ]
+    diff_data_dict["colors"] = ["fuchsia", "green", "blue"]
+    diff_data_dict["limits"] = {"y_min": 1e-4, "y_max": 1e4}
+    diff_data_dict["limit_lines"] = {
+        "P4GM": (90.91, diff_data_dict["colors"][1]),
+        "P41GM": (0.71, diff_data_dict["colors"][2]),
+    }
+    #: Format the integral plotting dictionary
+    lines = [intg_table[energy] for energy in INTG_GROUP_SELECTION]
+    times = [datetime.strptime(x, ISO_FORMATTING) for x in intg_table['time_tag']]
+
+    intg_data_dict = {"times": times, "lines": lines}
+    #
+    # --- Define extra plotting variables
+    #
+    intg_data_dict["units"] = "p/cm2-s-sr"
+    intg_data_dict["title"] = "Proton Flux (Integral)"
+    intg_data_dict["labels"] = INTG_GROUP_SELECTION
+    intg_data_dict["colors"] = ["red", "blue", "#51FF3B"]
+    intg_data_dict["limits"] = {"y_min": 1e-2, "y_max": 1e4}
+    
+    #: Run and save the plotting functions
+    _diff_plot = GOES_PLOT_DIR / "goes_protons.png"
+    diff_fig = plot_data(diff_data_dict)
+    diff_fig.savefig(_diff_plot, format="png", dpi=300)
+    plt.close(diff_fig)
+
+    _intg_plot = GOES_PLOT_DIR / "goes_particles.png"
+    intg_fig = plot_data(intg_data_dict)
+    intg_fig.savefig(_intg_plot, format="png", dpi=300)
+    plt.close(intg_fig)
+
 
 def plot_goes_data(dlink=DLINK, clink=CLINK, choice=["diff", "intg"]):
     """Fetch and plot GOES data
@@ -324,6 +379,7 @@ def plot_data(data_dict):
     #
     fig = plt.gcf()
     fig.set_size_inches(8.0, 5.0)
+    return fig
     #
     # --- save the plot in png format
     #
@@ -356,7 +412,7 @@ if __name__ == "__main__":
         
         os.makedirs(GOES_PLOT_DIR, exist_ok=True)
         try:
-            plot_goes_data()
+            main()
         except json.decoder.JSONDecodeError:
             traceback.print_exc()
             #: No cleanup of lock files
