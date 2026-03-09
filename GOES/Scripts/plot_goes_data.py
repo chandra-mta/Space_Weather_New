@@ -1,4 +1,4 @@
-#!/proj/sot/ska3/flight/bin/python
+#!/usr/bin/env python
 """
 **plot_goes_data.py**: Get and plot goes data.
 
@@ -27,12 +27,14 @@ import matplotlib.font_manager as font_manager
 from matplotlib.dates import AutoDateLocator, ConciseDateFormatter
 import argparse
 import traceback
-
+from pathlib import Path
 #
 # --- Defining Directory Pathing
 #
-HTML_DIR = "/data/mta4/www/RADIATION"
-PLOT_DIR = f"{HTML_DIR}/GOES/Plots"
+SPACE_WEATHER = Path(os.getenv("Space_Weather", "/data/mta4/Space_Weather"))
+SPACE_WEATHER_WEB = Path(os.environ.get('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION"))
+GOES_DATA_DIR : Path = SPACE_WEATHER / "GOES" / "Data"
+GOES_PLOT_DIR : Path = SPACE_WEATHER_WEB / "GOES" / "Plots"
 
 #
 # --- JSON data web links
@@ -145,7 +147,7 @@ def plot_goes_data(dlink=DLINK, clink=CLINK, choice=["diff", "intg"]):
         #
         diff_data_dict["units"] = "p/cm2-s-sr-MeV"
         diff_data_dict["title"] = "Proton Flux (Differential)"
-        diff_data_dict["filename"] = f"{PLOT_DIR}/goes_protons.png"
+        diff_data_dict["filename"] = GOES_PLOT_DIR / "goes_protons.png"
         diff_data_dict["labels"] = [
             f"{x.min}-{x.max} Mev" for x in DIFF_GROUP_SELECTION
         ]
@@ -169,7 +171,7 @@ def plot_goes_data(dlink=DLINK, clink=CLINK, choice=["diff", "intg"]):
         #
         intg_data_dict["units"] = "p/cm2-s-sr"
         intg_data_dict["title"] = "Proton Flux (Integral)"
-        intg_data_dict["filename"] = f"{PLOT_DIR}/goes_particles.png"
+        intg_data_dict["filename"] = GOES_PLOT_DIR / "goes_particles.png"
         intg_data_dict["labels"] = INTG_GROUP_SELECTION
         intg_data_dict["colors"] = ["red", "blue", "#51FF3B"]
         intg_data_dict["limits"] = {"y_min": 1e-2, "y_max": 1e4}
@@ -182,7 +184,7 @@ def rerun(func):
     _freq = 3
     _errors = (json.decoder.JSONDecodeError, urllib.error.URLError)
     def wrapper_func(*args,**kwargs):
-        _last_exception = None
+        _last_exception = Exception()
         for i in range(_freq):
             try:
                 return func(*args, **kwargs)
@@ -331,20 +333,9 @@ def plot_data(data_dict):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        "-m",
-        "--mode",
-        choices=["flight", "test"],
-        required=True,
-        help="Determine running mode.",
-    )
-    parser.add_argument(
-        "-p",
-        "--path",
-        required=False,
-        help="Directory path to determine output location of plot.",
-    )
+    parser.add_argument("-m", "--mode", choices=["flight", "test"], required=True, help="Determine running mode.")
+    parser.add_argument("-d", "--data", required = False, help = "Directory path to determine input location of data.")
+    parser.add_argument("-p", "--path", required=False, help="Directory path to determine output location of plot.")
     args = parser.parse_args()
     #
     # --- Determine if running in test mode and change pathing if so
@@ -353,11 +344,17 @@ if __name__ == "__main__":
         #
         # --- Path output to same location as unit tests
         #
-        OUT_DIR = f"{os.getcwd()}/test/_outTest"
-        PLOT_DIR = f"{OUT_DIR}/GOES/Plots"
+        if args.data:
+            GOES_DATA_DIR = Path(args.data)
+        else:
+            GOES_DATA_DIR = Path(os.getcwd(), "test", '_outTest')
+
         if args.path:
-            PLOT_DIR = args.path
-        os.makedirs(PLOT_DIR, exist_ok=True)
+            GOES_PLOT_DIR = Path(args.path)
+        else:
+            GOES_PLOT_DIR = Path(os.getcwd(), "test", "_outTest", "GOES", "Plots")
+        
+        os.makedirs(GOES_PLOT_DIR, exist_ok=True)
         try:
             plot_goes_data()
         except json.decoder.JSONDecodeError:
