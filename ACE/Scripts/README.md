@@ -56,7 +56,7 @@ http://cxc.cfa.harvard.edu/mta/RADIATION/ACE/ace.html
 - Secondary
     - SPACE_WEATHER=/data/mta/Script/Space_Weather
     - SPACE_WEATHER_WEB=/data/mta/www/MIRROR/Space_Weather
-    - SPACE_WEATHER_URL=https://ops-web.cfa.harvard.edu/mta/RADIATION
+    - SPACE_WEATHER_URL=https://ops-web.cfa.harvard.edu/mta/Space_Weather
     - ENV_FLIGHT=/proj/sot/ska3/flight
 
 ### Cron Job:
