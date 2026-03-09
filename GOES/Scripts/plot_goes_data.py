@@ -11,11 +11,6 @@
 """
 import signal
 import os
-import json
-from time import sleep
-import urllib.request
-import urllib.error
-from astropy.table import Table
 from astropy.io import ascii
 from datetime import datetime
 import matplotlib as mpl
@@ -27,7 +22,6 @@ import matplotlib.pyplot as plt
 import matplotlib.font_manager as font_manager
 from matplotlib.dates import AutoDateLocator, ConciseDateFormatter
 import argparse
-import traceback
 from pathlib import Path
 #
 # --- Defining Directory Pathing
@@ -36,13 +30,6 @@ SPACE_WEATHER = Path(os.getenv("Space_Weather", "/data/mta4/Space_Weather"))
 SPACE_WEATHER_WEB = Path(os.environ.get('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION"))
 GOES_DATA_DIR : Path = SPACE_WEATHER / "GOES" / "Data"
 GOES_PLOT_DIR : Path = SPACE_WEATHER_WEB / "GOES" / "Plots"
-#
-# --- JSON data web links
-#
-DLINK = (
-    "https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json"
-)
-CLINK = "https://services.swpc.noaa.gov/json/goes/primary/integral-protons-3-day.json"
 
 BAND_LIMITS = {
     "P1": {"min": 1.02, "max": 1.86},
@@ -135,7 +122,7 @@ def main():
         avg = group_avg(diff_table, info)
         lines.append(avg)
 
-    times = [datetime.strptime(x, ISO_FORMATTING) for x in diff_table['time_tag']]
+    times = [datetime.strptime(x, ISO_FORMATTING) for x in diff_table['time_tag']] # type: ignore
     diff_data_dict = {"times": times, "lines": lines}
     #
     # --- Define extra plotting variables
@@ -152,8 +139,8 @@ def main():
         "P41GM": (0.71, diff_data_dict["colors"][2]),
     }
     #: Format the integral plotting dictionary
-    lines = [intg_table[energy] for energy in INTG_GROUP_SELECTION]
-    times = [datetime.strptime(x, ISO_FORMATTING) for x in intg_table['time_tag']]
+    lines = [intg_table[energy] for energy in INTG_GROUP_SELECTION] # type: ignore
+    times = [datetime.strptime(x, ISO_FORMATTING) for x in intg_table['time_tag']] # type: ignore
 
     intg_data_dict = {"times": times, "lines": lines}
     #
@@ -175,126 +162,6 @@ def main():
     intg_fig = plot_data(intg_data_dict)
     intg_fig.savefig(_intg_plot, format="png", dpi=300)
     plt.close(intg_fig)
-
-
-def plot_goes_data(dlink=DLINK, clink=CLINK, choice=["diff", "intg"]):
-    """Fetch and plot GOES data
-
-    :param dlink: JSON file or web path for differential protons, defaults to DLINK
-    :type dlink: str, optional
-    :param clink: JSON file or web path for integral protons, defaults to CLINK
-    :type clink: str, optional
-    :param choice: List of strings to determine which kind of plot to generates, defaults to ["diff", "intg"]
-    :type choice: list, optional
-    """
-    if "diff" in choice:
-        diff_table = json2table(dlink)
-        diff_table = reorient_particle_table(diff_table, gen_column="channel", column_list=ALL_DIFF_CHANNEL)
-        lines = []
-        for info in DIFF_GROUP_SELECTION:
-            avg = group_avg(diff_table, info)
-            lines.append(avg)
-
-        times = [datetime.strptime(x, ISO_FORMATTING) for x in diff_table['time_tag']]
-        diff_data_dict = {"times": times, "lines": lines}
-        #
-        # --- Define extra plotting variables
-        #
-        diff_data_dict["units"] = "p/cm2-s-sr-MeV"
-        diff_data_dict["title"] = "Proton Flux (Differential)"
-        diff_data_dict["filename"] = GOES_PLOT_DIR / "goes_protons.png"
-        diff_data_dict["labels"] = [
-            f"{x.min}-{x.max} Mev" for x in DIFF_GROUP_SELECTION
-        ]
-        diff_data_dict["colors"] = ["fuchsia", "green", "blue"]
-        diff_data_dict["limits"] = {"y_min": 1e-4, "y_max": 1e4}
-        diff_data_dict["limit_lines"] = {
-            "P4GM": (90.91, diff_data_dict["colors"][1]),
-            "P41GM": (0.71, diff_data_dict["colors"][2]),
-        }
-        plot_data(diff_data_dict)
-
-    if "intg" in choice:
-        intg_table = json2table(clink)
-        intg_table = reorient_particle_table(intg_table, column_list=INTG_GROUP_SELECTION)
-        lines = [intg_table[energy] for energy in INTG_GROUP_SELECTION]
-        times = [datetime.strptime(x, ISO_FORMATTING) for x in intg_table['time_tag']]
-
-        intg_data_dict = {"times": times, "lines": lines}
-        #
-        # --- Define extra plotting variables
-        #
-        intg_data_dict["units"] = "p/cm2-s-sr"
-        intg_data_dict["title"] = "Proton Flux (Integral)"
-        intg_data_dict["filename"] = GOES_PLOT_DIR / "goes_particles.png"
-        intg_data_dict["labels"] = INTG_GROUP_SELECTION
-        intg_data_dict["colors"] = ["red", "blue", "#51FF3B"]
-        intg_data_dict["limits"] = {"y_min": 1e-2, "y_max": 1e4}
-        plot_data(intg_data_dict)
-
-def rerun(func):
-    """
-    Function decorator which sleeps and reruns the provided function upon encountering a set of errors.
-    """
-    _freq = 3
-    _errors = (json.decoder.JSONDecodeError, urllib.error.URLError)
-    def wrapper_func(*args,**kwargs):
-        _last_exception = Exception()
-        for i in range(_freq):
-            try:
-                return func(*args, **kwargs)
-            except _errors as e:
-                _last_exception = e
-                sleep(5)
-        _last_exception.add_note(f'Decorator ran function {_freq} times. Still encountered error.')
-        raise _last_exception
-    return wrapper_func
-
-@rerun
-def json2table(jlink):
-    """Extract JSON file and format into Astropy Table
-
-    :param jlink: JSON web address or file
-    :type jlink: str
-    :return: astropy table of the provided data.
-    :rtype: astropy.Table
-
-    """
-    if os.path.isfile(jlink):
-        with open(jlink) as f:
-            data = json.load(f)
-    else:
-        with urllib.request.urlopen(jlink, timeout = 10) as url:
-            data = json.loads(url.read().decode())
-    data = Table(data)
-    return data
-
-def reorient_particle_table(table, gen_column = 'energy', column_list = None):
-    """
-    Take a particle table with multiple time tag entires (one for each energy).
-    This is the default for SWPC data products. Then reorient to single time entries with flux for each column
-    """
-    for col in table.columns:
-        if 'time' in col:
-            time_column = col
-    
-    time_list = sorted(set(table[time_column].data))
-    if column_list is None:
-        column_list = sorted(set(table[gen_column]))
-    
-    new_rows = []
-    for time in time_list:
-        row = {time_column: time}
-        for col in column_list:
-            selection = np.logical_and(table[time_column] == time, table[gen_column] == col)
-            if sum(selection) == 0:
-                flux = np.ma.masked
-            else:
-                flux = table[selection]['flux'].data[0]
-            row.update({col: flux})
-        new_rows.append(row)
-    
-    return Table(rows = new_rows)
 
 def group_avg(table, group_info, factor = 1e3):
     """
@@ -321,7 +188,7 @@ def plot_data(data_dict):
     """
     plt.close("all")
     mpl.rcParams["font.size"] = 14
-    props = font_manager.FontProperties(size=14)
+    font_manager.FontProperties(size=14)
     plt.subplots_adjust(hspace=0.10)
     ax = plt.subplot(111)
     ax.set_ylim(
@@ -380,12 +247,6 @@ def plot_data(data_dict):
     fig = plt.gcf()
     fig.set_size_inches(8.0, 5.0)
     return fig
-    #
-    # --- save the plot in png format
-    #
-    plt.savefig(data_dict["filename"], format="png", dpi=300)
-
-    plt.close("all")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -411,11 +272,7 @@ if __name__ == "__main__":
             GOES_PLOT_DIR = Path(os.getcwd(), "test", "_outTest", "GOES", "Plots")
         
         os.makedirs(GOES_PLOT_DIR, exist_ok=True)
-        try:
-            main()
-        except json.decoder.JSONDecodeError:
-            traceback.print_exc()
-            #: No cleanup of lock files
+        main()
     elif args.mode == "flight":
         #: Create a lock file and exit strategy in case of stall.
         name = os.path.basename(__file__).split(".")[0]
@@ -435,8 +292,6 @@ if __name__ == "__main__":
         os.makedirs(lock.parent, exist_ok = True)
         with open(lock, 'w') as f:
             f.write(str(pid))
-
-        plot_goes_data()
-
+        main()
         #: Remove lock file once process is completed
         os.remove(lock)
