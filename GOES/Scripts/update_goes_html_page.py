@@ -1,4 +1,4 @@
-#!/proj/sot/ska3/flight/bin/python
+#!/usr/bin/env python
 """
 **update_goes_html_page.py**: Update goes differential protons html page.
 
@@ -9,26 +9,30 @@
 # tested-ska-release = "2026.1"
 # ///
 """
+from email.mime.text import MIMEText
 import os
 import signal
 from datetime import datetime, timedelta
+from subprocess import PIPE, Popen
 from time import sleep
 import urllib.request
+import urllib.error
 import json
 import numpy as np
 import argparse
-import traceback
-import getpass
 from jinja2 import Environment, FileSystemLoader
 from astropy.io import ascii
+from pathlib import Path
+import psutil
 #
 #--- Define Directory Pathing
 #
-GOES_DIR = '/data/mta4/Space_Weather/GOES'
-GOES_DATA_DIR = f"{GOES_DIR}/Data"
-GOES_TEMPLATE_DIR = f"{GOES_DIR}/Scripts/Template"
-HTML_GOES_DIR = '/data/mta4/www/RADIATION/GOES'
-ADMIN = ['mtadude@cfa.harvard.edu']
+SPACE_WEATHER = Path(os.getenv("Space_Weather", "/data/mta4/Space_Weather"))
+SPACE_WEATHER_WEB = Path(os.environ.get('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION"))
+GOES_DATA_DIR : Path = SPACE_WEATHER / "GOES" / "Data"
+GOES_WEB_DIR : Path = SPACE_WEATHER_WEB / "GOES"
+TESTMAIL = False
+ADMIN = 'mtadude@cfa.harvard.edu'
 
 #
 # --- Links to data sources
@@ -98,18 +102,15 @@ def update_goes_html_page():
     #
     # --- Write template contents to a html file
     #
-    diff_file = f"{HTML_GOES_DIR}/goes_pchan_p.html"
-    os.makedirs(os.path.dirname(diff_file), exist_ok=True)
+    diff_file =  GOES_WEB_DIR / "goes_pchan_p.html"
     with open(diff_file, "w") as f:
         f.write(diff_render)
     
-    intg_file = f"{HTML_GOES_DIR}/goes_part_p.html"
-    os.makedirs(os.path.dirname(intg_file), exist_ok=True)
+    intg_file = GOES_WEB_DIR / "goes_part_p.html"
     with open(intg_file, "w") as f:
         f.write(intg_render)
     
-    xray_file = f"{HTML_GOES_DIR}/goes_xray_p.html"
-    os.makedirs(os.path.dirname(xray_file), exist_ok=True)
+    xray_file = GOES_WEB_DIR / "goes_xray_p.html"
     with open(xray_file, "w") as f:
         f.write(xray_render)
 
@@ -186,7 +187,7 @@ def make_diff_table():
             pass
 
         try:
-            line = line + "%5.0f\t\t" % (hrc_val[k])
+            line = line + f"{hrc_val[k]:5.0f}\t\t"
         except:
             line = line + '\t\t '
 
@@ -217,7 +218,7 @@ def make_diff_table():
     line = line + adjust_format(np.mean([i for i in p_data[11][1] if i >=0])) + "\t"
     line = line + adjust_format(np.mean([i for i in p_data[12][1] if i >=0])) + "\t"
 
-    line = line + "%5.0f\t\t" % (np.mean([i for i in hrc_val if i >= 0]))
+    line = line + f"{np.mean([i for i in hrc_val if i >= 0]):5.0f}\t\t"
     line = line + f"{np.mean([i for i in pre_hrc_val if i >= 0]):5.0f}\n" 
 #
     line = line + '\tFLUENCE\t\t\t'
@@ -235,7 +236,7 @@ def make_diff_table():
     line = line + adjust_format(np.sum([i for i in p_data[11][1] if i >=0])) + "\t"
     line = line + adjust_format(np.sum([i for i in p_data[12][1] if i >=0])) + "\t"
 
-    line = line + "%5.0f\t\t" % (np.sum([i for i in hrc_val if i >= 0]))
+    line = line + f"{np.sum([i for i in hrc_val if i >= 0]):5.0f}\t\t"
     line = line + f"{np.sum([i for i in pre_hrc_val if i >= 0]):5.0f}\n\n"
     line = line + '\tHRC Proxy is defined as:\n\n'
     line = line + '\tHRC Proxy  = 143 * P5 + 64738 * P6 + 162505 * P7 + 4127\n\n'
@@ -244,7 +245,7 @@ def make_diff_table():
     line = line + '\tHRC Proxy Legacy = 6000 * P5P6 + 270000 * P7 + 100000 * P8ABC\n\n'
     line = line + '\twhere P5P6 is a combination of P5 and P6 and P8ABC is a combination of P8A, P8B, and P8C.\n'
 
-    outfile = f"{GOES_DATA_DIR}/Gp_pchan_5m.txt"
+    outfile = GOES_DATA_DIR / "Gp_pchan_5m.txt"
     with open(outfile, 'w') as fo:
         fo.write(aline) #: Write out data file for CRM use
 
@@ -302,15 +303,15 @@ def make_intg_table():
             except:  # noqa: E722
                 continue
             line = line   +  out +"\t\t" 
-            aline = aline + "%2.3e\t\t" % (p_save[m][1][k])
+            aline = aline + f"{p_save[m][1][k]:2.3e}\t\t"
         line = line + '\n'
 #
 #--- electron does not have distinction for 0.8 2.8 or 4.0; so fake with all E>2.0
 #
         try:
-            aline = aline  + "%2.3e\t%2.3e\n" % (p_save[m][1][k], p_save[m][1][k])
+            aline = aline  + f"{p_save[m][1][k]:2.3e}\t{p_save[m][1][k]:2.3e}\n"
         except:  # noqa: E722
-            aline = aline  + "na\t%na\n" % (p_save[m][1][k], p_save[m][1][k])
+            aline = aline  + "na\t%na\n"
 #
 #--- table break
 #
@@ -341,7 +342,8 @@ def make_intg_table():
     bline = bline + '\t' + '-'*150 +'\n'
     bline = bline + aline
 
-    with open(f"{GOES_DATA_DIR}/Gp_part_5m.txt", 'w') as fo:
+    outfile = GOES_DATA_DIR / "Gp_part_5m.txt"
+    with open(outfile, 'w') as fo:
         fo.write(bline)
 
     return line
@@ -350,7 +352,8 @@ def make_xray_table():
     """
     Generate webpage table
     """
-    flare_table = ascii.read(f"{GOES_DATA_DIR}/goes_flares.ecsv")
+    _flare_file = GOES_DATA_DIR / "goes_flares.ecsv"
+    flare_table = ascii.read(_flare_file)
     #: Only select and compare noteworthy flares
     sel = flare_table['max_class'] > 'M1'
     flare_table = flare_table[sel]
@@ -376,7 +379,7 @@ def rerun(func):
     _freq = 3
     _errors = (json.decoder.JSONDecodeError, urllib.error.URLError)
     def wrapper_func(*args,**kwargs):
-        _last_exception = None
+        _last_exception = Exception()
         for i in range(_freq):
             try:
                 return func(*args, **kwargs)
@@ -569,96 +572,92 @@ def adjust_format(val):
     if val < 0: #: Missing entry
         out = f"{val:5.0f}"
     elif val < 10:
-        out = "%1.5f" % (val)
+        out = f"{val:1.5f}"
     elif val < 100:
-        out = "%2.4f" % (val)
+        out = f"{val:2.4f}"
     elif val < 1000:
-        out = "%3.3f" % (val)
+        out = f"{val:3.3f}"
     elif val < 10000:
-        out = "%4.2f" % (val)
+        out = f"{val:4.2f}"
     elif val < 100000:
-        out = "%5.1f" % (val)
+        out = f"{val:5.1f}"
     else:
-        out = "%5.0f" % (val)
+        out = f"{val:5.0f}"
     
     return out
 
-def send_mail(content, subject, admin):
+def send_mail(subject, content, address):
+    """Send Emails
+
+    :param subject: Subject line
+    :type subject: str
+    :param content: Email content as string
+    :type content: str
+    :param address: Email address of the recipient
+    :type address: str
     """
-    send out a notification email to admin in case the
-    script is found to be stalling, which would impact data file
-    used in hrc proxy alerting
-    """
-    content += f'This message was send to {" ".join(admin)}'
-    cmd = f'echo "{content}" | mailx -s "{subject}" {" ".join(admin)}'
-    os.system(cmd)
+    msg = MIMEText(content)
+    msg['Subject'] = subject
+    msg['To'] = address
+
+    if TESTMAIL:
+        print(msg)
+    else:
+        p = Popen(["/sbin/sendmail", "-t", "-oi"], stdin=PIPE)
+        p.communicate(msg.as_bytes())
                                                                                            
 #----------------------------------------------------------------------------
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    parser.add_argument("-d", "--data", required = False, help = "Directory path to determine input location of data.")
     parser.add_argument("-p", "--path", help = "Determine data output file path")
     parser.add_argument("-j", "--json", help = "Determine json data file source")
     parser.add_argument("-e", '--email', nargs = '*', required = False, help = "List of emails to receive notifications")
     args = parser.parse_args()
 
     if args.mode == 'test':
-#
-#--- Redefine Admin for sending notification email in test mode
-#
-        if args.email is not None:
-            ADMIN = args.email
-        else:
-            ADMIN = [os.popen(f"getent aliases | grep {getpass.getuser()}").read().split(":")[1].strip()]
+        TESTMAIL = True
 #
 #---Define pathing for test output
 #
-        OUT_DIR = f"{os.getcwd()}/test/_outTest"
-        os.makedirs(OUT_DIR, exist_ok = True)
-        GOES_TEMPLATE_DIR = f"{os.getcwd()}/Template"
-        if args.path:
-            GOES_DATA_DIR = args.path
-            HTML_GOES_DIR = args.path
+        if args.data:
+            GOES_DATA_DIR = Path(args.data)
         else:
-            GOES_DATA_DIR = OUT_DIR
-            HTML_GOES_DIR = f"{OUT_DIR}/GOES"
-            os.makedirs(HTML_GOES_DIR, exist_ok = True)
+            GOES_DATA_DIR = Path(os.getcwd(), "test", "_outTest")
+
+        if args.path:
+            GOES_WEB_DIR = Path(args.path)
+        else:
+            GOES_WEB_DIR = Path(os.getcwd(), "test", "_outTest", "GOES")
+        os.makedirs(GOES_WEB_DIR, exist_ok = True)
 
         if args.json:
             DLINK = args.json
-        
-        #: Refresh GOES css
-        os.system(f"cp {GOES_TEMPLATE_DIR}/goes.css {HTML_GOES_DIR}/")
 
         update_goes_html_page()
     elif args.mode == "flight":
-#
-#--- Create a lock file and exit strategy in case of race conditions
-#
+        #: Create a lock file and exit strategy in case of stall.
         name = os.path.basename(__file__).split(".")[0]
-        user = getpass.getuser()
-        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
-            notification = f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. " 
-            notification += "Check calling scripts/cronjob/cronlog. Killing old process."
-            #Email alert if the script stalls out, since HRC alerting depends on output
-            send_mail(notification,f"Stalled Script: {name}", ADMIN)
-            with open(f"/tmp/{user}/{name}.lock") as f:
-                pid = int(f.readlines()[-1].strip())
-            #Kill old stalling process and remove corresponding lock file.
-            os.remove(f"/tmp/{user}/{name}.lock")
-            os.kill(pid,signal.SIGTERM)
-            #Generate lock file for the current corresponding process
-            os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
-        else:
-            #Previous script run must have completed successfully. Prepare lock file for this script run.
-            os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
+        user = os.getenv("USER", "mta")
+        lock = Path("/tmp", user, f"{name}.lock")
 
-        try:
-            update_goes_html_page()
-        except:  # noqa: E722
-            traceback.print_exc()
-#
-#--- Remove lock file once process is completed
-#
-        os.system(f"rm /tmp/{user}/{name}.lock")
+        #: If lock file exists, read the pid and kill the process, then remove the lock file
+        if os.path.isfile(lock):
+            notification = f"Lock file exists as {lock} Process already running/errored out. Check calling scripts/cronjob/cronlog. Killing old process." 
+            send_mail(f"Stalled Script: {name}", notification, ADMIN)
+            with open(lock) as f:
+                pid = int(f.read().strip())
+            if psutil.pid_exists(pid):
+                os.kill(pid, signal.SIGTERM)
+            os.remove(lock)
+        
+        #: Lock file with current pid
+        pid = os.getpid()
+        os.makedirs(lock.parent, exist_ok = True)
+        with open(lock, 'w') as f:
+            f.write(str(pid))
+        update_goes_html_page()
+        #: Remove lock file once process is completed
+        os.remove(lock)
