@@ -12,9 +12,11 @@
                 "ENV_FLIGHT": "/proj/sot/ska3/flight"
                 },
                 "machine": "mta@boba-v",
-                "cadence": "14 0,3,6,9,12,15,18,21 * * *",
-                "command": "cd ${SPACE_WEATHER}/KP/Scripts; ${ENV_FLIGHT}/bin/skare python fetch_kp_tables.py -m flight",
-                "log_file": "${HOME}/Logs/kp_index_update.cron"
+                "fetch": {
+                    "cadence": "14 0,3,6,9,12,15,18,21 * * *",
+                    "command": "cd ${SPACE_WEATHER}/KP/Scripts; ${ENV_FLIGHT}/bin/skare python fetch_kp_tables.py -m flight",
+                    "log_file": "${HOME}/Logs/kp_index_update.cron"
+                }
             },
             "secondary":{
                 "variables": {
@@ -22,9 +24,11 @@
                 "ENV_FLIGHT": "/proj/sot/ska3/flight"
                 },
                 "machine": "mta@r2d2-v",
-                "cadence": "14 0,3,6,9,12,15,18,21 * * *",
-                "command": "cd ${SPACE_WEATHER}/KP/Scripts; ${ENV_FLIGHT}/bin/skare python fetch_kp_tables.py -m flight",
-                "log_file": "${HOME}/Logs/kp_index_update_mirror.cron"
+                "fetch": {
+                    "cadence": "14 0,3,6,9,12,15,18,21 * * *",
+                    "command": "cd ${SPACE_WEATHER}/KP/Scripts; ${ENV_FLIGHT}/bin/skare python fetch_kp_tables.py -m flight",
+                    "log_file": "${HOME}/Logs/kp_index_update_mirror.cron"
+                }
             }
 
         }
@@ -43,9 +47,11 @@
                 "ENV_FLIGHT": "/proj/sot/ska3/flight"
                 },
                 "machine": "mta@boba-v",
-                "cadence": "3,8,13,18,23,28,33,38,43,48,53,58 * * * *",
-                "command": "${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/ACE/Scripts/ace.sh",
-                "log_file": "${HOME}/Logs/ace_main_new.cron"
+                "ace": {
+                    "cadence": "3,8,13,18,23,28,33,38,43,48,53,58 * * * *",
+                    "command": "${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/ACE/Scripts/ace.sh",
+                    "log_file": "${HOME}/Logs/ace_main_new.cron"
+                }
             },
             "secondary": {
                 "variables": {
@@ -54,10 +60,79 @@
                 "SPACE_WEATHER_URL": "https://ops-web.cfa.harvard.edu/mta/Space_Weather",
                 "ENV_FLIGHT": "/proj/sot/ska3/flight"
                 },
+                "machine": "mta@r2d2-v",
+                "ace": {
+                    "cadence": "3,8,13,18,23,28,33,38,43,48,53,58 * * * *",
+                    "command": "${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/ACE/Scripts/ace.sh",
+                    "log_file": "${HOME}/Logs/ace_main_mirror.cron"
+                }
+            }
+        }
+    },
+    "GOES": {
+        "runtime": "ska3-flight",
+        "dependencies": {
+            "ska3-flight": ">=2026.1",
+            "file_readers": ">=0.1.0"
+        },
+        "cron": {
+            "primary": {
+                "variables": {
+                "SPACE_WEATHER": "/data/mta4/Space_Weather",
+                "SPACE_WEATHER_WEB": "/data/mta4/www/RADIATION",
+                "SPACE_WEATHER_URL": "https://cxc.cfa.harvard.edu/mta/RADIATION",
+                "ENV_FLIGHT": "/proj/sot/ska3/flight"
+                },
                 "machine": "mta@boba-v",
-                "cadence": "3,8,13,18,23,28,33,38,43,48,53,58 * * * *",
-                "command": "${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/ACE/Scripts/ace.sh",
-                "log_file": "${HOME}/Logs/ace_main_mirror.cron"
+                "long" :{
+                    "cadence": "14 2 * * *",
+                    "command": "cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python collect_goes_long.py -m flight",
+                    "log_file": "${HOME}/Logs/goes_long_term_new.cron"
+                },
+                "media": {
+                    "cadence": "30 2 * * *",
+                    "command": "cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python swpc_media.py -m flight",
+                    "log_file": "${HOME}/Logs/swpc_media.cron"
+                },
+                "check_archive": {
+                    "cadence": "4,9,14,19,24,29,34,39,44,49,54,59 * * * *",
+                    "command": "cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python check_archive.py -m flight",
+                    "log_file": "${HOME}/Logs/goes_archive_check.cron"
+                },
+                "goes": {
+                    "cadence": "2,7,12,17,22,27,32,37,42,47,52,57 * * * *",
+                    "command": "${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/goes.sh",
+                    "log_file": "${HOME}/Logs/goes_main_new.cron"
+                }
+            },
+            "secondary": {
+                "variables": {
+                "SPACE_WEATHER": "/data/mta/Script/Space_Weather",
+                "SPACE_WEATHER_WEB": "/data/mta/www/MIRROR/Space_Weather",
+                "SPACE_WEATHER_URL": "https://ops-web.cfa.harvard.edu/mta/Space_Weather",
+                "ENV_FLIGHT": "/proj/sot/ska3/flight"
+                },
+                "machine": "mta@r2d2-v",
+                "long" :{
+                    "cadence": "14 2 * * *",
+                    "command": "cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python collect_goes_long.py -m flight",
+                    "log_file": "${HOME}/Logs/goes_long_term_mirror.cron"
+                },
+                "media": {
+                    "cadence": "30 2 * * *",
+                    "command": "cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python swpc_media.py -m flight",
+                    "log_file": "${HOME}/Logs/swpc_media_mirror.cron"
+                },
+                "check_archive": {
+                    "cadence": "4,9,14,19,24,29,34,39,44,49,54,59 * * * *",
+                    "command": "cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python check_archive.py -m flight",
+                    "log_file": "${HOME}/Logs/goes_archive_check_mirror.cron"
+                },
+                "goes": {
+                    "cadence": "2,7,12,17,22,27,32,37,42,47,52,57 * * * *",
+                    "command": "${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/goes.sh",
+                    "log_file": "${HOME}/Logs/goes_main_mirror.cron"
+                }
             }
         }
     }

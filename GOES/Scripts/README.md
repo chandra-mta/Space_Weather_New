@@ -112,11 +112,11 @@ Therefore, we do not run the script too early in the day in case the days' activ
 14 2 * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python collect_goes_long.py -m flight >> ${HOME}/Logs/goes_long_term_new.cron 2>&1
 30 2 * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python swpc_media.py -m flight >> ${HOME}/Logs/swpc_media.cron 2>&1
 4,9,14,19,24,29,34,39,44,49,54,59 * * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python check_archive.py -m flight >> ${HOME}/Logs/goes_archive_check.cron 2>&1
-2,7,12,17,22,27,32,37,42,47,52,57 * * * * ${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/goes_wrap_script >> ${HOME}/Logs/goes_main_new.cron 2>&1
+2,7,12,17,22,27,32,37,42,47,52,57 * * * * ${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/goes.sh >> ${HOME}/Logs/goes_main_new.cron 2>&1
 
 
 - Secondary (mta@r2d2-v):
 14 2 * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python collect_goes_long.py -m flight >> ${HOME}/Logs/goes_long_term_mirror.cron 2>&1
 30 2 * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python swpc_media.py -m flight >> ${HOME}/Logs/swpc_media_mirror.cron 2>&1
-4,9,14,19,24,29,34,39,44,49,54,59 * * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python check_archive.py -m flight >> ${HOME}/Logs/goes_archive_check.cron 2>&1
-2,7,12,17,22,27,32,37,42,47,52,57 * * * * ${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/goes_wrap_script >> ${HOME}/Logs/goes_main_new.cron 2>&1
+4,9,14,19,24,29,34,39,44,49,54,59 * * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python check_archive.py -m flight >> ${HOME}/Logs/goes_archive_check_mirror.cron 2>&1
+2,7,12,17,22,27,32,37,42,47,52,57 * * * * ${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/goes.sh >> ${HOME}/Logs/goes_main_mirror.cron 2>&1
