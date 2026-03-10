@@ -5,15 +5,18 @@
 :Author: W. Aaron (william.aaron@cfa.harvard.edu)
 :Last Updated: Feb 20, 2025
 
+:TODO: Consider adapting the hrc proxy violation archive into an astropy ECSV file in order to make use of table metadata
+
 # /// testing
 # tested-ska-release = "2026.1"
 # ///
 """
+
+from email.mime.text import MIMEText
 import os
 import signal
 import argparse
-import getpass
-import traceback
+from subprocess import PIPE, Popen
 from datetime import datetime, timezone
 import json
 import csv
@@ -58,7 +61,7 @@ HRC_ADMIN = [
     "mtadude@cfa.harvard.edu",
 ]  #: Alert Email Addresses
 ADMIN = ["mtadude@cfa.harvard.edu"]
-
+TESTMAIL = True
 
 def alert_hrc():
     """Read the GOES differential proton data for the calculated hrc proxy value
@@ -74,7 +77,6 @@ def alert_hrc():
         "hrc_proxy": int(hrc_proxy),
         "hrc_proxy_legacy": int(hrc_proxy_legacy),
     }  #: Cast astropy table data into json serializable types
-
     #
     # --- Check current status of HRC proxy violations.
     # --- If one has been found very recently, do not email about the violation again.
@@ -101,7 +103,7 @@ def alert_hrc():
                     curr_viol[f"{kind}_{proxy}"] = recent_data
 
     if content != "" and len(HRC_ADMIN) > 0:
-        send_mail(content, "HRC Proxy Violation", HRC_ADMIN)
+        send_mail("HRC Proxy Violation", content, HRC_ADMIN)
     with open(_violation_record, "w") as f:
         json.dump(curr_viol, f, indent=4)
 
@@ -109,12 +111,30 @@ def alert_hrc():
     add_to_archive(recent_data, _proxy_data_file)
 
 
-def send_mail(content, subject, admin):
+def send_mail(subject, content, address):
+    """Send Emails
+
+    :param subject: Subject line
+    :type subject: str
+    :param content: Email content as string
+    :type content: str
+    :param address: Email address of the recipient, or a list/tuple or recipients
+    :type address: str, list, tuple
     """
-    send out a notification email to admin
-    """
-    cmd = f'echo "{content}" | mailx -s "{subject}" {" ".join(admin)}'
-    os.system(cmd)
+    msg = MIMEText(content)
+    msg['Subject'] = subject
+    if isinstance(address,(list,tuple)):
+        msg['To'] = ','.join(address)
+    elif isinstance(address,str):
+        msg['To'] = address
+    else:
+        raise Exception("Please provide an address string or a lsit of address strings")
+
+    if TESTMAIL:
+        print(msg)
+    else:
+        p = Popen(["/sbin/sendmail", "-t", "-oi"], stdin=PIPE)
+        p.communicate(msg.as_bytes())
 
 
 def viol_time_check(curr_viol, kind, proxy):
@@ -139,45 +159,12 @@ def add_to_archive(recent_data, outfile):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-m",
-        "--mode",
-        choices=["flight", "test"],
-        required=True,
-        help="Determine running mode.",
-    )
-    parser.add_argument(
-        "-e",
-        "--email",
-        nargs="*",
-        required=False,
-        help="List of emails to receive notifications",
-    )
-    parser.add_argument("-g", "--goes", help="Determine GOES data file path")
-    parser.add_argument(
-        "-a", "--archive_hrc", help="Determine long term record file path for HRC proxy"
-    )
-    parser.add_argument(
-        "-j", "--json", help="Pass in record for current state of HRC proxy violations."
-    )
+    parser.add_argument("-m", "--mode", choices=["flight", "test"], required=True, help="Determine running mode.")
+    parser.add_argument("-d", "--data", help="Determine directory path for GOES Data")
     args = parser.parse_args()
 
     if args.mode == "test":
-        #
-        # --- Redefine Admin for sending notification email in test mode
-        #
-        if args.email is not None:
-            HRC_ADMIN = args.email
-            ADMIN = args.email
-        else:
-            HRC_ADMIN = [
-                os.popen(f"getent aliases | grep {getpass.getuser()}")
-                .read()
-                .split(":")[1]
-                .strip()
-            ]
-            ADMIN = HRC_ADMIN
-
+        TESTMAIL = True
         #
         # --- Redefine pathing for GOES and HRC PROXY data files
         #
