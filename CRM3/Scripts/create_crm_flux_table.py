@@ -3,7 +3,7 @@
 **create_crm_flux_table.py**: Fetch all relevant data and calculate the CRM flux table for current orbit
 
 :Author: w. aaron (William.aaron@cfa.harvard.edu)
-:Last Updated: Aug 08, 2025
+:Last Updated: Mar 11, 2026
 
 # /// script
 # requires-python = ">=3.12"
@@ -25,7 +25,6 @@ from datetime import datetime, timedelta
 import numpy as np
 from django.db import close_old_connections, utils
 import argparse
-import getpass
 import signal
 import glob
 from pathlib import Path
