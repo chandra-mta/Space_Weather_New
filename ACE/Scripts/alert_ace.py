@@ -147,9 +147,9 @@ def parse_p3(ace_table):
         if ace_table[i][_P3_CHANNEL] - no_outlier[-1][_P3_CHANNEL] < _BOGUS_P3:
             no_outlier.add_row(ace_table[i])
     
-    two_hours_ago = no_outlier["cxotime"][-1] - timedelta(hours=2) # type: ignore
+    two_hours_ago = no_outlier["cxotime"][-1] - timedelta(hours=2)
     sel = np.logical_and(
-        no_outlier["cxotime"].data >= two_hours_ago, no_outlier[_P3_CHANNEL] > 0 # type: ignore
+        no_outlier["cxotime"].data >= two_hours_ago, no_outlier[_P3_CHANNEL] > 0
     )
     sel = np.logical_and(
         sel, no_outlier['proton_status'] == 0
@@ -157,15 +157,15 @@ def parse_p3(ace_table):
     data_select = no_outlier[sel]
     if len(data_select) > 0:
         p130f = (
-            np.mean(data_select[_P3_CHANNEL].data) * 7200 # type: ignore
+            np.mean(data_select[_P3_CHANNEL].data) * 7200
         )  #: Calculates the fluence with available data.
-        _cxotime = data_select[-1]["cxotime"] # type: ignore
+        _cxotime = data_select[-1]["cxotime"]
     else:
         p130f = -1e5 #: No valid data to send alert.
         _cxotime = _NOW
     
     ace_p3 = {
-        "cxotime": _cxotime, # type: ignore
+        "cxotime": _cxotime,
         "val": p130f,
     }
     return ace_p3
@@ -186,7 +186,7 @@ def parse_invalid(ace_table):
     #: Sporadically valid data might be available. Send alert if number of valid point's doesn't exceed the leeway
     invalid = False
     if len(ace_table) - 5 <= sum(missing_selection):
-        if 8 <= _NOW.datetime.hour <= 22: # type: ignore
+        if 8 <= _NOW.datetime.hour <= 22:
             invalid = True
     return {'cxotime': _NOW, 'val': invalid}
 
@@ -208,7 +208,7 @@ def check_alert_triggers():
     #: Check for P3 alert trigger
     if ace_p3["val"] > ACE_P3_LIMIT:
         #: P3 triggered. Check to prevent repeat alerting.
-        if (ace_p3.get("cxotime").datetime - CxoTime(curr_viol["ace_p3"]["cxotime"]).datetime).days > 1: # type: ignore
+        if (ace_p3.get("cxotime").datetime - CxoTime(curr_viol["ace_p3"]["cxotime"]).datetime).days > 1:
             #: New triggering instance. Send alert and update violation file.
             curr_viol['ace_p3'] = {
                 "cxotime": int(ace_p3["cxotime"].secs),
@@ -235,7 +235,7 @@ def check_alert_triggers():
     #: Check for invalid data alert trigger
     if ace_invalid['val']:
         #: Invalid triggered. Check to prevent repeat alerting
-        if (ace_invalid.get("cxotime").datetime - CxoTime(curr_viol["ace_invalid"]["cxotime"]).datetime).days > 1: # type: ignore
+        if (ace_invalid.get("cxotime").datetime - CxoTime(curr_viol["ace_invalid"]["cxotime"]).datetime).days > 1:
             curr_viol['ace_invalid'] = {
                 "cxotime": int(ace_invalid["cxotime"].secs),
                 "val": ace_invalid["val"]

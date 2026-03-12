@@ -71,8 +71,8 @@ def fetch_kp_tables():
     iaga_kp = fetch_IAGA_KP()
 
     swpc_filename = KP_DATA_DIR / "kp_swpc.ecsv"
-    swpc_kp.meta['description'] = "Forecast of the planetary KP index as sourced from the SWPC. Includes observed, estimated, and predicted values. https://www.swpc.noaa.gov/products/planetary-k-index." # type: ignore
-    swpc_kp.meta['sources'] = [ # type: ignore
+    swpc_kp.meta['description'] = "Forecast of the planetary KP index as sourced from the SWPC. Includes observed, estimated, and predicted values. https://www.swpc.noaa.gov/products/planetary-k-index."
+    swpc_kp.meta['sources'] = [
         {'origin_link': SOURCE_SWPC,
          'origin_script': os.path.abspath(__file__),
          'update_time': CXONOW.date,
@@ -83,8 +83,8 @@ def fetch_kp_tables():
     swpc_kp.write(swpc_filename, overwrite=True, delimiter=',')
 
     iaga_filename = KP_DATA_DIR / "kp_iaga.ecsv"
-    iaga_kp.meta['description'] = "Observations of the planetary KP index as compiled by the IAGA. https://www-app3.gfz-potsdam.de/kp_index/qlyymm.html." # type: ignore
-    iaga_kp.meta['sources'] = [ # type: ignore
+    iaga_kp.meta['description'] = "Observations of the planetary KP index as compiled by the IAGA. https://www-app3.gfz-potsdam.de/kp_index/qlyymm.html."
+    iaga_kp.meta['sources'] = [
         {'origin_link': SOURCE_IAGA,
          'origin_script': os.path.abspath(__file__),
          'update_time': CXONOW.date,
@@ -206,21 +206,21 @@ def write_legacy_files(swpc_kp):
     
     def _format_sol(row):
         cxo = CxoTime(row['time_tag'])
-        ldate = cxo.datetime.strftime("%Y %m %d %H%M") # type: ignore
+        ldate = cxo.datetime.strftime("%Y %m %d %H%M")
         kval = round(row['kp'],1)
         line = f"{ldate}\t\t{ldate}\t\t{kval}\t\t\t{ldate}\t\t{kval}\t\t{kval}\n"
         return line
     
     #: Only write up to the current time block, either observed or estimated.
     past_archive = KP_DATA_DIR / "k_index_data_past"
-    past_archive_line = fr.get_last_text_line(past_archive) # type: ignore
+    past_archive_line = fr.get_last_text_line(past_archive)
     start = CxoTime(int(past_archive_line.split('\t')[0]))
     stop = CxoTime()
     sel = np.logical_and(start <= CxoTime(swpc_kp['time_tag'].data), CxoTime(swpc_kp['time_tag'].data) <= stop)
     append_past_archive = ''
     append_past_solar = ''
     for row in swpc_kp[sel]:
-        _time = int(CxoTime(row['time_tag']).secs) # type: ignore
+        _time = int(CxoTime(row['time_tag']).secs)
         append_past_archive += f"{_time}\t{round(row['kp'],1)}\n"
         append_past_solar += _format_sol(row)
     
@@ -238,13 +238,13 @@ def write_legacy_files(swpc_kp):
     
     #: Now write the forecast archive.
     forecast_archive = KP_DATA_DIR / "k_index_data"
-    forecast_archive_line = fr.get_last_text_line(forecast_archive) # type: ignore
+    forecast_archive_line = fr.get_last_text_line(forecast_archive)
     start = CxoTime(int(forecast_archive_line.split('\t')[0]))
     sel = start <= CxoTime(swpc_kp['time_tag'].data)
     append_forecast_archive = ''
     append_forecast_solar = ''
     for row in swpc_kp[sel]:
-        _time = int(CxoTime(row['time_tag']).secs) # type: ignore
+        _time = int(CxoTime(row['time_tag']).secs)
         append_forecast_archive += f"{_time}\t{round(row['kp'],1)}\n"
         append_forecast_solar += _format_sol(row)
     

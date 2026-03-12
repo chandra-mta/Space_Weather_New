@@ -59,20 +59,20 @@ def collect_goes_long():
     # --- find the last entry time
     #
     archive_file = GOES_DATA_DIR / "goes_data_r.txt"
-    last_line = fr.get_last_text_line(str(archive_file)) # type: ignore
+    last_line = fr.get_last_text_line(str(archive_file))
     cutoff = CxoTime(last_line.split()[0])
     #
     # --- extract proton data
     #
     proton_data_file = GOES_DATA_DIR / "goes_differential_protons.ecsv"
     goes_table = ascii.read(str(proton_data_file))
-    cxotime = CxoTime(goes_table['time_tag'].data) # type: ignore
-    goes_table.add_column(cxotime, name = 'cxotime') # type: ignore
+    cxotime = CxoTime(goes_table['time_tag'].data)
+    goes_table.add_column(cxotime, name = 'cxotime')
     #
     # --- Select new data lines
     #
-    sel = goes_table['cxotime'] > cutoff # type: ignore
-    subtable = goes_table[sel] # type: ignore
+    sel = goes_table['cxotime'] > cutoff
+    subtable = goes_table[sel]
     #
     # --- compute hrc proxy
     #

@@ -125,7 +125,7 @@ def create_crm_flux_table():
     _flux_table_file = CRM_DATA_DIR / "crm_flux_table.ecsv"
     if _flux_table_file.is_file():
         current_table = ascii.read(_flux_table_file)
-        start_fetch = CxoTime(current_table["cxosecs"][-1]) # type: ignore
+        start_fetch = CxoTime(current_table["cxosecs"][-1])
     else:
         #: If something happened to the current orbit's flux table, restart from scratch.
         start_fetch = orbit_data["orbit_start"]
@@ -139,7 +139,7 @@ def create_crm_flux_table():
     crm_flux_table = add_flux_attenuation(crm_flux_table)
 
     if current_table is not None:
-        current_metadata = current_table.meta # type: ignore
+        current_metadata = current_table.meta
         crm_flux_table = vstack([current_table, crm_flux_table], join_type="exact")
         crm_flux_table = unique(crm_flux_table, keys="cxosecs")
 
@@ -178,7 +178,7 @@ def archive(previous_table):
     _crm_archive_file = CRM_DATA_DIR / "CRMarchive.ecsv"
     _previous_table_file = CRM_DATA_DIR / "previous_crm_flux_table.ecsv"
     archive_table = ascii.read(_crm_archive_file)
-    archive_table.add_row( # type: ignore
+    archive_table.add_row(
         [
             previous_table.meta["orbit_start"],
             previous_table.meta["orbit_stop"],
@@ -187,7 +187,7 @@ def archive(previous_table):
             attenuated_crm_fluence,
         ]
     )
-    archive_table.write(_crm_archive_file, overwrite=True, delimiter=",") # type: ignore
+    archive_table.write(_crm_archive_file, overwrite=True, delimiter=",")
     previous_table.write(_previous_table_file, overwrite=True, delimiter=",")
 
 
@@ -252,14 +252,14 @@ def read_instrument_files(start_fetch):
     fp_table = ascii.read(
         FP_FILE, data_start=19000, names=("cxotime", "instrument", "obsid")
     )  #: History spans to 2001, start later then select.
-    sel_fp = fp_table["cxotime"] >= start_fetch - timedelta(days=4) # type: ignore
-    fp_table = fp_table[sel_fp] # type: ignore
+    sel_fp = fp_table["cxotime"] >= start_fetch - timedelta(days=4)
+    fp_table = fp_table[sel_fp]
 
     grat_table = ascii.read(
         GRAT_FILE, data_start=7050, names=("cxotime", "hetg", "letg", "obsid")
     )  #: History spans to 2001, start later then select.
-    sel_grat = grat_table["cxotime"] >= start_fetch - timedelta(days=4) # type: ignore
-    grat_table = grat_table[sel_grat] # type: ignore
+    sel_grat = grat_table["cxotime"] >= start_fetch - timedelta(days=4)
+    grat_table = grat_table[sel_grat]
     return fp_table, grat_table
 
 
@@ -271,10 +271,10 @@ def read_kp(start_fetch):
     kp_table = ascii.read(_kp_file)
     #: Note that the kp_forecast_table is fetched every 3 hours,
     #: therefore the KP estimates can periodically be outdated.
-    start_sel = kp_table["time_tag"] >= _z(start_fetch - timedelta(hours=3)) # type: ignore
-    stop_sel = kp_table["time_tag"] <= _z(CXONOW) # type: ignore
+    start_sel = kp_table["time_tag"] >= _z(start_fetch - timedelta(hours=3))
+    stop_sel = kp_table["time_tag"] <= _z(CXONOW)
     sel = np.logical_and(start_sel, stop_sel)
-    kp_table = kp_table[sel] # type: ignore
+    kp_table = kp_table[sel]
     return kp_table
 
 
@@ -344,10 +344,10 @@ def format_crm_flux_table(start_fetch, kp_table):
         )
         _table = kp_to_crm_data[row["kp"]]
         sel = np.logical_and(
-            _table["cxosecs"] >= start_interval_marker.secs, # type: ignore
-            _table["cxosecs"] <= stop_interval_marker.secs, # type: ignore
+            _table["cxosecs"] >= start_interval_marker.secs,
+            _table["cxosecs"] <= stop_interval_marker.secs,
         )
-        _table = _table[sel] # type: ignore
+        _table = _table[sel]
         include_cxosecs = _table["cxosecs"].tolist()
         include_region = _table["sol_region_idx"].tolist()
         include_flux = _table["crm_proton_flux"].tolist()
@@ -365,7 +365,7 @@ def format_crm_flux_table(start_fetch, kp_table):
         [cxosecs, kp, sol_region_idx, crm_proton_flux],
         names=("cxosecs", "kp", "sol_region_idx", "crm_proton_flux"),
     )
-    stop_sel = crm_flux_table["cxosecs"] <= CXONOW.secs # type: ignore
+    stop_sel = crm_flux_table["cxosecs"] <= CXONOW.secs
     crm_flux_table = crm_flux_table[stop_sel]
     return crm_flux_table
 
@@ -382,11 +382,11 @@ def add_instrument_config_file(crm_flux_table, start_fetch):
         entry_date = CxoTime(entry["cxosecs"]).date
         #: Bisect finds the index to insert a value into an array,
         #: therefore stepping back by one is the most recent state.
-        inst_idx = bisect.bisect_left(fp_table["cxotime"], entry_date) - 1 # type: ignore
+        inst_idx = bisect.bisect_left(fp_table["cxotime"], entry_date) - 1
         si = fp_table[inst_idx]["instrument"]
         instrument.append(si)
 
-        grat_idx = bisect.bisect_left(grat_table["cxotime"], entry_date) - 1 # type: ignore
+        grat_idx = bisect.bisect_left(grat_table["cxotime"], entry_date) - 1
         hetg = grat_table[grat_idx]["hetg"]
         letg = grat_table[grat_idx]["letg"]
         if hetg == "HETG-OUT" and letg == "LETG-OUT":
@@ -472,7 +472,7 @@ def _z(arg):
     Corrective internal function to yield ISOZ formatted datetimes
     """
     if isinstance(arg, CxoTime):
-        return arg.isot.split(".")[0] + "Z" # type: ignore
+        return arg.isot.split(".")[0] + "Z"
     elif isinstance(arg, datetime):
         return arg.isoformat().split(".")[0] + "Z"
 

@@ -55,7 +55,7 @@ GOES_P7_RADMON_FACTOR = 12
 TDELTA = 300
 
 CXONOW = CxoTime()
-ISONOW = CXONOW.isot.split(".")[0] + "Z" # type: ignore
+ISONOW = CXONOW.isot.split(".")[0] + "Z"
 SOL_REGION = [
     "NULL",
     "Solar_Wind",
@@ -97,18 +97,18 @@ def read_crm_flux_table():
     #: Astropy file format guesser can sometimes mistreat a Path() instance. Avoid by specifying format.
     crm_flux_table = ascii.read(_table_file, format="ecsv")
 
-    corrected_crm_fluence = sum(crm_flux_table["corrected_crm_flux"] * TDELTA) # type: ignore
-    attenuated_crm_fluence = sum(crm_flux_table["attenuated_crm_flux"] * TDELTA) # type: ignore
+    corrected_crm_fluence = sum(crm_flux_table["corrected_crm_flux"] * TDELTA)
+    attenuated_crm_fluence = sum(crm_flux_table["attenuated_crm_flux"] * TDELTA)
 
     summary = {}
     last_entry = {
-        col: crm_flux_table[-1][col].tolist() for col in crm_flux_table.columns # type: ignore
+        col: crm_flux_table[-1][col].tolist() for col in crm_flux_table.columns
     }
     summary.update(last_entry)
     summary["corrected_crm_fluence"] = corrected_crm_fluence
     summary["attenuated_crm_fluence"] = attenuated_crm_fluence
 
-    return summary, crm_flux_table.meta # type: ignore
+    return summary, crm_flux_table.meta
 
 
 def crm_supplementary_info():
@@ -143,21 +143,21 @@ def read_goes():
     #: record the last known values by iterating backwards.
     idx = -1
     while goes_data["goes_p4_flux"] is None:
-        a = diff_proton_table["P4"][idx] # type: ignore
+        a = diff_proton_table["P4"][idx]
         if a == np.ma.masked:
             idx -= 1
         else:
             goes_data["goes_p4_flux"] = a * GOES_P4_RADMON_FACTOR
     idx = -1
     while goes_data["goes_p7_flux"] is None:
-        b = diff_proton_table["P7"][idx] # type: ignore
+        b = diff_proton_table["P7"][idx]
         if b == np.ma.masked:
             idx -= 1
         else:
             goes_data["goes_p7_flux"] = b * GOES_P7_RADMON_FACTOR
     idx = -1
     while goes_data["goes_e2_flux"] is None:
-        c = intg_electron_table[">=2 MeV"][idx] # type: ignore
+        c = intg_electron_table[">=2 MeV"][idx]
         if c == np.ma.masked:
             idx -= 1
         else:

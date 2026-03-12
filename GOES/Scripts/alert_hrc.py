@@ -73,7 +73,7 @@ def alert_hrc():
     """
     _goes_data_file = GOES_DATA_DIR / "Gp_pchan_5m.txt"
     dat = ascii.read(_goes_data_file, data_start=5, delimiter="\t", guess=False, names=NAMES)
-    time, hrc_proxy, hrc_proxy_legacy = dat[-1]["time", "hrc_proxy", "hrc_proxy_legacy"] # type: ignore
+    time, hrc_proxy, hrc_proxy_legacy = dat[-1]["time", "hrc_proxy", "hrc_proxy_legacy"]
     recent_data = {
         "time": str(time),
         "hrc_proxy": int(hrc_proxy),
