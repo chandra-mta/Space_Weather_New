@@ -58,7 +58,7 @@ def check_cadence():
     """Reads the hrc_proxy.csv archive file to check if there is a delay in the calculation, likely due to missing data."""
     now = datetime.now(timezone.utc)
     _archive_file = GOES_DATA_DIR / "hrc_proxy.csv"
-    out = fr.get_last_text_line(_archive_file)  # type: ignore
+    out = fr.get_last_text_line(_archive_file) 
     last_time = datetime.strptime(out.split(",")[0], "%Y:%j:%H:%M")
     last_time = last_time.replace(tzinfo=timezone.utc)
     _archive_viol = GOES_DATA_DIR / "check_archive.viol"

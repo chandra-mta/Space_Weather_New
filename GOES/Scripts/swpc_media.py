@@ -89,7 +89,7 @@ def swpc_media():
     #: Annotate the magnetogram image with the active region locations
     for region in todays_regions:
         lat = region['latitude']
-        long = -region['longitude'] # type: ignore
+        long = -region['longitude']
         x,y = _to_pixel(w,h,lat,long)
         draw.text((x-112,y+48),str(region['region']), fill='white', font=font)
     

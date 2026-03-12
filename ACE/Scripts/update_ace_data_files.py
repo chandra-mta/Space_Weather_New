@@ -884,7 +884,7 @@ def update_kp_data_file():
     ltime = float(atemp[0])
     kval  = atemp[1]
     
-    ldate = CxoTime(ltime).datetime.strftime("%Y %m %d %H%M") # type: ignore
+    ldate = CxoTime(ltime).datetime.strftime("%Y %m %d %H%M")
     
     line  = ldate + '\t\t' + ldate + '\t\t' + kval + '\t\t\t' 
     line  = line  + ldate + '\t\t' + kval + '\t\t' + kval + '\n'

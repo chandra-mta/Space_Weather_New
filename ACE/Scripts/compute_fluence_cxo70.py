@@ -71,7 +71,7 @@ def compute_fluence_cxo70():
 #
 #--- make sure that the span is before the curren time
 #
-        if stime > CURRENT_CHANDRA_TIME: # type: ignore
+        if stime > CURRENT_CHANDRA_TIME:
             continue
 
         alt   = float(atemp[1])
@@ -105,9 +105,9 @@ def compute_fluence_cxo70():
 #
 #--- compute fluence between the span
 #
-        if stime < start: # type: ignore
+        if stime < start:
             continue
-        elif stime > stop: # type: ignore
+        elif stime > stop:
             break
         else:
             ind1 = float(atemp[6])
@@ -152,7 +152,7 @@ def compute_fluence_cxo70():
 # --- Render ace_flux jinja template
 #
     ace_flux = data[-1]
-    ace_flux_70kkm = f"{ftime}  -{e1:10.2e}{e2:10.2e}  -{p1:10.2e}{p2:10.2e}{p3:10.2e}{p4:10.2e}{p5:10.2e}{cstop - cstart:8.0f}" # type: ignore
+    ace_flux_70kkm = f"{ftime}  -{e1:10.2e}{e2:10.2e}  -{p1:10.2e}{p2:10.2e}{p3:10.2e}{p4:10.2e}{p5:10.2e}{cstop - cstart:8.0f}"
 
     template = _JINJA_ENV.get_template('ace_flux.jinja')
     render = template.render(ace_flux = ace_flux, ace_flux_70kkm = ace_flux_70kkm)

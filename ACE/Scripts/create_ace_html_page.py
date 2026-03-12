@@ -514,7 +514,7 @@ def convert_to_col_data(data):
 #
 #--- keep the record of 'previous' entry; only valid data
 #
-        if stime < cut: # type: ignore
+        if stime < cut:
             chk1 = int(float(atemp[6]))
             chk2 = int(float(atemp[9]))
             if chk1 == 0 and chk2 == 0:

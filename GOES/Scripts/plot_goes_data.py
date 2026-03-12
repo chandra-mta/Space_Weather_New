@@ -122,7 +122,7 @@ def main():
         avg = group_avg(diff_table, info)
         lines.append(avg)
 
-    times = [datetime.strptime(x, ISO_FORMATTING) for x in diff_table['time_tag']] # type: ignore
+    times = [datetime.strptime(x, ISO_FORMATTING) for x in diff_table['time_tag']]
     diff_data_dict = {"times": times, "lines": lines}
     #
     # --- Define extra plotting variables
@@ -139,8 +139,8 @@ def main():
         "P41GM": (0.71, diff_data_dict["colors"][2]),
     }
     #: Format the integral plotting dictionary
-    lines = [intg_table[energy] for energy in INTG_GROUP_SELECTION] # type: ignore
-    times = [datetime.strptime(x, ISO_FORMATTING) for x in intg_table['time_tag']] # type: ignore
+    lines = [intg_table[energy] for energy in INTG_GROUP_SELECTION]
+    times = [datetime.strptime(x, ISO_FORMATTING) for x in intg_table['time_tag']]
 
     intg_data_dict = {"times": times, "lines": lines}
     #
