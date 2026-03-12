@@ -30,12 +30,20 @@ from datetime import datetime, timezone, time, timedelta
 import kadi.events
 import getpass
 import signal
+from pathlib import Path
+
+import psutil
+if __name__ == '__main__':
+    mpl.use('Agg')
 #
 # --- Define Directory Pathing
 #
-CRM3_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
-EPHEM_DATA_DIR = "/data/mta4/Space_Weather/EPHEM/Data"
-HTML_DIR = "/data/mta4/www/RADIATION/Orbit/Plots"
+SPACE_WEATHER = Path(os.getenv('SPACE_WEATHER', "/data/mta4/Space_Weather"))
+SPACE_WEATHER_WEB = Path(os.environ.get('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION"))
+
+CRM_DATA_DIR : Path = SPACE_WEATHER / "CRM3" / "Data"
+ORBIT_PLOT_DIR : Path = SPACE_WEATHER_WEB / "Orbit" / "Plots" #: A quirk of our web setup. No CRM page, just a collated orbit page
+EPEHM_DATA_DIR : Path = SPACE_WEATHER / "EPHEM" / "Data"
 
 UTC_NOW = datetime.now(timezone.utc)
 TODAY_CHANDRA_TIME = round(CxoTime(UTC_NOW.replace(hour=0, minute=0, second=0, microsecond=0)).secs)
@@ -66,7 +74,8 @@ def plot_crm_flux_data():
 #
 #--- read crm summary data table
 #
-    with open(f"{CRM3_DATA_DIR}/CRMsummary.json") as f:
+    _summary_json = CRM_DATA_DIR / "CRMsummary.json"
+    with open(_summary_json) as f:
         crm_summary = json.load(f)
     kp = crm_summary.get('kp')
     ace = crm_summary.get('ace_p3_flux')
@@ -145,7 +154,8 @@ def read_coord_data():
 #
 #--- read data
 #
-    with open(f"{EPHEM_DATA_DIR}/PE.EPH.gsme_spherical_short") as f:
+    _gsme_spherical_short = EPEHM_DATA_DIR / "PE.EPH.gsme_spherical_short"
+    with open(_gsme_spherical_short) as f:
         data = [line.strip() for line in f.readlines()]
     
     otime  = []
@@ -258,7 +268,8 @@ def read_region_data(time_list, cre=0):
 #
 #--- read data 
 #
-    with open(f"{CRM3_DATA_DIR}/CRM3_p.dat30") as f:
+    _crm_data_file = CRM_DATA_DIR / "CRM3_p.dat30" #: Is there a strict reason to use the kp=3.0 model instead of preduicted flux for varibable kp?
+    with open(_crm_data_file) as f:
         data = [line.strip() for line in f.readlines()]
     ctime  = []
     region = []
@@ -371,7 +382,8 @@ def read_flux_model(kp):
 #--- read each of them and save the fluxes
 #
     for k in range(0, 11):
-        with open(f"{CRM3_DATA_DIR}/CRM3_p.dat{tail_list[k]}") as f:
+        _crm_data_file = CRM_DATA_DIR / f"CRM3_p.dat{tail_list[k]}"
+        with open(_crm_data_file) as f:
             data = [line.strip() for line in f.readlines()]
         for ent in data:
             atemp = re.split(r'\s+', ent)
@@ -887,7 +899,7 @@ def plot_crm(otime, altitude, orbit_color_list, dsn_start, dsn_stop, inst_start,
         outname = 'crmpl.png'
     else:
         outname = 'crmplatt.png'
-    outfile = f"{HTML_DIR}/{outname}"
+    outfile = ORBIT_PLOT_DIR / outname
     plt.savefig(outfile, format='png', dpi=300)
 
     plt.close('all')
@@ -944,8 +956,12 @@ def convert_to_doy(ctime):
 if __name__ == "__main__":
     opt = get_options()
     if opt.mode == 'test':
-        HTML_DIR = f"{os.getcwd()}/test/_outTest"
-        os.makedirs(HTML_DIR, exist_ok = True)
+
+        if opt.path:
+            ORBIT_PLOT_DIR = Path(opt.path)
+        else:
+            ORBIT_PLOT_DIR = Path(os.getcwd(), "test", "_outTest")
+        os.makedirs(ORBIT_PLOT_DIR, exist_ok = True)
 
         plot_crm_flux_data()
     
