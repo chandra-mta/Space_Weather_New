@@ -22,7 +22,7 @@ and update various data files
 ### Cron Job:
 
 - Primary (mta@boba-v):
-14 0,3,6,9,12,15,18,21 * * * cd ${SPACE_WEATHER}/KP/Scripts; ${ENV_FLIGHT}/bin/skare python fetch_kp_tables.py -m flight >> ${HOME}/Logs/kp_index_update.cron 2>&1
+14 */3 * * * cd ${SPACE_WEATHER}/KP/Scripts; ${ENV_FLIGHT}/bin/skare python fetch_kp_tables.py -m flight >> ${HOME}/Logs/kp_index_update.cron 2>&1
 
 - Secondary (mta@r2d2-v):
-14 0,3,6,9,12,15,18,21 * * * cd ${SPACE_WEATHER}/KP/Scripts; ${ENV_FLIGHT}/bin/skare python fetch_kp_tables.py -m flight >> ${HOME}/Logs/kp_index_update_mirror.cron 2>&1
+14 */3 * * * cd ${SPACE_WEATHER}/KP/Scripts; ${ENV_FLIGHT}/bin/skare python fetch_kp_tables.py -m flight >> ${HOME}/Logs/kp_index_update_mirror.cron 2>&1

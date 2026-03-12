@@ -12,8 +12,8 @@
                 "ENV_FLIGHT": "/proj/sot/ska3/flight"
                 },
                 "machine": "mta@boba-v",
-                "fetch": {
-                    "cadence": "14 0,3,6,9,12,15,18,21 * * *",
+                "fetch_kp": {
+                    "cadence": "14 */3 * * *",
                     "command": "cd ${SPACE_WEATHER}/KP/Scripts; ${ENV_FLIGHT}/bin/skare python fetch_kp_tables.py -m flight",
                     "log_file": "${HOME}/Logs/kp_index_update.cron"
                 }
@@ -24,8 +24,8 @@
                 "ENV_FLIGHT": "/proj/sot/ska3/flight"
                 },
                 "machine": "mta@r2d2-v",
-                "fetch": {
-                    "cadence": "14 0,3,6,9,12,15,18,21 * * *",
+                "fetch_kp": {
+                    "cadence": "14 */3 * * *",
                     "command": "cd ${SPACE_WEATHER}/KP/Scripts; ${ENV_FLIGHT}/bin/skare python fetch_kp_tables.py -m flight",
                     "log_file": "${HOME}/Logs/kp_index_update_mirror.cron"
                 }
