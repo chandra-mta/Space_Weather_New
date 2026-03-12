@@ -1,9 +1,9 @@
-#!/proj/sot/ska3/flight/bin/python
+#!/usr/bin/env python
 """
 **create_crm_summary_table.py**: Summarize the CRM flux table into different data files.
 
 :Author: w. aaron (William.aaron@cfa.harvard.edu)
-:Last Updated: Aug 11, 2025
+:Last Updated: Mar 11, 2026
 
 # /// script
 # requires-python = ">=3.12"
@@ -13,26 +13,27 @@
 # tested-ska-release = "2026.1"
 # ///
 """
-
 import os
 import json
+import shutil
 import numpy as np
 import argparse
-import getpass
 import signal
 from astropy.io import ascii
 from cxotime import CxoTime
 from jinja2 import Environment, FileSystemLoader
-
+from pathlib import Path
+import psutil
 #
 # --- Define Directory Pathing
 #
-CRM_WEB_DIR = "/data/mta4/www/RADIATION/CRM3"
-CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
-OUT_CRM_WEB_DIR = "/data/mta4/www/RADIATION/CRM3"
-OUT_CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
-EPHEM_DATA_DIR = "/data/mta4/Space_Weather/EPHEM/Data"
-GOES_DATA_DIR = "/data/mta4/Space_Weather/GOES/Data"
+SPACE_WEATHER = Path(os.getenv('SPACE_WEATHER', "/data/mta4/Space_Weather"))
+SPACE_WEATHER_WEB = Path(os.environ.get('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION"))
+
+CRM_DATA_DIR : Path = SPACE_WEATHER / "CRM3" / "Data"
+CRM_WEB_DIR : Path = SPACE_WEATHER_WEB / "CRM3"
+GOES_DATA_DIR : Path = SPACE_WEATHER / "GOES" / "Data"
+EPHEM_DATA_DIR : Path = SPACE_WEATHER / "EPHEM" / "Data"
 #
 # --- Template Globals
 #
@@ -54,7 +55,7 @@ GOES_P7_RADMON_FACTOR = 12
 TDELTA = 300
 
 CXONOW = CxoTime()
-ISONOW = CXONOW.isot.split(".")[0] + "Z"
+ISONOW = CXONOW.isot.split(".")[0] + "Z" # type: ignore
 SOL_REGION = [
     "NULL",
     "Solar_Wind",
@@ -77,12 +78,14 @@ def create_crm_summary():
     summary.update(orbit_meta)
     summary = _coerce_json_serialize(summary)
 
-    with open(f"{OUT_CRM_DATA_DIR}/CRMsummary.json", "w") as f:
+    _summary_json = CRM_DATA_DIR / "CRMsummary.json"
+    with open(_summary_json, "w") as f:
         json.dump(summary, f, indent=4)
 
     crm_template = _JINJA_ENV.get_template("CRMsummary.jinja")
     crm_render = crm_template.render(data=summary)
-    with open(f"{OUT_CRM_DATA_DIR}/CRMsummary.dat", "w") as fo:
+    _summary_dat = CRM_DATA_DIR / "CRMsummary.dat"
+    with open(_summary_dat, "w") as fo:
         fo.write(crm_render)
 
 
@@ -90,20 +93,22 @@ def read_crm_flux_table():
     """
     Read from the crm_flux_table.ecsv
     """
-    crm_flux_table = ascii.read(f"{OUT_CRM_DATA_DIR}/crm_flux_table.ecsv")
+    _table_file = CRM_DATA_DIR / "crm_flux_table.ecsv"
+    #: Astropy file format guesser can sometimes mistreat a Path() instance. Avoid by specifying format.
+    crm_flux_table = ascii.read(_table_file, format="ecsv")
 
-    corrected_crm_fluence = sum(crm_flux_table["corrected_crm_flux"] * TDELTA)
-    attenuated_crm_fluence = sum(crm_flux_table["attenuated_crm_flux"] * TDELTA)
+    corrected_crm_fluence = sum(crm_flux_table["corrected_crm_flux"] * TDELTA) # type: ignore
+    attenuated_crm_fluence = sum(crm_flux_table["attenuated_crm_flux"] * TDELTA) # type: ignore
 
     summary = {}
     last_entry = {
-        col: crm_flux_table[-1][col].tolist() for col in crm_flux_table.columns
+        col: crm_flux_table[-1][col].tolist() for col in crm_flux_table.columns # type: ignore
     }
     summary.update(last_entry)
     summary["corrected_crm_fluence"] = corrected_crm_fluence
     summary["attenuated_crm_fluence"] = attenuated_crm_fluence
 
-    return summary, crm_flux_table.meta
+    return summary, crm_flux_table.meta # type: ignore
 
 
 def crm_supplementary_info():
@@ -128,28 +133,31 @@ def read_goes():
         "goes_p7_flux": None,
         "goes_e2_flux": None,
     }
-    diff_proton_table = ascii.read(f"{GOES_DATA_DIR}/goes_differential_protons.ecsv")
-    intg_electron_table = ascii.read(f"{GOES_DATA_DIR}/goes_integral_electrons.ecsv")
+    _diff_table = GOES_DATA_DIR / "goes_differential_protons.ecsv"
+    _intg_table = GOES_DATA_DIR / "goes_integral_electrons.ecsv"
+    #: Astropy file format guesser can sometimes mistreat a Path() instance. Avoid by specifying format.
+    diff_proton_table = ascii.read(_diff_table, format="ecsv")
+    intg_electron_table = ascii.read(_intg_table, format="ecsv")
 
     #: In case the most recent flux for the target channel is missing,
     #: record the last known values by iterating backwards.
     idx = -1
     while goes_data["goes_p4_flux"] is None:
-        a = diff_proton_table["P4"][idx]
+        a = diff_proton_table["P4"][idx] # type: ignore
         if a == np.ma.masked:
             idx -= 1
         else:
             goes_data["goes_p4_flux"] = a * GOES_P4_RADMON_FACTOR
     idx = -1
     while goes_data["goes_p7_flux"] is None:
-        b = diff_proton_table["P7"][idx]
+        b = diff_proton_table["P7"][idx] # type: ignore
         if b == np.ma.masked:
             idx -= 1
         else:
             goes_data["goes_p7_flux"] = b * GOES_P7_RADMON_FACTOR
     idx = -1
     while goes_data["goes_e2_flux"] is None:
-        c = intg_electron_table[">=2 MeV"][idx]
+        c = intg_electron_table[">=2 MeV"][idx] # type: ignore
         if c == np.ma.masked:
             idx -= 1
         else:
@@ -164,7 +172,8 @@ def read_ephem():
 
     The EPHEM file records altitude in meters. This fetch returns in km.
     """
-    with open(f"{EPHEM_DATA_DIR}/gephem.dat") as f:
+    _gephem = EPHEM_DATA_DIR / "gephem.dat"
+    with open(_gephem) as f:
         data = f.read().split()  #: Located on the first and only line.
         alt = int(float(data[0]) / 1000)
         leg = data[1]
@@ -190,20 +199,8 @@ def _coerce_json_serialize(obj):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        "-m",
-        "--mode",
-        choices=["flight", "test"],
-        required=True,
-        help="Determine running mode.",
-    )
-    parser.add_argument(
-        "-p",
-        "--path",
-        required=False,
-        help="Directory path to determine output location of plot.",
-    )
+    parser.add_argument("-m", "--mode", choices=["flight", "test"], required=True, help="Determine running mode.")
+    parser.add_argument("-p", "--path", required=False, help="Directory path to determine output location of summary.")
     args = parser.parse_args()
     #
     # --- Determine if running in test mode and change pathing if so.
@@ -212,44 +209,37 @@ if __name__ == "__main__":
         #
         # --- Path output to same location as unit tests.
         #
-        OUT_CRM_DATA_DIR = f"{os.getcwd()}/test/_outTest"
         if args.path:
-            OUT_CRM_DATA_DIR = args.path
-        os.makedirs(OUT_CRM_DATA_DIR, exist_ok=True)
+            CRM_DATA_DIR = Path(args.path)
+        else:
+            CRM_DATA_DIR = Path(os.getcwd(), "test", "_outTest")
+        
         create_crm_summary()
 
     elif args.mode == "flight":
-        #
-        # --- Create a lock file and exit strategy in case of race conditions
-        #
+        #: Create a lock file and exit strategy in case of race conditions.
         name = os.path.basename(__file__).split(".")[0]
-        user = getpass.getuser()
-        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
-            with open(f"/tmp/{user}/{name}.lock") as f:
-                pid = int(f.readlines()[-1].strip())
-            #: Kill old process if stalling.
-            try:
+        user = os.getenv("USER", "mta")
+        lock = Path("/tmp", user, f"{name}.lock")
+
+        #: If lock file exists, read the pid and kill the process, then remove the lock file
+        if os.path.isfile(lock):
+            with open(lock) as f:
+                pid = int(f.read().strip())
+            if psutil.pid_exists(pid):
                 os.kill(pid, signal.SIGTERM)
-            except ProcessLookupError:
-                pass
-            os.system(
-                f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock"
-            )
-        else:
-            os.system(
-                f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock"
-            )
+            os.remove(lock)
+        
+        #: Lock file with current pid
+        pid = os.getpid()
+        os.makedirs(os.path.dirname(lock), exist_ok = True)
+        with open(lock, 'w') as f:
+            f.write(str(pid))
 
         create_crm_summary()
-        #: Make available on the web.
-        os.system(
-            f"cp {OUT_CRM_DATA_DIR}/CRMsummary.json {OUT_CRM_WEB_DIR}/CRMsummary.json"
-        )
-        os.system(
-            f"cp {OUT_CRM_DATA_DIR}/CRMsummary.dat {OUT_CRM_WEB_DIR}/CRMsummary.dat"
-        )
+        #: Make data available on the web.
+        shutil.copyfile(CRM_DATA_DIR / "CRMsummary.json", CRM_WEB_DIR / "CRMsummary.json")
+        shutil.copyfile(CRM_DATA_DIR / "CRMsummary.dat", CRM_WEB_DIR / "CRMsummary.dat")
 
-        #
-        # --- Remove lock file once process is completed.
-        #
-        os.system(f"rm /tmp/{user}/{name}.lock")
+        #: Remove lock file once process is completed
+        os.remove(lock)

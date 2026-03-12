@@ -1,9 +1,9 @@
-#!/proj/sot/ska3/flight/bin/python
+#!/usr/bin/env python
 """
 **create_crm_flux_table.py**: Fetch all relevant data and calculate the CRM flux table for current orbit
 
 :Author: w. aaron (William.aaron@cfa.harvard.edu)
-:Last Updated: Aug 08, 2025
+:Last Updated: Mar 11, 2026
 
 # /// script
 # requires-python = ">=3.12"
@@ -16,6 +16,7 @@
 
 import os
 import bisect
+import shutil
 from astropy.io import ascii
 from astropy.table import Table, unique, vstack
 from kadi import events
@@ -24,18 +25,22 @@ from datetime import datetime, timedelta
 import numpy as np
 from django.db import close_old_connections, utils
 import argparse
-import getpass
 import signal
+import glob
+from pathlib import Path
 
+import psutil
 #
 # --- Define Directory Pathing
 #
-CRM_WEB_DIR = "/data/mta4/www/RADIATION/CRM3"
-CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
-OUT_CRM_WEB_DIR = "/data/mta4/www/RADIATION/CRM3"
-OUT_CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
-ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
-KP_DATA_DIR = "/data/mta4/Space_Weather/KP/Data"
+SPACE_WEATHER = Path(os.getenv('SPACE_WEATHER', "/data/mta4/Space_Weather"))
+SPACE_WEATHER_WEB = Path(os.environ.get('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION"))
+
+CRM_DATA_DIR : Path = SPACE_WEATHER / "CRM3" / "Data"
+CRM_WEB_DIR : Path = SPACE_WEATHER_WEB / "CRM3"
+ACE_DATA_DIR : Path = SPACE_WEATHER / "ACE" / "Data"
+KP_DATA_DIR : Path = SPACE_WEATHER / "KP" / "Data"
+#: TODO: Consider converting the determination of Focal Plane and Grating to Kadi API
 FP_FILE = "/proj/sot/acis/FLU-MON/FPHIST-2001.dat"
 GRAT_FILE = "/proj/sot/acis/FLU-MON/GRATHIST-2001.dat"
 #
@@ -117,9 +122,10 @@ def create_crm_flux_table():
     orbit_data = fetch_orbit()
     current_table = None
     current_metadata = {}
-    if os.path.isfile(f"{OUT_CRM_DATA_DIR}/crm_flux_table.ecsv"):
-        current_table = ascii.read(f"{OUT_CRM_DATA_DIR}/crm_flux_table.ecsv")
-        start_fetch = CxoTime(current_table["cxosecs"][-1])
+    _flux_table_file = CRM_DATA_DIR / "crm_flux_table.ecsv"
+    if _flux_table_file.is_file():
+        current_table = ascii.read(_flux_table_file)
+        start_fetch = CxoTime(current_table["cxosecs"][-1]) # type: ignore
     else:
         #: If something happened to the current orbit's flux table, restart from scratch.
         start_fetch = orbit_data["orbit_start"]
@@ -133,7 +139,7 @@ def create_crm_flux_table():
     crm_flux_table = add_flux_attenuation(crm_flux_table)
 
     if current_table is not None:
-        current_metadata = current_table.meta
+        current_metadata = current_table.meta # type: ignore
         crm_flux_table = vstack([current_table, crm_flux_table], join_type="exact")
         crm_flux_table = unique(crm_flux_table, keys="cxosecs")
 
@@ -160,9 +166,7 @@ def create_crm_flux_table():
         for k, v in COLUMN_UNITS.items():
             crm_flux_table[k].unit = v
 
-    crm_flux_table.write(
-        f"{OUT_CRM_DATA_DIR}/crm_flux_table.ecsv", overwrite=True, delimiter=","
-    )
+    crm_flux_table.write(_flux_table_file, overwrite=True, delimiter=",")
 
 
 def archive(previous_table):
@@ -171,9 +175,10 @@ def archive(previous_table):
     """
     corrected_crm_fluence = sum(previous_table["corrected_crm_flux"] * TDELTA)
     attenuated_crm_fluence = sum(previous_table["attenuated_crm_flux"] * TDELTA)
-
-    archive_table = ascii.read(f"{CRM_DATA_DIR}/CRMarchive.ecsv")
-    archive_table.add_row(
+    _crm_archive_file = CRM_DATA_DIR / "CRMarchive.ecsv"
+    _previous_table_file = CRM_DATA_DIR / "previous_crm_flux_table.ecsv"
+    archive_table = ascii.read(_crm_archive_file)
+    archive_table.add_row( # type: ignore
         [
             previous_table.meta["orbit_start"],
             previous_table.meta["orbit_stop"],
@@ -182,14 +187,8 @@ def archive(previous_table):
             attenuated_crm_fluence,
         ]
     )
-    archive_table.write(
-        f"{OUT_CRM_DATA_DIR}/CRMarchive.ecsv", overwrite=True, delimiter=","
-    )
-    previous_table.write(
-        f"{OUT_CRM_DATA_DIR}/previous_crm_flux_table.ecsv",
-        overwrite=True,
-        delimiter=",",
-    )
+    archive_table.write(_crm_archive_file, overwrite=True, delimiter=",") # type: ignore
+    previous_table.write(_previous_table_file, overwrite=True, delimiter=",")
 
 
 def reconnect(func):
@@ -200,7 +199,7 @@ def reconnect(func):
     _errors = utils.OperationalError
 
     def wrapper_func(*args, **kwargs):
-        _last_exception = None
+        _last_exception = Exception()
         for i in range(_freq):
             try:
                 return func(*args, **kwargs)
@@ -253,14 +252,14 @@ def read_instrument_files(start_fetch):
     fp_table = ascii.read(
         FP_FILE, data_start=19000, names=("cxotime", "instrument", "obsid")
     )  #: History spans to 2001, start later then select.
-    sel_fp = fp_table["cxotime"] >= start_fetch - timedelta(days=4)
-    fp_table = fp_table[sel_fp]
+    sel_fp = fp_table["cxotime"] >= start_fetch - timedelta(days=4) # type: ignore
+    fp_table = fp_table[sel_fp] # type: ignore
 
     grat_table = ascii.read(
         GRAT_FILE, data_start=7050, names=("cxotime", "hetg", "letg", "obsid")
     )  #: History spans to 2001, start later then select.
-    sel_grat = grat_table["cxotime"] >= start_fetch - timedelta(days=4)
-    grat_table = grat_table[sel_grat]
+    sel_grat = grat_table["cxotime"] >= start_fetch - timedelta(days=4) # type: ignore
+    grat_table = grat_table[sel_grat] # type: ignore
     return fp_table, grat_table
 
 
@@ -268,13 +267,14 @@ def read_kp(start_fetch):
     """
     Read the most recent observed / estimated value for the KP index.
     """
-    kp_table = ascii.read(f"{KP_DATA_DIR}/kp_iaga.ecsv")
+    _kp_file = KP_DATA_DIR / "kp_iaga.ecsv"
+    kp_table = ascii.read(_kp_file)
     #: Note that the kp_forecast_table is fetched every 3 hours,
     #: therefore the KP estimates can periodically be outdated.
-    start_sel = kp_table["time_tag"] >= _z(start_fetch - timedelta(hours=3))
-    stop_sel = kp_table["time_tag"] <= _z(CXONOW)
+    start_sel = kp_table["time_tag"] >= _z(start_fetch - timedelta(hours=3)) # type: ignore
+    stop_sel = kp_table["time_tag"] <= _z(CXONOW) # type: ignore
     sel = np.logical_and(start_sel, stop_sel)
-    kp_table = kp_table[sel]
+    kp_table = kp_table[sel] # type: ignore
     return kp_table
 
 
@@ -282,9 +282,8 @@ def read_ace(start_fetch):
     """
     Read in the ACE flux for the desired time interval
     """
-    ace_table = unique(
-        ascii.read(f"{ACE_DATA_DIR}/ace_7day_archive", names=_INPUT_ACE_COLUMNS)
-    )
+    _ace_7day_archive_file = ACE_DATA_DIR / "ace_7day_archive"
+    ace_table = unique(ascii.read(_ace_7day_archive_file, names=_INPUT_ACE_COLUMNS))
     cxotime_col = _convert_time_format(
         ace_table["year"],
         ace_table["month"],
@@ -320,7 +319,7 @@ def read_ace(start_fetch):
 
 
 def intake_crm_table(kp):
-    file = f"{CRM_DATA_DIR}/CRM3_p.dat{_kpi(kp)}"
+    file = CRM_DATA_DIR/ f"CRM3_p.dat{_kpi(kp)}"
     crm_data_table = ascii.read(file, names=_CRM_DATA_COL_NAMES)
     return crm_data_table
 
@@ -345,10 +344,10 @@ def format_crm_flux_table(start_fetch, kp_table):
         )
         _table = kp_to_crm_data[row["kp"]]
         sel = np.logical_and(
-            _table["cxosecs"] >= start_interval_marker.secs,
-            _table["cxosecs"] <= stop_interval_marker.secs,
+            _table["cxosecs"] >= start_interval_marker.secs, # type: ignore
+            _table["cxosecs"] <= stop_interval_marker.secs, # type: ignore
         )
-        _table = _table[sel]
+        _table = _table[sel] # type: ignore
         include_cxosecs = _table["cxosecs"].tolist()
         include_region = _table["sol_region_idx"].tolist()
         include_flux = _table["crm_proton_flux"].tolist()
@@ -366,7 +365,7 @@ def format_crm_flux_table(start_fetch, kp_table):
         [cxosecs, kp, sol_region_idx, crm_proton_flux],
         names=("cxosecs", "kp", "sol_region_idx", "crm_proton_flux"),
     )
-    stop_sel = crm_flux_table["cxosecs"] <= CXONOW.secs
+    stop_sel = crm_flux_table["cxosecs"] <= CXONOW.secs # type: ignore
     crm_flux_table = crm_flux_table[stop_sel]
     return crm_flux_table
 
@@ -383,11 +382,11 @@ def add_instrument_config_file(crm_flux_table, start_fetch):
         entry_date = CxoTime(entry["cxosecs"]).date
         #: Bisect finds the index to insert a value into an array,
         #: therefore stepping back by one is the most recent state.
-        inst_idx = bisect.bisect_left(fp_table["cxotime"], entry_date) - 1
+        inst_idx = bisect.bisect_left(fp_table["cxotime"], entry_date) - 1 # type: ignore
         si = fp_table[inst_idx]["instrument"]
         instrument.append(si)
 
-        grat_idx = bisect.bisect_left(grat_table["cxotime"], entry_date) - 1
+        grat_idx = bisect.bisect_left(grat_table["cxotime"], entry_date) - 1 # type: ignore
         hetg = grat_table[grat_idx]["hetg"]
         letg = grat_table[grat_idx]["letg"]
         if hetg == "HETG-OUT" and letg == "LETG-OUT":
@@ -473,7 +472,7 @@ def _z(arg):
     Corrective internal function to yield ISOZ formatted datetimes
     """
     if isinstance(arg, CxoTime):
-        return arg.isot.split(".")[0] + "Z"
+        return arg.isot.split(".")[0] + "Z" # type: ignore
     elif isinstance(arg, datetime):
         return arg.isoformat().split(".")[0] + "Z"
 
@@ -540,64 +539,56 @@ def _att_factor(si, otg):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-m",
-        "--mode",
-        choices=["flight", "test"],
-        required=True,
-        help="Determine running mode.",
-    )
+    parser.add_argument("-m", "--mode", choices=["flight", "test"], required=True, help="Determine running mode.")
     parser.add_argument("-p", "--path", help="Determine data output file path")
     args = parser.parse_args()
 
     if args.mode == "test":
+        _old = CRM_DATA_DIR
         if args.path:
-            OUT_CRM_DATA_DIR = args.path
+            CRM_DATA_DIR = Path(args.path)
         else:
-            OUT_CRM_DATA_DIR = f"{os.getcwd()}/test/_outTest"
-        os.makedirs(OUT_CRM_DATA_DIR, exist_ok=True)
+            CRM_DATA_DIR = Path(os.getcwd(), "test", "_outTest")
+        os.makedirs(CRM_DATA_DIR, exist_ok=True)
+
+        if not (CRM_DATA_DIR / "CRM3_p.dat30").is_file():
+            #: Test run without the fortran output. Copy from live.
+            _data_cube_files = glob.glob(str(_old / "CRM3_p.dat*"))
+            for _file in _data_cube_files:
+                shutil.copyfile(_file, CRM_DATA_DIR / os.path.basename(_file))
 
         create_crm_flux_table()
 
     elif args.mode == "flight":
-        #
-        # --- Create a lock file and exit strategy in case of race conditions.
-        #
+        #: Create a lock file and exit strategy in case of race conditions.
         name = os.path.basename(__file__).split(".")[0]
-        user = getpass.getuser()
-        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
-            with open(f"/tmp/{user}/{name}.lock") as f:
-                pid = int(f.readlines()[-1].strip())
-                #: Kill old stalling process and remove corresponding lock file.
-                os.remove(f"/tmp/{user}/{name}.lock")
-                try:
-                    os.kill(pid, signal.SIGTERM)
-                except ProcessLookupError:
-                    pass
-                #: Generate lock file for the current corresponding process
-                os.system(
-                    f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock"
-                )
-        else:
-            #: Previous script run must have completed successfully. Prepare lock file for this script run.
-            os.system(
-                f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock"
-            )
+        user = os.getenv("USER", "mta")
+        lock = Path("/tmp", user, f"{name}.lock")
+
+        #: If lock file exists, read the pid and kill the process, then remove the lock file
+        if os.path.isfile(lock):
+            with open(lock) as f:
+                pid = int(f.read().strip())
+            if psutil.pid_exists(pid):
+                os.kill(pid, signal.SIGTERM)
+            os.remove(lock)
+        
+        #: Lock file with current pid
+        pid = os.getpid()
+        os.makedirs(os.path.dirname(lock), exist_ok = True)
+        with open(lock, 'w') as f:
+            f.write(str(pid))
 
         create_crm_flux_table()
         #: Make data available on the web.
-        os.system(
-            f"cp {OUT_CRM_DATA_DIR}/crm_flux_table.ecsv {OUT_CRM_WEB_DIR}/crm_flux_table.ecsv"
-        )
-        if (
-            os.stat(f"{OUT_CRM_DATA_DIR}/CRMarchive.ecsv").st_mtime
-            > os.stat(f"{OUT_CRM_WEB_DIR}/CRMarchive.ecsv").st_mtime
-        ):
-            #: If archive has been modified recently, update available web copy.
-            os.system(
-                f"cp {OUT_CRM_DATA_DIR}/CRMarchive.ecsv {OUT_CRM_WEB_DIR}/CRMarchive.ecsv"
-            )
-        #
-        # --- Remove lock file once process is completed.
-        #
-        os.system(f"rm /tmp/{user}/{name}.lock")
+        _table = CRM_DATA_DIR / "crm_flux_table.ecsv"
+        _table_web = CRM_WEB_DIR / "crm_flux_table.ecsv"
+        _archive = CRM_DATA_DIR / "CRMarchive.ecsv"
+        _archive_web = CRM_WEB_DIR / "CRMarchive.ecsv"
+        shutil.copyfile(_table, _table_web)
+        if _archive.stat().st_mtime > _archive_web.stat().st_mtime:
+            shutil.copyfile(_archive, _archive_web)
+
+
+        #: Remove lock file once process is completed
+        os.remove(lock)
