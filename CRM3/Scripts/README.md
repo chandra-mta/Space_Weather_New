@@ -134,9 +134,9 @@ The ascii versions are already in:
 ###### Primary (mta@boba-v):
 
 - 21 3,6,9,12,18,21 * * * /data/mta4/Space_Weather/CRM3/Scripts/crm_wrap_script >> $HOME/Logs/crm3_runcrm_new.cron       2>&1
-- 4,9,14,19,24,29,34,39,44,49,54,59 * * * *  ${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/crm.sh >> ${HOME}/Logs/crm3_create_table_new.cron 2>&1
+- 4-59/5 * * * *  ${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/CRM3/Scripts/crm.sh >> ${HOME}/Logs/crm3_create_table_new.cron 2>&1
 
 ###### Secondary (mta@r2d2-v):
 
 - 21 3,6,9,12,18,21 * * * /data/mta/Script/Space_Weather/CRM3/Scripts/crm_wrap_script
-- 2,7,12,17,22,27,32,37,42,47,52,57 * * * *  ${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/crm.sh >> ${HOME}/Logs/crm3_create_table_mirror.cron 2>&1
+- 4-59/5 * * * *  ${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/CRM3/Scripts/crm.sh >> ${HOME}/Logs/crm3_create_table_mirror.cron 2>&1

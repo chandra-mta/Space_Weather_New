@@ -344,6 +344,12 @@ def read_region_data(time_list, cre=0):
 #-- read_flux_model: read CRM flux model                                       --
 #--------------------------------------------------------------------------------
 
+def _kpi(kp):
+    """
+    Corrective KP index float to CRM filename format
+    """
+    return f"{kp:.1f}".replace(".", "")
+
 def read_flux_model(kp):
     """
     read CRM flux model
@@ -355,13 +361,7 @@ def read_flux_model(kp):
             note, there are 11 sub lists in all three lists. the last list is
                   based on the current kp value
     """
-#
-#--- find the model # corresponding to kp value
-#
-    ikp = int(10 * kp)
-    lkp = str(ikp)
-    if ikp < 10:
-        lkp = '0' + lkp
+
 #
 #--- set start and stop time
 #
@@ -370,7 +370,7 @@ def read_flux_model(kp):
 #
 #--- select 10 models + kp correspoinding flux
 #
-    tail_list  = ['00', '10', '20', '30', '40', '50', '60', '70', '80', '90', lkp]
+    tail_list  = ['00', '10', '20', '30', '40', '50', '60', '70', '80', '90', _kpi(kp)]
     time_list  = [[], [], [], [], [], [], [], [], [], [], []]
     color_list = [[], [], [], [], [], [], [], [], [], [], []]
     flux_list  = [[], [], [], [], [], [], [], [], [], [], []]

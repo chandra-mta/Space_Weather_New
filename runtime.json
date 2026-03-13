@@ -156,5 +156,27 @@
                 }
             }
         }
+    },
+    "CRM3": {
+        "runtime": "ska3-flight",
+        "dependencies": {
+            "ska3-flight": ">=2026.1",
+            "file_readers": ">=0.1.0"
+        },
+        "cron": {
+            "primary": {
+                "variables": {
+                "SPACE_WEATHER": "/data/mta4/Space_Weather",
+                "SPACE_WEATHER_WEB": "/data/mta4/www/RADIATION",
+                "SPACE_WEATHER_URL": "https://cxc.cfa.harvard.edu/mta/RADIATION",
+                "ENV_FLIGHT": "/proj/sot/ska3/flight"
+                },
+                "machine": "mta@boba-v",
+                "crm": {
+                    "cadence": "4-59/5 * * * *",
+                    "command": "${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/CRM3/Scripts/crm.sh",
+                    "log_file": "${HOME}/Logs/crm3_create_table_mirror.cron"
+                }
+        }
     }
 }
