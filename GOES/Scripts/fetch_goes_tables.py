@@ -149,11 +149,8 @@ def make_xray_table():
     flare_table['region'] = flare_table['region'].tolist()
     #: Apply metadata
     filename = GOES_DATA_DIR / "goes_flares.ecsv"
-    flare_table['max_xrlong'].format = ".5e"
     flare_table['max_xrlong'].unit = "W/m^2*s"
-    flare_table['current_int_xrlong'].format = ".5e"
     flare_table['current_int_xrlong'].unit = "W/m^2"
-    flare_table['max_ratio'].format = ".5e"
 
     flare_table.meta["description"] = (
         "X-ray flare fluxes and classifications from the GOES-R series satellite. The begin time of an X-ray event is defined as the first minute, in a sequence of 4 minutes, of steep monotonic increase in 0.1-0.8 nm flux. The X-ray event maximum is taken as the minute of the peak X-ray flux. The end time is the time when the flux level decays to a point halfway between the maximum flux and the pre-flare background level. The max_xrlong column consists of the peak flux. The current_int_xrlong is the integrated flux. A flare source region column is included in this table as determined from the SWPC events table. https://www.swpc.noaa.gov/products/goes-x-ray-flux."
