@@ -61,17 +61,10 @@ http://cxc.cfa.harvard.edu/mta/RADIATION/ACE/ace.html
 
 ### Cron Job:
 
-- Primary (mta@boba-v):
-3,8,13,18,23,28,33,38,43,48,53,58 * * * * ${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/ACE/Scripts/ace.sh >> ${HOME}/Logs/ace_main_new.cron 2>&1
+###### Primary (mta@boba-v):
+- 3-59/5 * * * * ${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/ACE/Scripts/ace.sh >> ${HOME}/Logs/ace_main_new.cron 2>&1
+- 4-59/5 * * * * cd ${SPACE_WEATHER}/ACE/Scripts; ${ENV_FLIGHT}/bin/skare python alert_ace.py -m flight >> ${HOME}/Logs/ace_main_new.cron 2>&1
 
-- Secondary (mta@r2d2-v):
-3,8,13,18,23,28,33,38,43,48,53,58 * * * * ${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/ACE/Scripts/ace.sh >> ${HOME}/Logs/ace_main_mirror.cron 2>&1
-
-Cron Jobs
-=========
-
-mta@boba-v
-3,8,13,18,23,28,33,38,43,48,53,58 * * * * /data/mta4/Space_Weather/ACE/Scripts/ace_wrap_script >> $HOME/Logs/ace_main_new.cron  2>&1 ::
-
-mta@r2d2-v
-3,8,13,18,23,28,33,38,43,48,53,58 * * * * /data/mta/Script/Space_Weather/ACE/Scripts/ace_wrap_script >> $HOME/Logs/ace_main_mirror.cron  2>&1 ::
+###### Secondary (mta@r2d2-v):
+- 3-59/5 * * * * ${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/ACE/Scripts/ace.sh >> ${HOME}/Logs/ace_main_mirror.cron 2>&1
+- 4-59/5 * * * * cd ${SPACE_WEATHER}/ACE/Scripts; ${ENV_FLIGHT}/bin/skare python alert_ace.py -m flight >> ${HOME}/Logs/ace_main_mirror.cron 2>&1

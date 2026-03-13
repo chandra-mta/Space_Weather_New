@@ -48,8 +48,13 @@
                 },
                 "machine": "mta@boba-v",
                 "ace": {
-                    "cadence": "3,8,13,18,23,28,33,38,43,48,53,58 * * * *",
+                    "cadence": "3-59/5 * * * *",
                     "command": "${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/ACE/Scripts/ace.sh",
+                    "log_file": "${HOME}/Logs/ace_main_new.cron"
+                },
+                "alert_ace" : {
+                    "cadence": "4-59/5 * * * *",
+                    "command": "cd ${SPACE_WEATHER}/ACE/Scripts; ${ENV_FLIGHT}/bin/skare python alert_ace.py -m flight",
                     "log_file": "${HOME}/Logs/ace_main_new.cron"
                 }
             },
@@ -62,8 +67,13 @@
                 },
                 "machine": "mta@r2d2-v",
                 "ace": {
-                    "cadence": "3,8,13,18,23,28,33,38,43,48,53,58 * * * *",
+                    "cadence": "3-59/5 * * * *",
                     "command": "${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/ACE/Scripts/ace.sh",
+                    "log_file": "${HOME}/Logs/ace_main_mirror.cron"
+                },
+                "alert_ace" : {
+                    "cadence": "4-59/5 * * * *",
+                    "command": "cd ${SPACE_WEATHER}/ACE/Scripts; ${ENV_FLIGHT}/bin/skare python alert_ace.py -m flight",
                     "log_file": "${HOME}/Logs/ace_main_mirror.cron"
                 }
             }
