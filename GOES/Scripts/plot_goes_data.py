@@ -26,7 +26,7 @@ from pathlib import Path
 #
 # --- Defining Directory Pathing
 #
-SPACE_WEATHER = Path(os.getenv("Space_Weather", "/data/mta4/Space_Weather"))
+SPACE_WEATHER = Path(os.getenv("SPACE_WEATHER", "/data/mta4/Space_Weather"))
 SPACE_WEATHER_WEB = Path(os.environ.get('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION"))
 GOES_DATA_DIR : Path = SPACE_WEATHER / "GOES" / "Data"
 GOES_PLOT_DIR : Path = SPACE_WEATHER_WEB / "GOES" / "Plots"

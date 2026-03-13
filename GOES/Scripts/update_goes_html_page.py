@@ -15,6 +15,7 @@ import signal
 from datetime import datetime, timedelta
 from subprocess import PIPE, Popen
 from time import sleep
+import traceback
 import urllib.request
 import urllib.error
 import json
@@ -27,7 +28,7 @@ import psutil
 #
 #--- Define Directory Pathing
 #
-SPACE_WEATHER = Path(os.getenv("Space_Weather", "/data/mta4/Space_Weather"))
+SPACE_WEATHER = Path(os.getenv("SPACE_WEATHER", "/data/mta4/Space_Weather"))
 SPACE_WEATHER_WEB = Path(os.environ.get('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION"))
 GOES_DATA_DIR : Path = SPACE_WEATHER / "GOES" / "Data"
 GOES_WEB_DIR : Path = SPACE_WEATHER_WEB / "GOES"
@@ -353,7 +354,7 @@ def make_xray_table():
     Generate webpage table
     """
     _flare_file = GOES_DATA_DIR / "goes_flares.ecsv"
-    flare_table = ascii.read(_flare_file)
+    flare_table = ascii.read(str(_flare_file))
     #: Only select and compare noteworthy flares
     sel = flare_table['max_class'] > 'M1'
     flare_table = flare_table[sel]
@@ -658,6 +659,9 @@ if __name__ == "__main__":
         os.makedirs(lock.parent, exist_ok = True)
         with open(lock, 'w') as f:
             f.write(str(pid))
-        update_goes_html_page()
+        try:
+            update_goes_html_page()
+        except json.decoder.JSONDecodeError:
+            traceback.print_exc()
         #: Remove lock file once process is completed
         os.remove(lock)

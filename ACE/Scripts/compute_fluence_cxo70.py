@@ -31,7 +31,7 @@ _JINJA_ENV = Environment(loader = FileSystemLoader('Template', followlinks = Tru
 #
 #--- Define Directory Pathing
 #
-SPACE_WEATHER = Path(os.getenv("Space_Weather", "/data/mta4/Space_Weather"))
+SPACE_WEATHER = Path(os.getenv("SPACE_WEATHER", "/data/mta4/Space_Weather"))
 SPACE_WEATHER_WEB = Path(os.environ.get('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION"))
 ACE_DATA_DIR : Path = SPACE_WEATHER / "ACE" / "Data"
 ACE_HTML_DIR : Path = SPACE_WEATHER_WEB / "ACE"

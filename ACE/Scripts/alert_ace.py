@@ -28,7 +28,7 @@ import psutil
 #
 # --- Define Directory Pathing and Globals
 #
-SPACE_WEATHER = Path(os.getenv("Space_Weather", "/data/mta4/Space_Weather"))
+SPACE_WEATHER = Path(os.getenv("SPACE_WEATHER", "/data/mta4/Space_Weather"))
 SPACE_WEATHER_WEB = Path(os.environ.get('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION"))
 SPACE_WEATHER_URL = os.environ.get('SPACE_WEATHER_URL', "https://cxc.cfa.harvard.edu/mta/RADIATION")
 
