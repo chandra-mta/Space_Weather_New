@@ -12,17 +12,25 @@ and update various data files
     - in addition to sorting the KP index in ECSV format, also stores legacy solar wind format for /data/mta/Script/Ephem
 
 ### Cron Variables:
-- Primary
-    - SPACE_WEATHER=/data/mta4/Space_Weather
-    - ENV_FLIGHT=/proj/sot/ska3/flight
-- Secondary
-    - SPACE_WEATHER=/data/mta/Script/Space_Weather
-    - ENV_FLIGHT=/proj/sot/ska3/flight
+###### Primary
+```
+SPACE_WEATHER=/data/mta4/Space_Weather
+ENV_FLIGHT=/proj/sot/ska3/flight
+```
+###### Secondary
+```
+SPACE_WEATHER=/data/mta/Script/Space_Weather
+ENV_FLIGHT=/proj/sot/ska3/flight
+```
 
 ### Cron Job:
 
-- Primary (mta@boba-v):
+###### Primary (mta@boba-v):
+```
 14 */3 * * * cd ${SPACE_WEATHER}/KP/Scripts; ${ENV_FLIGHT}/bin/skare python fetch_kp_tables.py -m flight >> ${HOME}/Logs/kp_index_update.cron 2>&1
+```
 
-- Secondary (mta@r2d2-v):
+###### Secondary (mta@r2d2-v):
+```
 14 */3 * * * cd ${SPACE_WEATHER}/KP/Scripts; ${ENV_FLIGHT}/bin/skare python fetch_kp_tables.py -m flight >> ${HOME}/Logs/kp_index_update_mirror.cron 2>&1
+```
