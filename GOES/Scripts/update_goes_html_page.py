@@ -21,14 +21,14 @@ import traceback
 import getpass
 from jinja2 import Environment, FileSystemLoader
 from astropy.io import ascii
+from pathlib import Path
 #
 #--- Define Directory Pathing
 #
-GOES_DIR = '/data/mta4/Space_Weather/GOES'
-GOES_DATA_DIR = f"{GOES_DIR}/Data"
-GOES_TEMPLATE_DIR = f"{GOES_DIR}/Scripts/Template"
-HTML_GOES_DIR = '/data/mta4/www/RADIATION/GOES'
-ADMIN = ['mtadude@cfa.harvard.edu']
+SPACE_WEATHER = Path(os.getenv("SPACE_WEATHER", "/data/mta4/Space_Weather"))
+SPACE_WEATHER_WEB = Path(os.getenv('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION"))
+GOES_DATA_DIR : Path = SPACE_WEATHER / "GOES" / "Data"
+GOES_WEB_DIR : Path = SPACE_WEATHER_WEB / "GOES"
 
 #
 # --- Links to data sources
@@ -115,18 +115,15 @@ def update_goes_html_page():
     #
     # --- Write template contents to a html file
     #
-    diff_file = f"{HTML_GOES_DIR}/goes_pchan_p.html"
-    os.makedirs(os.path.dirname(diff_file), exist_ok=True)
+    diff_file =  GOES_WEB_DIR / "goes_pchan_p.html"
     with open(diff_file, "w") as f:
         f.write(diff_render)
     
-    intg_file = f"{HTML_GOES_DIR}/goes_part_p.html"
-    os.makedirs(os.path.dirname(intg_file), exist_ok=True)
+    intg_file = GOES_WEB_DIR / "goes_part_p.html"
     with open(intg_file, "w") as f:
         f.write(intg_render)
     
-    xray_file = f"{HTML_GOES_DIR}/goes_xray_p.html"
-    os.makedirs(os.path.dirname(xray_file), exist_ok=True)
+    xray_file = GOES_WEB_DIR / "goes_xray_p.html"
     with open(xray_file, "w") as f:
         f.write(xray_render)
 
@@ -261,7 +258,7 @@ def make_diff_table():
     line = line + '\tHRC Proxy Legacy = 6000 * P5P6 + 270000 * P7 + 100000 * P8ABC\n\n'
     line = line + '\twhere P5P6 is a combination of P5 and P6 and P8ABC is a combination of P8A, P8B, and P8C.\n'
 
-    outfile = f"{GOES_DATA_DIR}/Gp_pchan_5m.txt"
+    outfile = GOES_DATA_DIR / "Gp_pchan_5m.txt"
     with open(outfile, 'w') as fo:
         fo.write(aline) #: Write out data file for CRM use
 
@@ -358,7 +355,8 @@ def make_intg_table():
     bline = bline + '\t' + '-'*150 +'\n'
     bline = bline + aline
 
-    with open(f"{GOES_DATA_DIR}/Gp_part_5m.txt", 'w') as fo:
+    outfile = GOES_DATA_DIR / "Gp_part_5m.txt"
+    with open(outfile, 'w') as fo:
         fo.write(bline)
 
     return line
@@ -367,7 +365,8 @@ def make_xray_table():
     """
     Generate webpage table
     """
-    flare_table = ascii.read(f"{GOES_DATA_DIR}/goes_flares.ecsv")
+    _flare_file = GOES_DATA_DIR / "goes_flares.ecsv"
+    flare_table = ascii.read(str(_flare_file))
     #: Only select and compare noteworthy flares
     sel = class_to_flux(flare_table['max_class'].data) > 1e-5
     flare_table = flare_table[sel]
@@ -615,6 +614,7 @@ def send_mail(content, subject, admin):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    parser.add_argument("-d", "--data", required = False, help = "Directory path to determine input location of data.")
     parser.add_argument("-p", "--path", help = "Determine data output file path")
     parser.add_argument("-j", "--json", help = "Determine json data file source")
     parser.add_argument("-e", '--email', nargs = '*', required = False, help = "List of emails to receive notifications")
@@ -631,22 +631,19 @@ if __name__ == "__main__":
 #
 #---Define pathing for test output
 #
-        OUT_DIR = f"{os.getcwd()}/test/_outTest"
-        os.makedirs(OUT_DIR, exist_ok = True)
-        GOES_TEMPLATE_DIR = f"{os.getcwd()}/Template"
-        if args.path:
-            GOES_DATA_DIR = args.path
-            HTML_GOES_DIR = args.path
+        if args.data:
+            GOES_DATA_DIR = Path(args.data)
         else:
-            GOES_DATA_DIR = OUT_DIR
-            HTML_GOES_DIR = f"{OUT_DIR}/GOES"
-            os.makedirs(HTML_GOES_DIR, exist_ok = True)
+            GOES_DATA_DIR = Path(os.getcwd(), "test", "_outTest")
+
+        if args.path:
+            GOES_WEB_DIR = Path(args.path)
+        else:
+            GOES_WEB_DIR = Path(os.getcwd(), "test", "_outTest", "GOES")
+        os.makedirs(GOES_WEB_DIR, exist_ok = True)
 
         if args.json:
             DLINK = args.json
-        
-        #: Refresh GOES css
-        os.system(f"cp {GOES_TEMPLATE_DIR}/goes.css {HTML_GOES_DIR}/")
 
         update_goes_html_page()
     elif args.mode == "flight":
