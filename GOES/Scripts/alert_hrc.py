@@ -12,6 +12,7 @@
 # ///
 """
 import os
+import shutil
 import signal
 import argparse
 import getpass
@@ -20,14 +21,13 @@ from datetime import datetime, timezone
 import json
 import csv
 from astropy.io import ascii
-
+from pathlib import Path
 #
 # --- Define Directory Pathing
 #
-GOES_DIR = "/data/mta4/Space_Weather/GOES/Data"
-GOES_DATA_FILE = f"{GOES_DIR}/Gp_pchan_5m.txt"
-HRC_PROXY_DATA_FILE = f"{GOES_DIR}/hrc_proxy.csv"
-VIOL_RECORD_FILE = f"{GOES_DIR}/hrc_proxy_viol.json"
+SPACE_WEATHER = Path(os.getenv("SPACE_WEATHER", "/data/mta4/Space_Weather"))
+GOES_DATA_DIR : Path = SPACE_WEATHER / "GOES" / "Data"
+
 NAMES = (
     "time",
     "p1",
@@ -69,21 +69,20 @@ def alert_hrc():
     :File Out: <goes_dir>/hrc_proxy.csv
 
     """
-    dat = ascii.read(
-        GOES_DATA_FILE, data_start=5, delimiter="\t", guess=False, names=NAMES
-    )
+    _goes_data_file = GOES_DATA_DIR / "Gp_pchan_5m.txt"
+    dat = ascii.read(_goes_data_file, data_start=5, delimiter="\t", guess=False, names=NAMES)
     time, hrc_proxy, hrc_proxy_legacy = dat[-1]["time", "hrc_proxy", "hrc_proxy_legacy"]
     recent_data = {
         "time": str(time),
         "hrc_proxy": int(hrc_proxy),
         "hrc_proxy_legacy": int(hrc_proxy_legacy),
     }  #: Cast astropy table data into json serializable types
-
     #
     # --- Check current status of HRC proxy violations.
     # --- If one has been found very recently, do not email about the violation again.
     #
-    with open(VIOL_RECORD_FILE) as f:
+    _violation_record = GOES_DATA_DIR / "hrc_proxy_viol.json"
+    with open(_violation_record) as f:
         curr_viol = json.load(f)
 
     content = ""
@@ -105,10 +104,11 @@ def alert_hrc():
 
     if content != "" and len(HRC_ADMIN) > 0:
         send_mail(content, "HRC Proxy Violation", HRC_ADMIN)
-    with open(VIOL_RECORD_FILE, "w") as f:
+    with open(_violation_record, "w") as f:
         json.dump(curr_viol, f, indent=4)
 
-    add_to_archive(recent_data, HRC_PROXY_DATA_FILE)
+    _proxy_data_file = GOES_DATA_DIR / "hrc_proxy.csv"
+    add_to_archive(recent_data, _proxy_data_file)
 
 
 def send_mail(content, subject, admin):
@@ -183,46 +183,37 @@ if __name__ == "__main__":
         #
         # --- Redefine pathing for GOES and HRC PROXY data files
         #
-        OUT_DIR = f"{os.getcwd()}/test/_outTest"
-        os.makedirs(OUT_DIR, exist_ok=True)
-        if args.goes:
-            GOES_DATA_FILE = args.goes
+        _old = GOES_DATA_DIR
+        if args.data:
+            GOES_DATA_DIR = Path(args.goes)
         else:
-            GOES_DATA_FILE = f"{OUT_DIR}/Gp_pchan_5m.txt"
-
-        if args.json:
-            VIOL_RECORD_FILE = args.json
-        else:
-            temp_dict = {
-                "time": "2020:077:17:10",
-                "hrc_proxy": 0,
-                "hrc_proxy_legacy": 0,
+            GOES_DATA_DIR = Path(os.getcwd(), "test", "_outTest")
+        #: GOES Data directory not created in test case, because it should already be created to read the hrc proxy data.
+        _violation_record = GOES_DATA_DIR / "hrc_proxy_viol.json"
+        if not _violation_record.is_file():
+            #: Creates a default violation record file.
+            #: Manually copy from the live running version to test triggers for current version.
+            _default_dict ={
+                "Warning_hrc_proxy": {
+                    "time": "2020:077:17:10",
+                    "hrc_proxy": 0,
+                    "hrc_proxy_legacy": 0,
+                },
+                "Warning_hrc_proxy_legacy": {
+                    "time": "2020:077:17:10",
+                    "hrc_proxy": 0,
+                    "hrc_proxy_legacy": 0,
+                }
             }
-            import copy
+            with open(_violation_record, "w") as f:
+                json.dump(_default_dict, f, indent=4)
+        
+        _proxy_data_file = GOES_DATA_DIR / "hrc_proxy.csv"
+        if not _proxy_data_file.is_file():
+            shutil.copyfile(_old / "hrc_proxy.csv", _proxy_data_file)
 
-            check_viol = {
-                "Warning_hrc_proxy": copy.copy(temp_dict),
-                "Warning_hrc_proxy_legacy": copy.copy(temp_dict),
-            }
+        alert_hrc()
 
-            VIOL_RECORD_FILE = f"{OUT_DIR}/hrc_proxy_viol.json"
-            with open(VIOL_RECORD_FILE, "w") as f:
-                json.dump(check_viol, f, indent=4)
-
-        if args.archive_hrc:
-            HRC_PROXY_DATA_FILE = args.archive_hrc
-        else:
-            HRC_PROXY_DATA_FILE = f"{OUT_DIR}/hrc_proxy.csv"
-            with open(HRC_PROXY_DATA_FILE, "w", newline="", encoding="utf-8") as f:
-                writer = csv.DictWriter(
-                    f, dialect="unix", fieldnames=CSV_HEADER, quoting=csv.QUOTE_NONE
-                )
-                writer.writeheader()
-
-        try:
-            alert_hrc()
-        except:  # noqa: E722
-            traceback.print_exc()
     elif args.mode == "flight":
         #
         # --- Create a lock file and exit strategy in case of race conditions
