@@ -11,14 +11,13 @@
 """
 import os
 import shutil
+import signal
 from datetime import datetime, timezone
-import subprocess
 import argparse
-import traceback
-import getpass
 from email.mime.text import MIMEText
 from subprocess import Popen, PIPE
 from pathlib import Path
+import psutil
 import file_readers as fr
 #
 # --- Define Directory Pathing
@@ -104,23 +103,28 @@ if __name__ == "__main__":
         check_cadence()
 
     elif args.mode == "flight":
-        #
-        # --- Create a lock file and exit strategy in case of race conditions
-        #
+    #: Create a lock file and exit strategy in case of stall.
         name = os.path.basename(__file__).split(".")[0]
-        user = getpass.getuser()
-        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
-            notification = f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog."
-            send_mail(notification, f"Stalled Script: {name}", ADMIN)
-            sys.exit(notification)
-        else:
-            os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
+        user = os.getenv("USER", "mta")
+        lock = Path("/tmp", user, f"{name}.lock")
 
-        try:
-            check_cadence()
-        except:  # noqa: E722
-            traceback.print_exc()
-        #
-        # --- Remove lock file once process is completed
-        #
-        os.system(f"rm /tmp/{user}/{name}.lock")
+        #: If lock file exists, read the pid and kill the process, then remove the lock file
+        if os.path.isfile(lock):
+            notification = f"Lock file exists as {lock}. Process already running/errored out. Check calling scripts/cronjob/cronlog."
+            send_mail(f"Stalled Script: {name}", notification, ADMIN)
+            with open(lock) as f:
+                pid = int(f.read().strip())
+            if psutil.pid_exists(pid):
+                os.kill(pid, signal.SIGTERM)
+            os.remove(lock)
+        
+        #: Lock file with current pid
+        pid = os.getpid()
+        os.makedirs(lock.parent, exist_ok = True)
+        with open(lock, 'w') as f:
+            f.write(str(pid))
+
+        check_cadence()
+
+        #: Remove lock file once process is completed
+        os.remove(lock)
