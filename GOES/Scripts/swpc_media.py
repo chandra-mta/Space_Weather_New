@@ -21,6 +21,9 @@ from urllib.parse import urlparse
 from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont
 from astropy.table import Table
+import io
+import requests
+import urllib.request
 #
 #--- Define Directory Pathing
 #
@@ -34,6 +37,31 @@ SOLAR_REGIONS = 'https://services.swpc.noaa.gov/json/solar_regions.json'
 
 URL_FILES = [CCOR_1_7DAYS,MAGNETOGRAM_MAP,SOLAR_REGIONS]
 TODAY = datetime.now().strftime("%Y-%m-%d")
+
+def download_img(url):
+    """
+    Download image
+    """
+    #: Create response object
+    resp = requests.get(url, timeout=30)
+    resp.raise_for_status()
+    img = Image.open(io.BytesIO(resp.content))
+    return img
+
+def download_video(url, file_out):
+    """
+    Download video, and save directly to a file.
+    """
+    #: Create response object
+    with requests.get(url, stream=True) as resp:
+        resp.raise_for_status()
+        with open(file_out, 'wb') as f:
+            for chunk in resp.iter_content(chunk_size = 1024*1024): 
+                if chunk: 
+                    f.write(chunk)
+
+def _filename(url):
+    return os.path.basename(urlparse(url).path)
 
 def swpc_media():
     """
