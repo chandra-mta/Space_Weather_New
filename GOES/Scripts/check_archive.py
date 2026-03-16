@@ -26,28 +26,33 @@ import file_readers as fr
 SPACE_WEATHER = Path(os.getenv('SPACE_WEATHER', "/data/mta4/Space_Weather"))
 GOES_DATA_DIR : Path = SPACE_WEATHER / "GOES" / "Data"
 HRC_PROXY_ARCHIVE : Path= GOES_DATA_DIR / "hrc_proxy.csv"
+
+ADMIN = "mtadude@cfa.harvard.edu"
 #
 # --- Due to the latest data from SWPC being 15 minutes behind, this data will always have at minimum a 15 minute delay.
 #
 TIME_DIFF = 2700  #: 45 minutes in seconds
+TESTMAIL = False
 
+def send_mail(subject, content, address):
+    """Send Emails
 
-def send_mail(content, subject, admin):
-    """Send warning message to the admins
-
-    :param content: Content of the email.
-    :type content: str
-    :param subject: Subject line of the email.
+    :param subject: Subject line
     :type subject: str
-    :param admin: List of email recipients.
-    :type admin: list
+    :param content: Email content as string
+    :type content: str
+    :param address: Email address of the recipient
+    :type address: str
     """
-    content += f'This message was send to {" ".join(admin)}'
     msg = MIMEText(content)
-    msg["Subject"] = subject
-    msg["To"] = ",".join(admin)
-    p = Popen(["/sbin/sendmail", "-t", "-oi"], stdin=PIPE)
-    (out, error) = p.communicate(msg.as_bytes())
+    msg['Subject'] = subject
+    msg['To'] = address
+
+    if TESTMAIL:
+        print(msg)
+    else:
+        p = Popen(["/sbin/sendmail", "-t", "-oi"], stdin=PIPE)
+        p.communicate(msg.as_bytes())
 
 
 def check_cadence():
@@ -63,18 +68,18 @@ def check_cadence():
         # --- if we are in violation with a time discrepancy, do nothing until we are no longer in violation, then send email
         #
         if (now - last_time).total_seconds() < TIME_DIFF:
-            content = f"Time discrepancy in {ARCHIVE_FILE} has ended.\n{'-' * 40}\nTail of file: {out}Current Time: {now.strftime('%Y:%j:%H:%M')}\n"
-            send_mail(content, "HRC Proxy Archive Resumed", ADMIN)
-            os.remove(f"{DATA_DIR}/check_archive.viol")
+            content = f"Time discrepancy in {_archive_file} has ended.\n{'-' * 40}\nTail of file: {out}Current Time: {now.strftime('%Y:%j:%H:%M')}\n"
+            send_mail("HRC Proxy Archive Resumed", content, ADMIN)
+            os.remove(_archive_viol)
     #
     # --- If we have no record of a time violation, but then find one, write the viol file and send email
     #
     elif (now - last_time).total_seconds() > TIME_DIFF:
-        content = f"Time discrepancy in {ARCHIVE_FILE}\n{'-' * 40}\nTail of file: {out}Current Time: {now.strftime('%Y:%j:%H:%M')}\n"
+        content = f"Time discrepancy in {_archive_file}\n{'-' * 40}\nTail of file: {out}Current Time: {now.strftime('%Y:%j:%H:%M')}\n"
         content += "Discrepancy likely due to interrupted service from SWPC NOAA.\n"
-        with open(f"{DATA_DIR}/check_archive.viol", "w") as f:
+        with open(_archive_viol, "w") as f:
             f.write(content)
-        send_mail(content, "Time Discrepancy in HRC Proxy Archive", ADMIN)
+        send_mail("Time Discrepancy in HRC Proxy Archive", content, ADMIN)
 
 
 if __name__ == "__main__":
