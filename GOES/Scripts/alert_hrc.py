@@ -160,27 +160,8 @@ def add_to_archive(recent_data, outfile):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-m",
-        "--mode",
-        choices=["flight", "test"],
-        required=True,
-        help="Determine running mode.",
-    )
-    parser.add_argument(
-        "-e",
-        "--email",
-        nargs="*",
-        required=False,
-        help="List of emails to receive notifications",
-    )
-    parser.add_argument("-g", "--goes", help="Determine GOES data file path")
-    parser.add_argument(
-        "-a", "--archive_hrc", help="Determine long term record file path for HRC proxy"
-    )
-    parser.add_argument(
-        "-j", "--json", help="Pass in record for current state of HRC proxy violations."
-    )
+    parser.add_argument("-m", "--mode", choices=["flight", "test"], required=True, help="Determine running mode.")
+    parser.add_argument("-d", "--data", help="Determine directory path for GOES Data")
     args = parser.parse_args()
 
     if args.mode == "test":
@@ -190,7 +171,7 @@ if __name__ == "__main__":
         #
         _old = GOES_DATA_DIR
         if args.data:
-            GOES_DATA_DIR = Path(args.goes)
+            GOES_DATA_DIR = Path(args.data)
         else:
             GOES_DATA_DIR = Path(os.getcwd(), "test", "_outTest")
         #: GOES Data directory not created in test case, because it should already be created to read the hrc proxy data.
