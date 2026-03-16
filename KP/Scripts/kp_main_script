@@ -1,3 +1,0 @@
-cd /data/mta4/Space_Weather/KP/Scripts
-
-/data/mta4/Space_Weather/KP/Scripts/fetch_kp_tables.py -m flight
