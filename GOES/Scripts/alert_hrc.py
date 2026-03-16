@@ -1,9 +1,11 @@
-#!/proj/sot/ska3/flight/bin/python
+#!/usr/bin/env python
 """
 **alert_hrc.py**: Send alerts to the HRC team in case the HRC proxy violates
 
 :Author: W. Aaron (william.aaron@cfa.harvard.edu)
 :Last Updated: Feb 20, 2025
+
+:TODO: Consider adapting the hrc proxy violation archive into an astropy ECSV file in order to make use of table metadata
 
 # /// testing
 # tested-ska-release = "2026.1"
