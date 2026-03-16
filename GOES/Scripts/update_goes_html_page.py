@@ -32,6 +32,8 @@ SPACE_WEATHER = Path(os.getenv("SPACE_WEATHER", "/data/mta4/Space_Weather"))
 SPACE_WEATHER_WEB = Path(os.getenv('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION"))
 GOES_DATA_DIR : Path = SPACE_WEATHER / "GOES" / "Data"
 GOES_WEB_DIR : Path = SPACE_WEATHER_WEB / "GOES"
+TESTMAIL = False
+ADMIN = 'mtadude@cfa.harvard.edu'
 
 #
 # --- Links to data sources
