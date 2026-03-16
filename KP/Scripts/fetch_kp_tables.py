@@ -239,7 +239,7 @@ def write_legacy_files(swpc_kp):
     #: Now write the forecast archive.
     forecast_archive = KP_DATA_DIR / "k_index_data"
     forecast_archive_line = fr.get_last_text_line(forecast_archive)
-    start = CxoTime(int(past_archive_line.split('\t')[0]))
+    start = CxoTime(int(forecast_archive_line.split('\t')[0]))
     sel = start <= CxoTime(swpc_kp['time_tag'].data)
     append_forecast_archive = ''
     append_forecast_solar = ''
