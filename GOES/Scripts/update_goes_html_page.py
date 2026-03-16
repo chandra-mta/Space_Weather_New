@@ -1,4 +1,4 @@
-#!/proj/sot/ska3/flight/bin/python
+#!/usr/bin/env python
 """
 **update_goes_html_page.py**: Update goes differential protons html page.
 
