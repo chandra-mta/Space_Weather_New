@@ -1,139 +1,4 @@
-
-GOES proton/particle monitoring system for Chandra.
-===================================================
-
-
-Currently:  dir_list: /data/mta4/Space_Weather/hose_keeping/dir_list
-            goes_dir: /data/mta4/Space_Weather/GOES/
-            web_dir:  /data/mta4/www/RADIATION/GOES/
-
-
-Scripts:
---------
-goes_wrap_script
-goes_main_script        --- environment setting scripts
-
-goes_long_wrap_script   --- environment setting scripts for the long term data 
-goes_long_main_script
-
-check_archive_wrap_script --- checks validity of hrc proxy archive in case goes_main_script fails
-check_archive_main_script
-
-pull_swpc_media_wrap_script --- Daily pull of media files from SWPC and SDO for GOES x-ray page
-pull_swpc_media_main_script
-
-update_goes_html_page.py
----------------------------------
-Update: <web_dir>/goes_pchan_p.html
-        <web_dir>/goes_part_p.html
-        <web_dir>/goes_xray_p.html
-
-input: https://services.swpc.noaa.gov/json/goes/primary/differential-protons-1-day.json
-       https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json
-       https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-1-day.json
-       https://services.swpc.noaa.gov/json/goes/primary/xray-flares-7-day.json
-       https://services.swpc.noaa.gov/json/edited_events.json
-
-"energy"    = ['1020-1860 keV',   '1900-2300 keV',   '2310-3340 keV',    '3400-6480 keV',\
-               '5840-11000 keV',  '11640-23270 keV', '25900-38100 keV',  '40300-73400 keV',\
-               '83700-98500 keV', '99900-118000 keV','115000-143000 keV','160000-242000 keV',\
-               '276000-404000 keV']
-"energy" (particles)  = ['>=1 MeV', '>=5 MeV', '>=10 MeV', '>=30 MeV', '>=50 MeV',\
-                         '>=60 MeV', '>=100 MeV', '>=500 MeV']
-"energy" (electron)   = ['>=2 MeV',]
-
-output: <web_dir>/goes_pchan_p.html
-        <web_dir>/goes_part_p.html
-
-plot_goes_data.py
------------------
-plot goes data
-
-input: https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json
-       https://services.swpc.noaa.gov/json/goes/primary/integral-protons-3-day.json
-
-differential
-"energy"    = ['1020-1860 keV',   '1900-2300 keV',   '2310-3340 keV',    '3400-6480 keV',\
-               '5840-11000 keV',  '11640-23270 keV', '25900-38100 keV',  '40300-73400 keV',\
-               '83700-98500 keV', '99900-118000 keV','115000-143000 keV','160000-242000 keV',\
-               '276000-404000 keV']
-integral
-"energy"    = ['>=1 MeV', '>=5 MeV', '>=10 MeV', '>=30 MeV', '>=50 MeV',\
-               '>=60 MeV', '>=100 MeV', '>=500 MeV']
-
-output: <html_dir>/Plots/goes_protons.png
-        <html_dir>/Plots/goes_particles.png 
-
-alert_hrc.py
-------------
-send hrc proxy alerts
-
-input: <goes_dir>/Gp_pchan_5m.txt
-
-output: email alerts
-        <goes_dir>/hrc_proxy.csv
-        <goes_dir>/hrc_proxy_viol.json
-
-swpc_media.py
--------------
-Daily pull of SWPC and SDO media for the GOES X-ray page
-
-output: <web_dir>/Media/ccor1_last_7_days.mp4
-        <web_dir>/Media/latest_2048_HMIBC.jpg
-        <web_dir>/Media/annotated_sdo_hmi_magnetogram.png
-        <web_dir>/Media/solar_regions.json
-
-collect_goes_long.py
-----------------------
-update a long term goes data
-
-input:  https://services.swpc.noaa.gov/json/goes/primary/differential-protons-7-day.json
-output: <data_dir>/goes_data_r.txt
-        note there is goes_data.txt which is from older goes satellites and have 2001 - early Mar 2020
-
-web address:
-------------
-http://cxc.cfa.harvard.edu/mta/RADIATION/GOES/goes_part_p.html
-http://cxc.cfa.harvard.edu/mta/RADIATION/GOES/goes_pchan_p.html
-( /data/mta4/www/RADIATION/GOES/)
-
-## Cron Variables:
-###### Primary
-```
-SPACE_WEATHER=/data/mta4/Space_Weather
-ENV_FLIGHT=/proj/sot/ska3/flight
-SPACE_WEATHER_WEB=/data/mta4/www/RADIATION
-SPACE_WEATHER_URL=https://cxc.cfa.harvard.edu/mta/RADIATION
-```
-###### Secondary
-```
-SPACE_WEATHER=/data/mta/Script/Space_Weather
-ENV_FLIGHT=/proj/sot/ska3/flight
-SPACE_WEATHER_WEB=/data/mta/www/MIRROR/Space_Weather
-SPACE_WEATHER_URL=https://ops-web.cfa.harvard.edu/mta/Space_Weather
-```
-
-Cron job
---------
-
-mta on boba-v
-
-2,7,12,17,22,27,32,37,42,47,52,57 * * * * /data/mta4/Space_Weather/GOES/Scripts/goes_wrap_script      >> $HOME/Logs/goes_main_new.cron      2>&1
-14 2 * * *                                /data/mta4/Space_Weather/GOES/Scripts/goes_long_wrap_script >> $HOME/Logs/goes_long_term_new.cron 2>&1
-#: The pull_swpc_media script marks active solar regions marked as observed or still observed on the current date
-#: Therefore do not run the script too early in the day in case the days' active regions have not been updated yet.
-30 2 * * *                                /data/mta4/Space_Weather/GOES/Scripts/pull_swpc_media_wrap_script >> $HOME/Logs/swpc_media.cron 2>&1
-4,9,14,19,24,29,34,39,44,49,54,59 * * * * /data/mta4/Space_Weather/GOES/Scripts/check_archive_wrap_script >> $HOME/Logs/goes_archive_check.cron 2>&1
-
-
-
-Old Version
-han-v  as mta
-
-2,7,12,17,22,27,32,37,42,47,52,57 * * * * /data/mta4/Space_Weather/GOES/Scripts/goes_wrap_script      > /data/mta4/Space_Weather/Test_Logs/goes_main.cron 2>&1
-14 2 * * *                                /data/mta4/Space_Weather/GOES/Scripts/goes_long_wrap_script > /data/mta4/Space_Weather/Test_Logs/goes_long_term.cron 2>&1
-14 2 * * *                                /data/mta4/Space_Weather/GOES/Scripts/get_goes_xray_plot.py > /data/mta4/Space_Weather/Test_Logs/goes_x_ray_plot.cron 2>&1
-
+# GOES proton/particle monitoring system for Chandra.
 
 Note: Goes proton channel name and the energy band:
 
@@ -151,12 +16,118 @@ P8C         115000-143000 keV
 P9          160000-242000 keV
 P10         276000-404000 keV
 
+## Scripts:
+
+- collect_goes_long.py: update a long term goes data
+
+        - input:  
+                - https://services.swpc.noaa.gov/json/goes/primary/differential-protons-7-day.json
+        - output:
+                - <goes_data_dir>/goes_data_r.txt (note there is goes_data.txt which is from older goes satellites and have 2001 - early Mar 2020)
+
+- swpc_media.py: Daily pull of SWPC and SDO media for the GOES X-ray page
+        
+        - input:
+                - https://services.swpc.noaa.gov/products/ccor1/mp4s/ccor1_last_7_days.mp4
+                - https://sdo.gsfc.nasa.gov/assets/img/latest/latest_2048_hmibc.jpg
+                - https://services.swpc.noaa.gov/json/solar_regions.json
+        - output: 
+                - <goes_media_dir>/ccor1_last_7_days.mp4
+                - <goes_media_dir>/latest_2048_HMIBC.jpg
+                - <goes_media_dir>/annotated_sdo_hmi_magnetogram.png
+                - <goes_media_dir>/Media/solar_regions.json
+
+- check_archive.py: checks validity of hrc proxy archive in case goes.sh fails
+
+        - input: 
+                - <goes_data_dir>/hrc_proxy.csv
+        - output:
+                - email to mtadude in case of a time discrepancy in archive.
+
+- goes.sh: Bash shell script for running all the 5-minutely GOES data products (data files, plots, and web pages)
+
+- fetch_goes_tables.py: Fetch GOES particle tables and data from SWPC NOAA
+
+        - input:
+                - https://services.swpc.noaa.gov/json/goes/primary/differential-protons-3-day.json
+                - https://services.swpc.noaa.gov/json/goes/primary/integral-protons-3-day.json
+                - https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-3-day.json
+                - https://services.swpc.noaa.gov/json/goes/primary/xray-flares-7-day.json
+                - https://services.swpc.noaa.gov/json/edited_events.json
+        - output:
+                - <goes_data_dir>/goes_differential_protons.ecsv
+                - <goes_data_dir>/goes_integral_protons.ecsv
+                - <goes_data_dir>/goes_integral_electrons.ecsv
+
+- plot_goes_data.py: Get and plot goes data.
+
+        - input:
+                - <goes_data_dir>/goes_differential_protons.ecsv
+                - <goes_data_dir>/goes_integral_protons.ecsv
+        - output:
+                - <goes_plot_dir>/goes_protons.png
+                - <goes_plot_dir>/goes_particles.png
+
+- update_goes_html_page.py: update goes differential, integral, and x-ray pages
+
+        - input:
+                - https://services.swpc.noaa.gov/json/goes/primary/differential-protons-1-day.json
+                - https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json
+                - https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-1-day.json
+        - output:
+                - <goes_data_dir>/Gp_pchan_5m.txt
+                - <goes_data_dir>/Gp_part_5m.txt
+                - <goes_data_dir>/goes_flares.ecsv
+                - <goes_web_dir>/goes_pchan_p.html
+                - <goes_web_dir>/goes_part_p.html
+                - <goes_web_dir>/goes_xray_p.html
+
+- alert_hrc.py: send hrc proxy alerts
+
+        - input:
+                - <goes_data_dir>/Gp_pchan_5m.txt
+        - output:
+                - email alerts
+                - <goes_data_dir>/hrc_proxy.csv
+                - <goes_data_dir>/hrc_proxy_viol.json
+
+## Cron Variables:
+###### Primary
+```
+SPACE_WEATHER=/data/mta4/Space_Weather
+ENV_FLIGHT=/proj/sot/ska3/flight
+SPACE_WEATHER_WEB=/data/mta4/www/RADIATION
+SPACE_WEATHER_URL=https://cxc.cfa.harvard.edu/mta/RADIATION
+```
+###### Secondary
+```
+SPACE_WEATHER=/data/mta/Script/Space_Weather
+ENV_FLIGHT=/proj/sot/ska3/flight
+SPACE_WEATHER_WEB=/data/mta/www/MIRROR/Space_Weather
+SPACE_WEATHER_URL=https://ops-web.cfa.harvard.edu/mta/Space_Weather
+```
+
+## Cron Job
+
+The swpc_media.py script marks active solar regions marked as observed or still observed on the current date
+Therefore, we do not run the script too early in the day in case the days' active regions have not been updated yet.
+
 ###### Primary (mta@boba-v):
 ```
+14 2 * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python collect_goes_long.py -m flight >> ${HOME}/Logs/goes_long_term_new.cron 2>&1
+30 2 * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python swpc_media.py -m flight >> ${HOME}/Logs/swpc_media.cron 2>&1
+
+2-59/5 * * * * ${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/goes.sh >> ${HOME}/Logs/goes_main_new.cron 2>&1
 3-59/5 * * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python alert_hrc.py -m flight >> ${HOME}/Logs/goes_main_new.cron 2>&1
+4-59/5 * * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python check_archive.py -m flight >> ${HOME}/Logs/goes_archive_check.cron 2>&1
 ```
 
 ###### Secondary (mta@r2d2-v):
 ```
+14 2 * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python collect_goes_long.py -m flight >> ${HOME}/Logs/goes_long_term_mirror.cron 2>&1
+30 2 * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python swpc_media.py -m flight >> ${HOME}/Logs/swpc_media_mirror.cron 2>&1
+
+2-59/5 * * * * ${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/goes.sh >> ${HOME}/Logs/goes_main_mirror.cron 2>&1
 3-59/5 * * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python alert_hrc.py -m flight >> ${HOME}/Logs/goes_main_mirror.cron 2>&1
+4-59/5 * * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python check_archive.py -m flight >> ${HOME}/Logs/goes_archive_check_mirror.cron 2>&1
 ```
