@@ -250,20 +250,9 @@ def plot_data(data_dict):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        "-m",
-        "--mode",
-        choices=["flight", "test"],
-        required=True,
-        help="Determine running mode.",
-    )
-    parser.add_argument(
-        "-p",
-        "--path",
-        required=False,
-        help="Directory path to determine output location of plot.",
-    )
+    parser.add_argument("-m", "--mode", choices=["flight", "test"], required=True, help="Determine running mode.")
+    parser.add_argument("-d", "--data", required = False, help = "Directory path to determine input location of data.")
+    parser.add_argument("-p", "--path", required=False, help="Directory path to determine output location of plot.")
     args = parser.parse_args()
     #
     # --- Determine if running in test mode and change pathing if so
@@ -272,6 +261,10 @@ if __name__ == "__main__":
         #
         # --- Path output to same location as unit tests
         #
+        if args.data:
+            GOES_DATA_DIR = Path(args.data)
+        else:
+            GOES_DATA_DIR = Path(os.getcwd(), "test", '_outTest')
         if args.path:
             GOES_PLOT_DIR = Path(args.path)
         else:
