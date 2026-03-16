@@ -209,7 +209,7 @@ def json2table(jlink):
     else:
         with urllib.request.urlopen(jlink, timeout = 10) as url:
             data = json.loads(url.read().decode())
-    data = Table(data)
+    data = Table(data, masked=True)
     return data
 
 def reorient_particle_table(table, gen_column = 'energy', column_list = None) -> Table:
@@ -235,7 +235,7 @@ def reorient_particle_table(table, gen_column = 'energy', column_list = None) ->
             row[j] = np.ma.masked
         new_rows.append(row)
     
-    return Table(rows = new_rows)
+    return Table(rows = new_rows, masked=True)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
