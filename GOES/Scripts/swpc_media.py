@@ -1,4 +1,4 @@
-#!/proj/sot/ska3/flight/bin/python
+#!/usr/bin/env python
 """
 **pull_swpc_media.py**: Fetches SWPC media for use in the GOES X-Ray webpage
 
