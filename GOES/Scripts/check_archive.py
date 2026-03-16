@@ -10,7 +10,7 @@
 # ///
 """
 import os
-import sys
+import shutil
 from datetime import datetime, timezone
 import subprocess
 import argparse
@@ -18,11 +18,14 @@ import traceback
 import getpass
 from email.mime.text import MIMEText
 from subprocess import Popen, PIPE
-
-
-DATA_DIR = "/data/mta4/Space_Weather/GOES/Data"
-ARCHIVE_FILE = f"{DATA_DIR}/hrc_proxy.csv"
-ADMIN = ["mtadude@cfa.harvard.edu"]
+from pathlib import Path
+import file_readers as fr
+#
+# --- Define Directory Pathing
+#
+SPACE_WEATHER = Path(os.getenv('SPACE_WEATHER', "/data/mta4/Space_Weather"))
+GOES_DATA_DIR : Path = SPACE_WEATHER / "GOES" / "Data"
+HRC_PROXY_ARCHIVE : Path= GOES_DATA_DIR / "hrc_proxy.csv"
 #
 # --- Due to the latest data from SWPC being 15 minutes behind, this data will always have at minimum a 15 minute delay.
 #
@@ -50,12 +53,12 @@ def send_mail(content, subject, admin):
 def check_cadence():
     """Reads the hrc_proxy.csv archive file to check if there is a delay in the calculation, likely due to missing data."""
     now = datetime.now(timezone.utc)
-    out = subprocess.check_output(
-        f"tail -n 1 {ARCHIVE_FILE}", shell=True, executable="/bin/csh"
-    ).decode()
+    _archive_file = GOES_DATA_DIR / "hrc_proxy.csv"
+    out = fr.get_last_text_line(_archive_file) 
     last_time = datetime.strptime(out.split(",")[0], "%Y:%j:%H:%M")
     last_time = last_time.replace(tzinfo=timezone.utc)
-    if os.path.isfile(f"{DATA_DIR}/check_archive.viol"):
+    _archive_viol = GOES_DATA_DIR / "check_archive.viol"
+    if _archive_viol.is_file():
         #
         # --- if we are in violation with a time discrepancy, do nothing until we are no longer in violation, then send email
         #
@@ -76,55 +79,24 @@ def check_cadence():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-m",
-        "--mode",
-        choices=["flight", "test"],
-        required=True,
-        help="Determine running mode.",
-    )
-    parser.add_argument(
-        "-e",
-        "--email",
-        nargs="*",
-        required=False,
-        help="List of emails to receive notifications",
-    )
-    parser.add_argument(
-        "-a", "--archive", help="Determine long-term record file path for HRC proxy"
-    )
+    parser.add_argument("-m", "--mode", choices=["flight", "test"], required=True, help="Determine running mode.")
+    parser.add_argument("-p", "--path", help="Determine GOES data directory containing long-term record file for HRC proxy")
     args = parser.parse_args()
 
     if args.mode == "test":
-        #
-        # --- Redefine Admin for sending notification email in test mode
-        #
-        if args.email is not None:
-            ADMIN = args.email
+
+        _old = GOES_DATA_DIR
+        TESTMAIL = True
+        if args.path:
+            GOES_DATA_DIR = Path(args.path)
         else:
-            ADMIN = [
-                os.popen(f"getent aliases | grep {getpass.getuser()}")
-                .read()
-                .split(":")[1]
-                .strip()
-            ]
+            GOES_DATA_DIR = Path(os.getcwd(), "test", "_outTest")
+        os.makedirs(GOES_DATA_DIR, exist_ok=True)
+        
+        if not (GOES_DATA_DIR / "hrc_proxy.csv").is_file():
+            shutil.copyfile(_old / "hrc_proxy.csv", GOES_DATA_DIR / "hrc_proxy.csv")
 
-        DATA_DIR = f"{os.getcwd()}/test/_outTest"
-        os.makedirs(DATA_DIR, exist_ok=True)
-        if args.archive:
-            ARCHIVE_FILE = args.archive
-        else:
-            ARCHIVE_FILE = f"{DATA_DIR}/hrc_proxy.csv"
-
-        if not os.path.isfile(ARCHIVE_FILE):
-            os.system(
-                f"cp /data/mta4/Space_Weather/GOES/Data/hrc_proxy.csv {ARCHIVE_FILE}"
-            )
-
-        try:
-            check_cadence()
-        except:  # noqa: E722
-            traceback.print_exc()
+        check_cadence()
 
     elif args.mode == "flight":
         #
