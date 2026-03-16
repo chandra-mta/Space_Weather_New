@@ -2,6 +2,7 @@
 outTest/
 _outTest/
 _example/
+.vscode/
 
 
 # Byte-compiled / optimized / DLL files
