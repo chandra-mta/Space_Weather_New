@@ -1,6 +1,0 @@
-cd /data/mta4/Space_Weather/GOES/Scripts
-
-/data/mta4/Space_Weather/GOES/Scripts/fetch_goes_tables.py -m flight
-/data/mta4/Space_Weather/GOES/Scripts/plot_goes_data.py -m flight
-/data/mta4/Space_Weather/GOES/Scripts/update_goes_html_page.py -m flight
-# /data/mta4/Space_Weather/GOES/Scripts/alert_hrc.py -m flight
