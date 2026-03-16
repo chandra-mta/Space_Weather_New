@@ -1,4 +1,4 @@
-#!/proj/sot/ska3/flight/bin/python
+#!/usr/bin/env python
 """
 **collect_goes_long.py**: Collect GOES data for the long term use
 
