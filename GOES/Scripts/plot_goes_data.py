@@ -1,4 +1,4 @@
-#!/proj/sot/ska3/flight/bin/python
+#!/usr/bin/env python
 """
 **plot_goes_data.py**: Get and plot goes data.
 
