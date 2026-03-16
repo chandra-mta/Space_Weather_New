@@ -1,4 +1,4 @@
-#!/proj/sot/ska3/flight/bin/python
+#!/usr/bin/env python
 """
 **check_archive.py**: Verify the HRC Proxy Archive is being updated.
 
