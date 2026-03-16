@@ -1,4 +1,4 @@
-#!/proj/sot/ska3/flight/bin/python
+#!/usr/bin/env python
 """
 **fetch_goes_tables.py**: Fetch GOES particle tables and data from SWPC NOAA
 
