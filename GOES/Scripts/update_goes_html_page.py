@@ -9,19 +9,22 @@
 # tested-ska-release = "2026.1"
 # ///
 """
+from email.mime.text import MIMEText
 import os
 import signal
 from datetime import datetime, timedelta
+from subprocess import PIPE, Popen
 from time import sleep
+import traceback
 import urllib.request
+import urllib.error
 import json
 import numpy as np
 import argparse
-import traceback
-import getpass
 from jinja2 import Environment, FileSystemLoader
 from astropy.io import ascii
 from pathlib import Path
+import psutil
 #
 #--- Define Directory Pathing
 #
@@ -599,15 +602,25 @@ def adjust_format(val):
     
     return out
 
-def send_mail(content, subject, admin):
+def send_mail(subject, content, address):
+    """Send Emails
+
+    :param subject: Subject line
+    :type subject: str
+    :param content: Email content as string
+    :type content: str
+    :param address: Email address of the recipient
+    :type address: str
     """
-    send out a notification email to admin in case the
-    script is found to be stalling, which would impact data file
-    used in hrc proxy alerting
-    """
-    content += f'This message was send to {" ".join(admin)}'
-    cmd = f'echo "{content}" | mailx -s "{subject}" {" ".join(admin)}'
-    os.system(cmd)
+    msg = MIMEText(content)
+    msg['Subject'] = subject
+    msg['To'] = address
+
+    if TESTMAIL:
+        print(msg)
+    else:
+        p = Popen(["/sbin/sendmail", "-t", "-oi"], stdin=PIPE)
+        p.communicate(msg.as_bytes())
                                                                                            
 #----------------------------------------------------------------------------
 
@@ -621,13 +634,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.mode == 'test':
-#
-#--- Redefine Admin for sending notification email in test mode
-#
-        if args.email is not None:
-            ADMIN = args.email
-        else:
-            ADMIN = [os.popen(f"getent aliases | grep {getpass.getuser()}").read().split(":")[1].strip()]
+        TESTMAIL = True
 #
 #---Define pathing for test output
 #
@@ -647,32 +654,29 @@ if __name__ == "__main__":
 
         update_goes_html_page()
     elif args.mode == "flight":
-#
-#--- Create a lock file and exit strategy in case of race conditions
-#
+        #: Create a lock file and exit strategy in case of stall.
         name = os.path.basename(__file__).split(".")[0]
-        user = getpass.getuser()
-        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
-            notification = f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. " 
-            notification += "Check calling scripts/cronjob/cronlog. Killing old process."
-            #Email alert if the script stalls out, since HRC alerting depends on output
-            send_mail(notification,f"Stalled Script: {name}", ADMIN)
-            with open(f"/tmp/{user}/{name}.lock") as f:
-                pid = int(f.readlines()[-1].strip())
-            #Kill old stalling process and remove corresponding lock file.
-            os.remove(f"/tmp/{user}/{name}.lock")
-            os.kill(pid,signal.SIGTERM)
-            #Generate lock file for the current corresponding process
-            os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
-        else:
-            #Previous script run must have completed successfully. Prepare lock file for this script run.
-            os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
+        user = os.getenv("USER", "mta")
+        lock = Path("/tmp", user, f"{name}.lock")
 
+        #: If lock file exists, read the pid and kill the process, then remove the lock file
+        if os.path.isfile(lock):
+            notification = f"Lock file exists as {lock} Process already running/errored out. Check calling scripts/cronjob/cronlog. Killing old process." 
+            send_mail(f"Stalled Script: {name}", notification, ADMIN)
+            with open(lock) as f:
+                pid = int(f.read().strip())
+            if psutil.pid_exists(pid):
+                os.kill(pid, signal.SIGTERM)
+            os.remove(lock)
+        
+        #: Lock file with current pid
+        pid = os.getpid()
+        os.makedirs(lock.parent, exist_ok = True)
+        with open(lock, 'w') as f:
+            f.write(str(pid))
         try:
             update_goes_html_page()
-        except:  # noqa: E722
+        except json.decoder.JSONDecodeError:
             traceback.print_exc()
-#
-#--- Remove lock file once process is completed
-#
-        os.system(f"rm /tmp/{user}/{name}.lock")
+        #: Remove lock file once process is completed
+        os.remove(lock)
