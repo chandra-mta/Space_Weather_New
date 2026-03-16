@@ -201,17 +201,17 @@ def make_diff_table():
             line = line + adjust_format(p_data[10][1][k]) + "\t"
             line = line + adjust_format(p_data[11][1][k]) + "\t"
             line = line + adjust_format(p_data[12][1][k]) + "\t"
-        except:
+        except (ValueError,IndexError):
             pass
 
         try:
-            line = line + "%5.0f\t\t" % (hrc_val[k])
-        except:
+            line = line + f"{hrc_val[k]:5.0f}\t\t"
+        except (ValueError,IndexError):
             line = line + '\t\t '
 
         try:
             line = line + f"{pre_hrc_val[k]:5.0f}\n" 
-        except:
+        except (ValueError,IndexError):
             line = line + '\n'
 
     line  = line + '\n'
@@ -236,7 +236,7 @@ def make_diff_table():
     line = line + adjust_format(np.mean([i for i in p_data[11][1] if i >=0])) + "\t"
     line = line + adjust_format(np.mean([i for i in p_data[12][1] if i >=0])) + "\t"
 
-    line = line + "%5.0f\t\t" % (np.mean([i for i in hrc_val if i >= 0]))
+    line = line + f"{np.mean([i for i in hrc_val if i >= 0]):5.0f}\t\t"
     line = line + f"{np.mean([i for i in pre_hrc_val if i >= 0]):5.0f}\n" 
 #
     line = line + '\tFLUENCE\t\t\t'
@@ -254,7 +254,7 @@ def make_diff_table():
     line = line + adjust_format(np.sum([i for i in p_data[11][1] if i >=0])) + "\t"
     line = line + adjust_format(np.sum([i for i in p_data[12][1] if i >=0])) + "\t"
 
-    line = line + "%5.0f\t\t" % (np.sum([i for i in hrc_val if i >= 0]))
+    line = line + f"{np.sum([i for i in hrc_val if i >= 0]):5.0f}\t\t"
     line = line + f"{np.sum([i for i in pre_hrc_val if i >= 0]):5.0f}\n\n"
     line = line + '\tHRC Proxy is defined as:\n\n'
     line = line + '\tHRC Proxy  = 143 * P5 + 64738 * P6 + 162505 * P7 + 4127\n\n'
@@ -321,15 +321,15 @@ def make_intg_table():
             except:  # noqa: E722
                 continue
             line = line   +  out +"\t\t" 
-            aline = aline + "%2.3e\t\t" % (p_save[m][1][k])
+            aline = aline + f"{p_save[m][1][k]:2.3e}\t\t"
         line = line + '\n'
 #
 #--- electron does not have distinction for 0.8 2.8 or 4.0; so fake with all E>2.0
 #
         try:
-            aline = aline  + "%2.3e\t%2.3e\n" % (p_save[m][1][k], p_save[m][1][k])
+            aline = aline  + f"{p_save[m][1][k]:2.3e}\t{p_save[m][1][k]:2.3e}\n"
         except:  # noqa: E722
-            aline = aline  + "na\t%na\n" % (p_save[m][1][k], p_save[m][1][k])
+            aline = aline  + "na\t%na\n"
 #
 #--- table break
 #
@@ -397,7 +397,7 @@ def rerun(func):
     _freq = 3
     _errors = (json.decoder.JSONDecodeError, urllib.error.URLError)
     def wrapper_func(*args,**kwargs):
-        _last_exception = None
+        _last_exception = Exception()
         for i in range(_freq):
             try:
                 return func(*args, **kwargs)
@@ -516,7 +516,7 @@ def compute_hrc(data):
             if c5[k] < 0 or c6[k] < 0 or c7[k] < 0:
                 val = -1e5 #: Missing a channel value
 
-        except:
+        except IndexError:
             val = -1e5 #: Missing a channel value
 
         hrc.append(val)
@@ -590,17 +590,17 @@ def adjust_format(val):
     if val < 0: #: Missing entry
         out = f"{val:5.0f}"
     elif val < 10:
-        out = "%1.5f" % (val)
+        out = f"{val:1.5f}"
     elif val < 100:
-        out = "%2.4f" % (val)
+        out = f"{val:2.4f}"
     elif val < 1000:
-        out = "%3.3f" % (val)
+        out = f"{val:3.3f}"
     elif val < 10000:
-        out = "%4.2f" % (val)
+        out = f"{val:4.2f}"
     elif val < 100000:
-        out = "%5.1f" % (val)
+        out = f"{val:5.1f}"
     else:
-        out = "%5.0f" % (val)
+        out = f"{val:5.0f}"
     
     return out
 
