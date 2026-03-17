@@ -13,15 +13,22 @@
 # tested-ska-release = "2026.1"
 # ///
 """
+from datetime import timedelta
 import os
-import sys
-import re
-import time
+import shutil
+import signal
+import traceback
 import numpy
 from cxotime import CxoTime
 import argparse
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
+import psutil
+#: Third-party libraries used for image downloading and manipulation
+import requests
+from PIL import Image, ImageOps
+import io
+
 #
 #---Define Directory Pathing
 #
@@ -511,18 +518,26 @@ if __name__ == "__main__":
 
         create_ace_html_page()
     elif args.mode == "flight":
-#
-#--- Create a lock file and exit strategy in case of race conditions.
-#
-        import getpass
+        #: Create a lock file and exit strategy in case of race conditions.
         name = os.path.basename(__file__).split(".")[0]
-        user = getpass.getuser()
-        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
-            sys.exit(f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog.")
-        else:
-            os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
+        user = os.getenv("USER", "mta")
+        lock = Path("/tmp", user, f"{name}.lock")
+
+        #: If lock file exists, read the pid and kill the process, then remove the lock file
+        if os.path.isfile(lock):
+            with open(lock) as f:
+                pid = int(f.read().strip())
+            if psutil.pid_exists(pid):
+                os.kill(pid, signal.SIGTERM)
+            os.remove(lock)
+        
+        #: Lock file with current pid
+        pid = os.getpid()
+        os.makedirs(os.path.dirname(lock), exist_ok = True)
+        with open(lock, 'w') as f:
+            f.write(str(pid))
+
         create_ace_html_page()
-#
-#--- Remove lock file once process is completed
-#
-        os.system(f"rm /tmp/{user}/{name}.lock")
+
+        #: Remove lock file once process is completed
+        os.remove(lock)
