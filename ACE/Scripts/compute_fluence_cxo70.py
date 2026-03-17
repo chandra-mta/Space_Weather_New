@@ -66,7 +66,7 @@ def compute_fluence_cxo70():
 #
     stop  = 0
     for ent in data:
-        atemp = re.split(r'\s+', ent)
+        atemp = ent.split()
         stime = float(atemp[0])
 #
 #--- make sure that the span is before the curren time
@@ -99,14 +99,9 @@ def compute_fluence_cxo70():
     cstart = 0.0
     cstop  = 0.0
     for ent in data:
-        atemp = re.split(r'\s+', ent)
-#
-#--- convert time in Chandra Time
-#
-        ltime = atemp[0] + ':' + atemp[1] + ':' + atemp[2] + ':' + atemp[3][0] + atemp[3][1] + ':'
-        ltime = ltime    + atemp[3][2] + atemp[3][3] + ':00'
-        ltime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(ltime, '%Y:%m:%d:%H:%M:%S'))
-        stime = int(CxoTime(ltime).secs)
+        atemp = ent.split()
+        #: convert time in Chandra Time   
+        stime = CxoTime(f"{atemp[0]}-{atemp[1]}-{atemp[2]}T{atemp[3][0]}{atemp[3][1]}:{atemp[3][2]}{atemp[3][3]}:00").secs #: isot format input.
 #
 #--- compute fluence between the span
 #
