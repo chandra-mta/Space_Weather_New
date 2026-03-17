@@ -23,6 +23,7 @@ import getpass
 import json
 import signal
 from pathlib import Path
+from urllib.parse import urljoin
 
 #
 # --- Define Directory Pathing and Globals
@@ -58,20 +59,21 @@ _INPUT_ACE_COLUMNS = [
 _P3_CHANNEL = "proton115-195"  #: Channel selection for P3 alert.
 ACE_P3_LIMIT = 3.6e8  #: Fluence of 3.6e8 particles/cm2-ster-MeV within 2 hours.
 _DEFAULT_VIOLATION = {
-    "ace_p3": {"cxotime": 0, "val": 0}
+    "ace_p3": {"cxotime": 0, "val": 0},
+    "ace_invalid": {"cxotime": 0, "val": False},
 }  #: If cannot find file of previous violations, then assume issue involving them not being sent and rebuild file. Built for multiple alert types
 _TESTMAIL = False
 _BOGUS_P3 = 500000
 
-def alert_ace():
+HOURS_MISSING = 12 #: Count of consecutive hours missing valid ACE data.
+_ALERT = "sot_ace_alert@cfa.harvard.edu" #: Alert email address
+_NOW = CxoTime()
+
+def _read_ace_file(file):
     """
-    Intake the last two hours worth of ACE data and calculate P3 fluence. If over the limit, send alert.
+    Read in the ACE Data file and format into astropy table.
     """
-    #
-    # --- Source Data File
-    #
-    data_file = f"{ACE_DATA_DIR}/ace_12h_archive"
-    ace_table = unique(ascii.read(data_file, names=_INPUT_ACE_COLUMNS))
+    ace_table = unique(ascii.read(file,names=_INPUT_ACE_COLUMNS))
     cxotime_col = Column(
         _convert_time_format(
             ace_table["year"], ace_table["month"], ace_table["day"], ace_table["hhmm"]
@@ -79,6 +81,12 @@ def alert_ace():
         name="cxotime",
     )
     ace_table.add_column(cxotime_col)
+    return ace_table
+
+def parse_p3(ace_table):
+    """
+    Parse ACE P3 data and return alert information if fluence over limit.
+    """
     no_outlier = Table(names = ace_table.colnames, dtype=ace_table.dtype)
     no_outlier.add_row(ace_table[0])
     for i in range(1,len(ace_table)):
@@ -97,60 +105,96 @@ def alert_ace():
         p130f = (
             np.mean(data_select[_P3_CHANNEL].data) * 7200
         )  #: Calculates the fluence with available data.
+        _cxotime = data_select[-1]["cxotime"]
     else:
         p130f = -1e5 #: No valid data to send alert.
+        _cxotime = _NOW
+    
+    ace_p3 = {
+        "cxotime": _cxotime,
+        "val": p130f,
+    }
+    return ace_p3
 
-    #
-    # ---Determine if Alerting
-    #
-    if p130f > ACE_P3_LIMIT:
-        #
-        # --- Pull current violation information to avoid repeated alerts
-        #
-        if os.path.isfile(f"{ACE_DATA_DIR}/ace_alert.json"):
-            with open(f"{ACE_DATA_DIR}/ace_alert.json") as f:
-                curr_viol = json.load(f)
-            if "ace_p3" not in curr_viol.keys():
-                curr_viol["ace_p3"] = _DEFAULT_VIOLATION["ace_p3"]
-        else:
-            curr_viol = _DEFAULT_VIOLATION
-        if (
-            data_select[-1]["cxotime"].datetime
-            - CxoTime(curr_viol["ace_p3"]["cxotime"]).datetime
-        ).days > 1:
-            #
-            # --- Last alert was more than one day ago. Therefore this is a new alerting instance
-            #
-            curr_viol["ace_p3"] = {
-                "cxotime": int(data_select[-1]["cxotime"].secs),
-                "val": p130f,
+def parse_invalid(ace_table):
+    """
+    Parse ACE data for invalid data and return alert information if over limit.
+    """
+    #: Slice table to search for consecutive data points for a set
+    #: number of hours ago. Number of hours is HOURS_MISSING variable.
+    _start = ace_table['cxotime'][-1] - timedelta(hours=HOURS_MISSING)
+    ace_table = ace_table[ace_table['cxotime'] >= _start]
+    
+    #: Select missing table values.
+    missing_selection = ace_table['proton_status'] == -1
+    #: If all consecutive data points minus the leeway (5) are less than those missing,
+    #: then check for sending notification.
+    #: Sporadically valid data might be available. Send alert if number of valid point's doesn't exceed the leeway
+    invalid = False
+    if len(ace_table) - 5 <= sum(missing_selection):
+        if 8 <= _NOW.datetime.hour <= 22:
+            invalid = True
+    return {'cxotime': _NOW, 'val': invalid}
+
+def check_alert_triggers():
+
+    _12h_file = ACE_DATA_DIR / "ace_12h_archive"
+    ace_table = _read_ace_file(_12h_file)
+    #: Pull Alert information
+    ace_p3 = parse_p3(ace_table)
+    ace_invalid = parse_invalid(ace_table)
+    #: Pull current violation information
+    alert_file = ACE_DATA_DIR / "ace_alert.json"
+    if not alert_file.is_file():
+        curr_viol = _DEFAULT_VIOLATION
+    else:
+        with open(alert_file) as f:
+            curr_viol = json.load(f)
+
+    #: Check for P3 alert trigger
+    if ace_p3["val"] > ACE_P3_LIMIT:
+        #: P3 triggered. Check to prevent repeat alerting.
+        if (ace_p3.get("cxotime").datetime - CxoTime(curr_viol["ace_p3"]["cxotime"]).datetime).days > 1:
+            #: New triggering instance. Send alert and update violation file.
+            curr_viol['ace_p3'] = {
+                "cxotime": int(ace_p3["cxotime"].secs),
+                "val": ace_p3["val"]
             }
-
-            text_body = (
+            p3_message = (
                 "A Radiation violation of P3 (130KeV) has been observed by ACE\n"
             )
-            text_body += f"Observed = {p130f:.4e}\n"
-            text_body += (
+            p3_message += f"Observed = {ace_p3['val']:.4e}\n"
+            p3_message += (
                 "(limit = fluence of 3.6e8 particles/cm2-ster-MeV within 2 hours)\n"
             )
-            text_body += f"see {ACE_URL}\n"
-            if os.path.isfile(f"{SNAPSHOT_DIR}/.scs107alert"):
+            p3_message += f"see {ACE_URL}\n"
+            _snap_file = SNAPSHOT_DIR / ".scs107alert"
+            if _snap_file.is_file():
                 recipients = "sot_yellow_alert@cfa.harvard.edu"
-                text_body += "SCS107 is listed as alerted.\n"
+                p3_message += "SCS107 is listed as alerted.\n"
             else:
                 recipients = "sot_ace_alert@cfa.harvard.edu"
-                text_body += "The ACIS on-call person should review the data and call a telecon if necessary.\n"
-            #
-            # --- Include additional CRM and Comm data
-            #
-            #with open(f"{CRM_DATA_DIR}/CRMsummary.dat") as f:
-            #    text_body += f"CRM:\n{f.read()}\n"
-            #with open(f"{COMM_DATA_DIR}/dsn_summary.dat") as f:
-            #    text_body += f"DSN:\n{f.read()}\n"
-            text_body += f"This message sent to {recipients.split('@')[0]}"
-            send_mail("ACE_p3", recipients, text_body)
-            with open(f"{ACE_DATA_DIR}/ace_alert.json", "w") as f:
-                json.dump(curr_viol, f, indent=4)
+                p3_message += "The ACIS on-call person should review the data and call a telecon if necessary.\n"
+            p3_message += f"This message sent to {recipients.split('@')[0]}"
+            send_mail("ACE_p3", recipients, p3_message)
+    
+    #: Check for invalid data alert trigger
+    if ace_invalid['val']:
+        #: Invalid triggered. Check to prevent repeat alerting
+        if (ace_invalid.get("cxotime").datetime - CxoTime(curr_viol["ace_invalid"]["cxotime"]).datetime).days > 1:
+            curr_viol['ace_invalid'] = {
+                "cxotime": int(ace_invalid["cxotime"].secs),
+                "val": ace_invalid["val"]
+            }
+            invalid_message = f'Alert in file: {_12h_file}\n'
+            invalid_message += f'No valid ACE data for at least {HOURS_MISSING} hours.\n'
+            invalid_message += "Radiation team should investigate.\n"
+            invalid_message += f"This message was sent to {_ALERT}\n"
+            send_mail(f"ACE no valid data for >{HOURS_MISSING}h", _ALERT, invalid_message)
+    
+    #: Update the current violation information
+    with open(alert_file, "w") as f:
+        json.dump(curr_viol, f, indent=4)
 
 
 def send_mail(subject, recipients, text_body, cc=""):
