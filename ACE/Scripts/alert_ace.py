@@ -17,7 +17,7 @@ from astropy.io import ascii
 from astropy.table import Column, unique, Table
 import argparse
 from cxotime import CxoTime
-from datetime import datetime, timedelta
+from datetime import timedelta
 import numpy as np
 import getpass
 import json
@@ -202,12 +202,11 @@ def _convert_time_format(year, month, day, hhmm):
     :rtype: ``numpy.ndarray(dtype = 'object')``
 
     """
-    hh = hhmm // 100  #: hours in hundreds and thousands place
-    mm = hhmm % 100  #: minutes in tens and ones place
-    time = datetime.strptime(
-        f"{year:04}:{month:02}:{day:02}:{hh:02}:{mm:02}", "%Y:%m:%d:%H:%M"
-    )
-    return CxoTime(time, format="datetime")
+    hh = hhmm // 100  #: Hours in hundreds and thousands place.
+    mm = hhmm % 100  #: Minutes in tens and ones place.
+    #: CxoTime accepts ISOT format
+    time = f"{year:04}-{month:02}-{day:02}T{hh:02}:{mm:02}:00"
+    return CxoTime(time)
 
 
 if __name__ == "__main__":
