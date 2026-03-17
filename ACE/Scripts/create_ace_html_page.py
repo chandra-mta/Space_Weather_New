@@ -283,9 +283,9 @@ def create_ace_data_table(cdata, l_vals):
     chk2   = len(echk[ind2])
 
     if (chk == 0) or (chk2 == 0):
-        ace_table = ace_table + '<p style="padding-top:40px;padding-bottom:40px;">'
-        ace_table = ace_table + " No Valid data for last 2 hours."
-        ace_table = ace_table + '</p>\n'
+        ace_table += '<p style="padding-top:40px;padding-bottom:40px;">'
+        ace_table += " No Valid data for last 2 hours."
+        ace_table += '</p>\n'
         return  ace_table, None
 #
 #--- there are good data
@@ -415,11 +415,9 @@ def convert_to_col_data(data):
 #
 #--- find the most recent entry time and set the cutting time to 2 hrs before that
 #
-    atemp   = re.split(r'\s+', data[-1])
-    ltime = atemp[0] + ':' + atemp[1] + ':' + atemp[2] + ':' + atemp[3][0] + atemp[3][1] + ':'
-    ltime = ltime    + atemp[3][2] + atemp[3][3] + ':00' 
-    ltime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(ltime, '%Y:%m:%d:%H:%M:%S'))
-    cut   = int(CxoTime(ltime).secs) - 2 * 3600.0 - 60.0
+    atemp = data[-1].split()
+    ltime = CxoTime(f"{atemp[0]}-{atemp[1]}-{atemp[2]}T{atemp[3][0]}{atemp[3][1]}:{atemp[3][2]}{atemp[3][3]}:00") #: isot format input.
+    cut = (ltime - timedelta(hours = 2, minutes = 1)).secs
 
     atime = []
     jtime = []
@@ -434,14 +432,8 @@ def convert_to_col_data(data):
     pch7  = []
     ptime = 0
     for ent in data:
-        atemp = re.split(r'\s+', ent)
-#
-#--- convert time in Chandra Time
-#
-        ltime = atemp[0] + ':' + atemp[1] + ':' + atemp[2] + ':' + atemp[3][0] + atemp[3][1] + ':'
-        ltime = ltime    + atemp[3][2] + atemp[3][3] + ':00' 
-        ltime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(ltime, '%Y:%m:%d:%H:%M:%S'))
-        stime = int(CxoTime(ltime).secs)
+        atemp = ent.split()
+        stime = CxoTime(f"{atemp[0]}-{atemp[1]}-{atemp[2]}T{atemp[3][0]}{atemp[3][1]}:{atemp[3][2]}{atemp[3][3]}:00").secs #: isot format input.
 #
 #--- sometime, there are double entries; so remove those
 #
@@ -467,8 +459,7 @@ def convert_to_col_data(data):
 #
 #--- save time part in a string format (YR MO DA  HHMM    Day    Day)
 #
-        ftime = atemp[0] + ' '  + atemp[1] + ' ' + atemp[2] + '  ' + atemp[3]
-#        ftime = ftime    + '%8d%8d' % (float(atemp[4]), float(atemp[5]))
+        ftime = f"{atemp[0]} {atemp[1]} {atemp[2]} {atemp[3]}"
 
         atime.append(stime)
         jtime.append(ftime)
