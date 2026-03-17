@@ -21,20 +21,22 @@ import numpy
 from cxotime import CxoTime
 import argparse
 from jinja2 import Environment, FileSystemLoader
+from pathlib import Path
 #
 #---Define Directory Pathing
 #
-HTTP_EPAM = "http://services.swpc.noaa.gov/images/ace-epam-7-day.gif"
-HTTP_MAG = "http://services.swpc.noaa.gov/images/ace-mag-swepam-7-day.gif"
-ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
-TEMPLATE_DIR = "/data/mta4/Space_Weather/ACE/Scripts/Template"
-ACE_HTML_DIR = "/data/mta4/www/RADIATION/ACE"
-ACE_PLOT_DIR = "/data/mta4/www/RADIATION/ACE/Plots"
-HOUSE_KEEPING = "/data/mta4/Space_Weather/house_keeping"
-TMP_DIR = "/tmp/mta"
+SPACE_WEATHER = Path(os.getenv("SPACE_WEATHER", "/data/mta4/Space_Weather"))
+SPACE_WEATHER_WEB = Path(os.environ.get('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION"))
+ACE_DATA_DIR : Path = SPACE_WEATHER / "ACE" / "Data"
+ACE_HTML_DIR : Path = SPACE_WEATHER_WEB / "ACE"
+ACE_PLOT_DIR : Path = SPACE_WEATHER_WEB / "ACE" / "Plots"
+SCRIPT_DIR : Path = Path(__file__).parent
+HOUSE_KEEPING : Path = SCRIPT_DIR.parent.parent/ "house_keeping"
 #
 #--- Defining other Globals
 #
+HTTP_EPAM = "http://services.swpc.noaa.gov/images/ace-epam-7-day.gif" #: Image Metadata : mode = 'P', size = (640, 512)
+HTTP_MAG = "http://services.swpc.noaa.gov/images/ace-mag-swepam-7-day.gif" #: Image Metadata :  mode = 'P', size = (640, 512)
 
 P5_P3_SCALE  = 7.           #--- scale P5 to P3 values, while P3 is broke
 P6_P3_SCALE  = 36.          #--- scale P6 to P3 values, while P3 is broke
@@ -57,7 +59,8 @@ def create_ace_html_page():
 #
 #---- read 12h_archive data
 #
-    with open(f"{ACE_DATA_DIR}/ace_12h_archive") as f:
+    _12h_archive = ACE_DATA_DIR / "ace_12h_archive"
+    with open(_12h_archive) as f:
         cdata = [line.strip() for line in f.readlines()]
 #
 #--- cdata:     a list of lists of electron/proton flux data 
@@ -80,7 +83,8 @@ def create_ace_html_page():
     ace_template = _JINJA_ENV.get_template('ace.jinja')
     ace_render = ace_template.render(ace_table = ace_table, summary_table = summary_table)
 
-    with open(f"{ACE_HTML_DIR}/ace.html", 'w') as fo:
+    _web = ACE_HTML_DIR / "ace.html"
+    with open(_web, 'w') as fo:
         fo.write(ace_render)
 
 def create_ace_data_table(cdata, l_vals):
@@ -521,29 +525,23 @@ if __name__ == "__main__":
 #
 #--- Path output to same location as unit tests
 #
-        TEMPLATE_DIR = f"{os.getcwd()}/Template"
-        TMP_DIR =  f"{os.getcwd()}/test/_outTest"
         if args.data:
-            ACE_DATA_DIR = args.data
+            ACE_DATA_DIR = Path(args.data)
         else:
-            ACE_DATA_DIR = f"{os.getcwd()}/test/_outTest"
+            ACE_DATA_DIR = Path(os.getcwd(), "test", "_outTest")
 
         if args.path:
-            ACE_PLOT_DIR = args.path
+            ACE_PLOT_DIR = Path(args.path)
         else:
-            ACE_PLOT_DIR = f"{os.getcwd()}/test/_outTest/Plots"
-        
+            ACE_PLOT_DIR = Path(os.getcwd(), "test", "_outTest", "Plots")
+
         if args.web:
-            ACE_HTML_DIR = args.web
+            ACE_HTML_DIR = Path(args.web)
         else:
-            ACE_HTML_DIR = f"{os.getcwd()}/test/_outTest"
+            ACE_HTML_DIR = Path(os.getcwd(), "test", "_outTest")
         os.makedirs(ACE_PLOT_DIR, exist_ok = True)
         os.makedirs(ACE_HTML_DIR, exist_ok = True)
-        print(f"ACE_DATA_DIR: {ACE_DATA_DIR}")
-        print(f"ACE_PLOT_DIR: {ACE_PLOT_DIR}")
-        print(f"ACE_HTML_DIR: {ACE_HTML_DIR}")
-        print(f"TEMPLATE_DIR: {TEMPLATE_DIR}")
-        print(f"TMP_DIR: {TMP_DIR}")
+
         create_ace_html_page()
     elif args.mode == "flight":
 #
