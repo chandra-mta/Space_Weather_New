@@ -11,6 +11,7 @@
 """
 import os
 from email.mime.text import MIMEText
+import shutil
 from subprocess import Popen, PIPE
 from astropy.io import ascii
 from astropy.table import Column, unique, Table
@@ -21,15 +22,20 @@ import numpy as np
 import getpass
 import json
 import signal
+from pathlib import Path
 
 #
 # --- Define Directory Pathing and Globals
 #
-ACE_URL = "https://cxc.cfa.harvard.edu/mta/RADIATION/ACE/ace.html"
-ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
-CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
-COMM_DATA_DIR = "/data/mta4/Space_Weather/Comm_data/Data"
-SNAPSHOT_DIR = "/data/mta4/www/Snapshot"
+SPACE_WEATHER = Path(os.getenv("SPACE_WEATHER", "/data/mta4/Space_Weather"))
+SPACE_WEATHER_WEB = Path(os.environ.get('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION"))
+SPACE_WEATHER_URL = os.environ.get('SPACE_WEATHER_URL', "https://cxc.cfa.harvard.edu/mta/RADIATION")
+
+ACE_DATA_DIR : Path = SPACE_WEATHER / "ACE" / "Data"
+ACE_HTML_DIR : Path = SPACE_WEATHER_WEB / "ACE"
+ACE_URL = urljoin(SPACE_WEATHER_URL, "ACE/ace.html")
+
+SNAPSHOT_DIR = Path("/data/mta4/www/Snapshot") #: Use primary run across instances
 _ADMIN = "mtadude@cfa.harvard.edu"
 _INPUT_ACE_COLUMNS = [
     "year",
@@ -218,16 +224,17 @@ if __name__ == "__main__":
 
     if args.mode == "test":
         _TESTMAIL = True
+        _copy_of_old = Path(str(ACE_DATA_DIR))
         if args.path:
-            ACE_DATA_DIR = args.path
+            ACE_DATA_DIR = Path(args.path)
         else:
-            ACE_DATA_DIR = f"{os.getcwd()}/test/_outTest"
+            ACE_DATA_DIR = Path(os.getcwd(), "test", "_outTest")
         os.makedirs(ACE_DATA_DIR, exist_ok=True)
-        if not os.path.isfile(f"{ACE_DATA_DIR}/ace_12h_archive"):
-            os.system(
-                f"cp /data/mta4/Space_Weather/ACE/Data/ace_12h_archive {ACE_DATA_DIR}"
-            )
-        alert_ace()
+        _12h_archive = ACE_DATA_DIR / "ace_12h_archive"
+        if not _12h_archive.is_file():
+            shutil.copyfile(_copy_of_old / "ace_12h_archive" , ACE_DATA_DIR / "ace_12h_archive")
+        
+        check_alert_triggers()
 
     elif args.mode == "flight":
         #
