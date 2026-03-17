@@ -366,57 +366,24 @@ def create_ace_data_table(cdata, l_vals):
 
     return ace_table, summary_table
 
-def convert_to_stime(year, yday):
-
-    atemp = re.split(r'\.', yday)
-    frac  = float(f"0.{atemp[1]}") 
-    val   = 24 * frac
-    hh    = int(val)
-    diff  = val - hh
-    val   = 60 * diff
-    mm    = int(val)
-    diff  = val - mm
-    ss    = int(60 *diff)
-
-    htime = f"{year:04}:{atemp[0]:03}:{hh:02}:{mm:02}:{ss:02}"
-    stime = CxoTime(htime).secs 
-
-    return stime
-
-def download_img(file, chg=1):
+def download_img(file):
     """
-    down load an image from web site
-    input:  file    --- image file address
-            chg     --- if >0, reverse the color
-    output: <plot_dir>/<name of the image>
+    Download ACE plots from SWPC
     """
-#
-#--- get the name of output img file name
-#
+
     ofile = os.path.basename(file)
-    oimg = f"{ACE_PLOT_DIR}/{ofile}"
-#
-#--- download the img
-#
-    #cmd   = 'lynx -source ' + file + '>' + oimg
-    try:
-        cmd  = 'wget -q -O' + oimg + ' ' + file
-        os.system(cmd)
-    except:
-        mc   = re.search('gif', oimg)
-        if mc is not None:
-            cmd = f"cp {HOUSE_KEEPING}/no_plot.gif {oimg}"
-        else:
-            cmd = f"cp {HOUSE_KEEPING}/no_data.png {oimg}"
-        os.system(cmd)
+    oimg = ACE_PLOT_DIR / ofile
 
-        return
-#
-#--- reverse the color of the image
-#
-    if chg == 1:
-        cmd   = 'convert -negate ' +  oimg + ' ' + oimg
-        os.system(cmd)
+    try:
+        resp = requests.get(file, timeout=30)
+        resp.raise_for_status()
+        img = Image.open(io.BytesIO(resp.content))
+        img = ImageOps.invert(img.convert('RGB'))
+        img.save(oimg)
+    except Exception:
+        traceback.print_exc()
+        #: network or decoding failure, use placeholder
+        shutil.copyfile(HOUSE_KEEPING / 'no_plot.gif', oimg)
 
 def convert_to_col_data(data):
     """
