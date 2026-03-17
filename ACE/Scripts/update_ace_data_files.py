@@ -16,7 +16,7 @@
 """
 import os
 import shutil
-import re
+from signal import signal
 import time
 from datetime import datetime, timezone
 from cxotime import CxoTime
@@ -25,6 +25,7 @@ import subprocess
 import urllib.request
 import urllib.error
 import argparse
+import psutil
 from pathlib import Path
 #
 #--- Define Directory Pathing
@@ -928,7 +929,6 @@ if __name__ == "__main__":
 #--- Determine if running in test mode and change pathing if so
 #
     if args.mode == "test":
-        print("Running In Test Mode.")
 #
 #--- Path output to same location as unit tests
 #
@@ -947,18 +947,26 @@ if __name__ == "__main__":
 
         update_ace_data_files()
     elif args.mode == "flight":
-#
-#--- Create a lock file and exit strategy in case of race conditions.
-#
-        import getpass
+        #: Create a lock file and exit strategy in case of race conditions.
         name = os.path.basename(__file__).split(".")[0]
-        user = getpass.getuser()
-        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
-            sys.exit(f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog.")
-        else:
-            os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
+        user = os.getenv("USER", "mta")
+        lock = Path("/tmp", user, f"{name}.lock")
+
+        #: If lock file exists, read the pid and kill the process, then remove the lock file
+        if os.path.isfile(lock):
+            with open(lock) as f:
+                pid = int(f.read().strip())
+            if psutil.pid_exists(pid):
+                os.kill(pid, signal.SIGTERM)
+            os.remove(lock)
+        
+        #: Lock file with current pid
+        pid = os.getpid()
+        os.makedirs(os.path.dirname(lock), exist_ok = True)
+        with open(lock, 'w') as f:
+            f.write(str(pid))
+
         update_ace_data_files()
-#
-#--- Remove lock file once process is completed
-#
-        os.system(f"rm /tmp/{user}/{name}.lock")
+
+        #: Remove lock file once process is completed
+        os.remove(lock)
