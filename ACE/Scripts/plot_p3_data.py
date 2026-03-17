@@ -22,6 +22,7 @@ import matplotlib as mpl
 from calendar import isleap
 import argparse
 import signal
+from pathlib import Path
 
 if __name__ == '__main__':
     mpl.use('Agg')
@@ -31,8 +32,10 @@ import matplotlib.font_manager as font_manager
 #
 #--- Define Directory Pathing
 #
-ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
-ACE_PLOT_DIR = "/data/mta4/www/RADIATION/ACE/Plots"
+SPACE_WEATHER = Path(os.getenv('SPACE_WEATHER', "/data/mta4/Space_Weather"))
+SPACE_WEATHER_WEB = Path(os.getenv('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION"))
+ACE_DATA_DIR : Path = SPACE_WEATHER / "ACE" / "Data"
+ACE_PLOT_DIR : Path = SPACE_WEATHER_WEB / "ACE" / "Plots"
 
 #
 #--- other setting
@@ -59,7 +62,7 @@ def plot_p3_data():
 #
 #--- read data and save in column array data format
 #
-    ifile = f"{ACE_DATA_DIR}/ace_7day_archive"
+    ifile = ACE_DATA_DIR / "ace_7day_archive"
     with open(ifile) as f:
         data = [line.strip() for line in f.readlines()]
     adata = convert_to_arrays(data)
@@ -252,7 +255,7 @@ def plot_data(ndata):
 #
 #--- save the plot in png format
 #
-    outname = f"{ACE_PLOT_DIR}/mta_ace_plot_P3.png"
+    outname = ACE_PLOT_DIR / 'mta_ace_plot_P3.png'
     plt.tight_layout()
     plt.savefig(outname, format='png', dpi=300)
 
@@ -270,22 +273,19 @@ if __name__ == "__main__":
 #--- Determine if running in test mode and change pathing if so
 #
     if args.mode == "test":
-        print("Running In Test Mode.")
 #
 #--- Path output to same location as unit tests
 #
         if args.data:
-            ACE_DATA_DIR = args.data
+            ACE_DATA_DIR = Path(args.data)
         else:
-            ACE_DATA_DIR = f"{os.getcwd()}/test/_outTest"
+            ACE_DATA_DIR = Path(os.getcwd(), 'test', '_outTest')
 
         if args.path:
             ACE_PLOT_DIR = args.path
         else:
-            ACE_PLOT_DIR = f"{os.getcwd()}/test/_outTest/Plots"
+            ACE_PLOT_DIR = Path(os.getcwd(), 'test', '_outTest', 'Plots')
         os.makedirs(ACE_PLOT_DIR, exist_ok = True)
-        print(f"ACE_DATA_DIR: {ACE_DATA_DIR}")
-        print(f"ACE_PLOT_DIR: {ACE_PLOT_DIR}")
         plot_p3_data()
     elif args.mode == 'flight':
 #
