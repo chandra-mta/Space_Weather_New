@@ -1,4 +1,4 @@
-#!/proj/sot/ska3/flight/bin/python
+#! /usr/bin/env python
 """
 **compute_fluence_cxo70.py**: create a html page displaying ace fluence when cxo is above 70kkm
 
