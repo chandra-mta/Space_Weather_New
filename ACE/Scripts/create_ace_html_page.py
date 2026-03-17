@@ -35,12 +35,10 @@ TMP_DIR = "/tmp/mta"
 #
 #--- Defining other Globals
 #
-TESTMAIL = False
 
 P5_P3_SCALE  = 7.           #--- scale P5 to P3 values, while P3 is broke
 P6_P3_SCALE  = 36.          #--- scale P6 to P3 values, while P3 is broke
 P7_P3_SCALE  = 110.         #--- scale P7 to P3 values, while P3 is broke
-P5_P6_LIM = 1.0e10
 
 #
 # --- Template Globals
@@ -351,15 +349,6 @@ def create_ace_data_table(cdata, l_vals):
     if p1073a <= 0:
         p337a = 0
 #
-#--- violation check
-#
-
-    if (p5_p6 > P5_P6_LIM) or (p5_p6 < 1):
-        speci     = f"{p5_p6:12.1f}"
-        speci_lim = f"{P5_P6_LIM:8.1f}"
-
-        ace_invalid_spec(speci, speci_lim)
-#
 #--- create a summary table
 #
     
@@ -372,47 +361,6 @@ def create_ace_data_table(cdata, l_vals):
     summary_table+= f"*** This P3 channel (not shown) is currently scaled from P7 data. P3*** = P7 X  {P7_P3_SCALE:4.1f}\n"
 
     return ace_table, summary_table
-
-def ace_invalid_spec(speci, speci_lim):
-    """
-    sending out a warning email 
-    input:  speci       --- the value reported
-            speci_lim   --- the limit of the vluae
-    output: email sent out
-    """
-#
-#--- check whether the mail is recently sent out
-#
-    out = f'{TMP_DIR}/prot_spec_violate'
-    if os.path.isfile(out):
-        cmd = 'date >> ' + out
-        os.system(cmd)
-#
-#--- if not, send the warning email
-#
-    else:
-        line = " A spectral index violation of P5/P6 has been observed by ACE, "
-        line = line + "indicating a possibly invalid P5 channel.\n"
-        line = line + 'Observed = ' + speci
-        line = line + '(limit = ' + speci_lim + ')\n'
-        line = line + 'see http://cxc.harvard.edu/mta/ace.html\n'
-        line = line + 'This message sent to mtadude\n'
-
-        send_mail('ACE_p5/p6', line, 'mtadude@cfa.harvard.edu')
-#
-#--- open a file indicating that the mail was sent
-#
-        with open(out, 'w') as fo:
-            fo.write(line)
-
-def send_mail(subject, content, address):
-    if TESTMAIL:
-        print(f"Test Mode, interrupting following email.\n\
-              Subject: {subject}\n\
-              Address: {address}\n\
-              Content: {content}\n")
-    else:
-        os.system(f"echo '{content}' | mailx -s '{subject}' {address}")
 
 def convert_to_stime(year, yday):
 
@@ -570,8 +518,6 @@ if __name__ == "__main__":
 #--- Determine if running in test mode and change pathing if so
 #
     if args.mode == "test":
-        print("Running In Test Mode.")
-        TESTMAIL = True
 #
 #--- Path output to same location as unit tests
 #
