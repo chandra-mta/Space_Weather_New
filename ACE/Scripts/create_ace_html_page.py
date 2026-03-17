@@ -1,4 +1,4 @@
-#!/proj/sot/ska3/flight/bin/python
+#! /usr/bin/env python
 """
 **create_ace_html_page.py**: Read ACE data and update html page
 
