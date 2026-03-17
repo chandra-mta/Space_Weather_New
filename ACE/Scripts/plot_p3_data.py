@@ -15,7 +15,6 @@
 # ///
 """
 import os
-import re
 import time
 import numpy
 import matplotlib as mpl
@@ -84,7 +83,7 @@ def convert_to_arrays(data):
 
     chk = 0
     for ent in data:
-        atemp = re.split(r'\s+', ent)
+        atemp = ent.split()
         chk1  = float(atemp[6])
         chk2  = float(atemp[9])
         if (chk1 != 0) or (chk2 != 0):
@@ -94,7 +93,7 @@ def convert_to_arrays(data):
 #
         ltime = atemp[0] + ':' +  atemp[1] + ':' + atemp[2] 
         ltime = time.strftime('%Y:%j', time.strptime(ltime, '%Y:%m:%d'))
-        btemp = re.split(':', ltime)
+        btemp = ltime.split(':')
         year  = int(float(btemp[0]))
         yday  = float(btemp[1])
         hh    = float(atemp[3][0] + atemp[3][1])
