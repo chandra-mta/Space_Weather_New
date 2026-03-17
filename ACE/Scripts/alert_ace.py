@@ -57,13 +57,19 @@ _INPUT_ACE_COLUMNS = [
     "aniso",
 ]  #: For reading in ACE data file.
 _P3_CHANNEL = "proton115-195"  #: Channel selection for P3 alert.
+_P5_CHANNEL = "proton310-580"
+_P6_CHANNEL = "proton795-1193" #: Channel selection for the P5/P6 spectral index violation.
 ACE_P3_LIMIT = 3.6e8  #: Fluence of 3.6e8 particles/cm2-ster-MeV within 2 hours.
+ACE_P5_P6_LIM = 1.0e10
 _DEFAULT_VIOLATION = {
     "ace_p3": {"cxotime": 0, "val": 0},
     "ace_invalid": {"cxotime": 0, "val": False},
+    "ace_p5_p6_spectral": {"cxotime": 0, "val": 0}
 }  #: If cannot find file of previous violations, then assume issue involving them not being sent and rebuild file. Built for multiple alert types
 _TESTMAIL = False
 _BOGUS_P3 = 500000
+_BOGUS_P5 = 40000
+_BOGUS_P6 = 20000
 
 HOURS_MISSING = 12 #: Count of consecutive hours missing valid ACE data.
 _ALERT = "sot_ace_alert@cfa.harvard.edu" #: Alert email address
@@ -136,6 +142,45 @@ def parse_invalid(ace_table):
             invalid = True
     return {'cxotime': _NOW, 'val': invalid}
 
+def parse_p5_p6_spectral(ace_table):
+    """
+    Parse ACE data for a violation of the spectral index of P5/P6, indicating a possibly invalid P5 channel.
+    """
+    no_outlier = Table(names = ace_table.colnames, dtype=ace_table.dtype)
+    no_outlier.add_row(ace_table[0])
+    for i in range(1,len(ace_table)):
+        if (ace_table[i][_P5_CHANNEL] - no_outlier[-1][_P5_CHANNEL] < _BOGUS_P5) \
+            and (ace_table[i][_P6_CHANNEL] - no_outlier[-1][_P6_CHANNEL] < _BOGUS_P6):
+            no_outlier.add_row(ace_table[i])
+
+    two_hours_ago = no_outlier["cxotime"][-1] - timedelta(hours=2)
+    sel = no_outlier["cxotime"].data >= two_hours_ago
+    sel = np.logical_and(
+        sel, no_outlier[_P5_CHANNEL] > 0
+    )
+    sel = np.logical_and(
+        sel, no_outlier[_P6_CHANNEL] > 0
+    )
+    sel = np.logical_and(
+        sel, no_outlier['proton_status'] == 0
+    )
+    data_select = no_outlier[sel]
+    if len(data_select) > 0:
+        p5_avg = np.mean(data_select[_P5_CHANNEL].data) #: Calculates the fluence with available data.
+        p6_avg = np.mean(data_select[_P6_CHANNEL].data)
+        p5_p6 = p5_avg / p6_avg
+        _cxotime = data_select[-1]["cxotime"]
+    else:
+        p5_p6 = -1e5 #: No valid data to send alert.
+        _cxotime = _NOW
+    
+    ace_p5_p6_spectral = {
+        "cxotime": _cxotime,
+        "val": p5_p6,
+    }
+    return ace_p5_p6_spectral
+
+
 def check_alert_triggers():
 
     _12h_file = ACE_DATA_DIR / "ace_12h_archive"
@@ -143,6 +188,7 @@ def check_alert_triggers():
     #: Pull Alert information
     ace_p3 = parse_p3(ace_table)
     ace_invalid = parse_invalid(ace_table)
+    ace_p5_p6_spectral = parse_p5_p6_spectral(ace_table)
     #: Pull current violation information
     alert_file = ACE_DATA_DIR / "ace_alert.json"
     if not alert_file.is_file():
@@ -192,6 +238,20 @@ def check_alert_triggers():
             invalid_message += f"This message was sent to {_ALERT}\n"
             send_mail(f"ACE no valid data for >{HOURS_MISSING}h", _ALERT, invalid_message)
     
+    #: Check for ACE P5 P6 spectral violation alert trigger
+    if ace_p5_p6_spectral['val'] > ACE_P5_P6_LIM:
+        #: Spectral Violation triggered. Check to prevent repeat alerting
+        if (ace_p5_p6_spectral.get("cxotime").datetime - CxoTime(curr_viol["ace_p5_p6_spectral"]["cxotime"]).datetime).days > 1:
+            curr_viol['ace_p5_p6_spectral'] = {
+                "cxotime": int(ace_p5_p6_spectral["cxotime"].secs),
+                "val": ace_p5_p6_spectral["val"]
+            }
+            spectral_message = "A spectral index violation of P5/P6 has been observed by ACE, indicating a possibly invalid P5 channel.\n"
+            spectral_message += f"Observed = {ace_p5_p6_spectral['val']:.4e}\n"
+            spectral_message += "(limit = ratio of averages of 1e10 within 2 hours)\n"
+            spectral_message += f"See {ACE_URL} for more details.\n"
+            send_mail("ACE_p5/p6", _ADMIN, spectral_message)
+
     #: Update the current violation information
     with open(alert_file, "w") as f:
         json.dump(curr_viol, f, indent=4)
