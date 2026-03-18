@@ -11,8 +11,26 @@ and update various data files
 - fetch_kp_tables.py --- download and update the files
     - in addition to sorting the KP index in ECSV format, also stores legacy solar wind format for /data/mta/Script/Ephem
 
-## Cron Job:
+### Cron Variables:
+###### Primary
+```
+SPACE_WEATHER=/data/mta4/Space_Weather
+ENV_FLIGHT=/proj/sot/ska3/flight
+```
+###### Secondary
+```
+SPACE_WEATHER=/data/mta/Script/Space_Weather
+ENV_FLIGHT=/proj/sot/ska3/flight
+```
 
-mta on boba-v
-14 0,3,6,9,12,15,18,21 * * * /data/mta4/Space_Weather/KP/Scripts/kp_wrap_script  >> $HOME/Logs/kp_index_update.cron 2>&1
+### Cron Job:
 
+###### Primary (mta@boba-v):
+```
+14 */3 * * * cd ${SPACE_WEATHER}/KP/Scripts; ${ENV_FLIGHT}/bin/skare python fetch_kp_tables.py -m flight >> ${HOME}/Logs/kp_index_update.cron 2>&1
+```
+
+###### Secondary (mta@r2d2-v):
+```
+14 */3 * * * cd ${SPACE_WEATHER}/KP/Scripts; ${ENV_FLIGHT}/bin/skare python fetch_kp_tables.py -m flight >> ${HOME}/Logs/kp_index_update_mirror.cron 2>&1
+```
