@@ -22,7 +22,6 @@ import getpass
 import signal
 from astropy.io import ascii
 from cxotime import CxoTime
-from jinja2 import Environment, FileSystemLoader
 
 #
 # --- Define Directory Pathing
@@ -33,17 +32,6 @@ OUT_CRM_WEB_DIR = "/data/mta4/www/RADIATION/CRM3"
 OUT_CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
 EPHEM_DATA_DIR = "/data/mta4/Space_Weather/EPHEM/Data"
 GOES_DATA_DIR = "/data/mta4/Space_Weather/GOES/Data"
-#
-# --- Template Globals
-#
-#: Keep trailing newline as old format has an additional newline character.
-_JINJA_ENV = Environment(
-    loader=FileSystemLoader("Template", followlinks=True), keep_trailing_newline=True
-)
-#: Custom filter to format to scientific notation.
-_JINJA_ENV.filters["e_format"] = lambda v, p: f"{v:.{p}e}"
-#: Custom filter to remove cxotime fractional seconds
-_JINJA_ENV.filters["date_format"] = lambda v: f"{v.split('.')[0]}"
 #
 # --- Globals
 #
@@ -79,12 +67,6 @@ def create_crm_summary():
 
     with open(f"{OUT_CRM_DATA_DIR}/CRMsummary.json", "w") as f:
         json.dump(summary, f, indent=4)
-
-    crm_template = _JINJA_ENV.get_template("CRMsummary.jinja")
-    crm_render = crm_template.render(data=summary)
-    with open(f"{OUT_CRM_DATA_DIR}/CRMsummary.dat", "w") as fo:
-        fo.write(crm_render)
-
 
 def read_crm_flux_table():
     """
@@ -245,10 +227,6 @@ if __name__ == "__main__":
         os.system(
             f"cp {OUT_CRM_DATA_DIR}/CRMsummary.json {OUT_CRM_WEB_DIR}/CRMsummary.json"
         )
-        os.system(
-            f"cp {OUT_CRM_DATA_DIR}/CRMsummary.dat {OUT_CRM_WEB_DIR}/CRMsummary.dat"
-        )
-
         #
         # --- Remove lock file once process is completed.
         #
