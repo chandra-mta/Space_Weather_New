@@ -16,7 +16,6 @@
 """
 import os
 import argparse
-import re
 import numpy
 import json
 from cxotime import CxoTime
@@ -25,7 +24,6 @@ import matplotlib.pyplot       as plt
 import matplotlib.font_manager as font_manager
 from datetime import datetime, timezone, time, timedelta
 import kadi.events
-import getpass
 import signal
 from pathlib import Path
 import psutil
@@ -125,12 +123,12 @@ def plot_crm_flux_data():
 #--- plot data: exteranl flux
 #
     plot_crm(otime, altitude, orbit_color_list, dsn_start, dsn_stop, inst_start, inst_stop, \
-             otg_start, otg_stop, ftime_list, flux, color_list, kp, atten=0)
+             otg_start, otg_stop, ftime_list, flux, color_list, kp, atten=False)
 #
 #--- plot data: attenuated flux
 #
     plot_crm(otime, altitude, orbit_color_list, dsn_start, dsn_stop, inst_start, inst_stop, \
-             otg_start, otg_stop, ftime_list, flux_atten, color_list, kp, atten=1)
+             otg_start, otg_stop, ftime_list, flux_atten, color_list, kp, atten=True)
 
 #--------------------------------------------------------------------------------
 #-- read_coord_data: read spherical gsm and dse data from ephem site           ---
@@ -163,7 +161,7 @@ def read_coord_data():
     latgse = []
     longse = []
     for ent in data:
-        atemp = re.split(r'\s+', ent)
+        atemp = ent.split()
         atime = float(atemp[0])
         if atime < start:
             continue
@@ -186,7 +184,7 @@ def read_coord_data():
 
     return [otime, radgsm, latgsm, longsm, radgse, latgse, longse]
 
-def translate(dsn_comm):
+def translate(dsn_comm) -> dict[str,CxoTime]:
         """
         Translate the Kadi Event DSN Comm query result into CxoTime
         :NOTE: Take from msid_plotting.comm_check.translate() v0.4.0,
@@ -199,7 +197,7 @@ def translate(dsn_comm):
         dt_start = support_start.datetime
         track_start = CxoTime(
             datetime.combine(
-                dt_start.date(), # type: ignore
+                dt_start.date(),
                 time(hour=int(dsn_comm.bot[:2]), minute=int(dsn_comm.bot[2:])),
             )
         )
@@ -211,7 +209,7 @@ def translate(dsn_comm):
         dt_stop = support_stop.datetime
         track_stop = CxoTime(
             datetime.combine(
-                dt_stop.date(), # type: ignore
+                dt_stop.date(),
                 time(hour=int(dsn_comm.eot[:2]), minute=int(dsn_comm.eot[2:])),
             )
         )
@@ -238,8 +236,8 @@ def read_contact_data():
     dsn_stop  = []
     for dsn_comm in dsn_query:
         x = translate(dsn_comm)
-        dsn_start.append(round(x.get('track_start').secs)) # type: ignore
-        dsn_stop.append(round(x.get('track_stop').secs)) # type: ignore
+        dsn_start.append(round(x.get('track_start').secs))
+        dsn_stop.append(round(x.get('track_stop').secs))
     
     return [dsn_start, dsn_stop]
 
@@ -271,7 +269,7 @@ def read_region_data(time_list, cre=0):
     ctime  = []
     region = []
     for ent in data:
-        atemp = re.split(r'\s+', ent)
+        atemp = ent.split()
         rtime = float(atemp[0])
         if rtime < start:
             continue
@@ -345,6 +343,12 @@ def read_region_data(time_list, cre=0):
 #-- read_flux_model: read CRM flux model                                       --
 #--------------------------------------------------------------------------------
 
+def _kpi(kp):
+    """
+    Corrective KP index float to CRM filename format
+    """
+    return f"{kp:.1f}".replace(".", "")
+
 def read_flux_model(kp):
     """
     read CRM flux model
@@ -356,13 +360,7 @@ def read_flux_model(kp):
             note, there are 11 sub lists in all three lists. the last list is
                   based on the current kp value
     """
-#
-#--- find the model # corresponding to kp value
-#
-    ikp = int(10 * kp)
-    lkp = str(ikp)
-    if ikp < 10:
-        lkp = '0' + lkp
+
 #
 #--- set start and stop time
 #
@@ -371,7 +369,7 @@ def read_flux_model(kp):
 #
 #--- select 10 models + kp correspoinding flux
 #
-    tail_list  = ['00', '10', '20', '30', '40', '50', '60', '70', '80', '90', lkp]
+    tail_list  = ['00', '10', '20', '30', '40', '50', '60', '70', '80', '90', _kpi(kp)]
     time_list  = [[], [], [], [], [], [], [], [], [], [], []]
     color_list = [[], [], [], [], [], [], [], [], [], [], []]
     flux_list  = [[], [], [], [], [], [], [], [], [], [], []]
@@ -383,7 +381,7 @@ def read_flux_model(kp):
         with open(_crm_data_file) as f:
             data = [line.strip() for line in f.readlines()]
         for ent in data:
-            atemp = re.split(r'\s+', ent)
+            atemp = ent.split()
             xtime = float(atemp[0])
             if xtime < start:
                 continue
@@ -448,7 +446,7 @@ def read_inst_list():
 #
     klen  = len(data)
     for k in range(0, klen):
-        atemp = re.split(r'\s+', data[k])
+        atemp = data[k].split()
         try:
             ctime = CxoTime(atemp[0]).secs
         except ValueError:
@@ -518,7 +516,7 @@ def read_otg_list():
 #
 #--- check which otg is on (or off)
 #
-        atemp = re.split(r'\s+', ent)
+        atemp= ent.split()
         try:
             ctime = CxoTime(atemp[0]).secs
         except ValueError:
@@ -679,7 +677,7 @@ def create_attenuation_list(ftime_list, flux_list, inst_start, inst_stop, otg_st
 #--------------------------------------------------------------------------------
 
 def plot_crm(otime, altitude, orbit_color_list, dsn_start, dsn_stop, inst_start, inst_stop,\
-             otg_start, otg_stop, ftime_list, flux_list, color_list, kp, atten=0):
+             otg_start, otg_stop, ftime_list, flux_list, color_list, kp, atten=False):
     """
     plot predictive CRM fluence model
     input:  otime       --- a list of time related to orbits
@@ -695,7 +693,7 @@ def plot_crm(otime, altitude, orbit_color_list, dsn_start, dsn_stop, inst_start,
             flux_list   --- a list of lists of flux(fluence)
             color_list  --- a list of lists of color related to flux
             kp          --- a current kp value
-            atten       --- whether this is external (0) or attenuated (1) plot
+            atten       --- whether this is external (False) or attenuated (True) plot
     output: <html_dir>/Orbit/Plots/crmpl.png or crmplatt.png
     """
 #
@@ -722,7 +720,7 @@ def plot_crm(otime, altitude, orbit_color_list, dsn_start, dsn_stop, inst_start,
 #
     plt.close('all')
     mpl.rcParams['font.size'] = 6
-    props = font_manager.FontProperties(size=6)
+    font_manager.FontProperties(size=6)
     f, (ax0, ax1, ax2) = plt.subplots(3, 1, sharex=True, gridspec_kw={'height_ratios': [1, 1, 3]})
     plt.subplots_adjust(hspace=0.02)
 #
@@ -735,7 +733,6 @@ def plot_crm(otime, altitude, orbit_color_list, dsn_start, dsn_stop, inst_start,
     ax0.set_facecolor('xkcd:black')
 
     x1 = len(otime)
-    x2 = len(altitude)
     x3 = len(orbit_color_list)
     ot_list = otime
     at_list = altitude
@@ -892,7 +889,7 @@ def plot_crm(otime, altitude, orbit_color_list, dsn_start, dsn_stop, inst_start,
 #
 #--- save the plot in png format
 #
-    if atten == 0:
+    if atten:
         outname = 'crmpl.png'
     else:
         outname = 'crmplatt.png'
