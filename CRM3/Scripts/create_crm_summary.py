@@ -13,16 +13,16 @@
 # tested-ska-release = "2026.1"
 # ///
 """
-
 import os
 import json
+import shutil
 import numpy as np
 import argparse
-import getpass
 import signal
 from astropy.io import ascii
 from cxotime import CxoTime
 from pathlib import Path
+import psutil
 #
 # --- Define Directory Pathing
 #
@@ -198,33 +198,28 @@ if __name__ == "__main__":
         create_crm_summary()
 
     elif args.mode == "flight":
-        #
-        # --- Create a lock file and exit strategy in case of race conditions
-        #
+        #: Create a lock file and exit strategy in case of race conditions.
         name = os.path.basename(__file__).split(".")[0]
-        user = getpass.getuser()
-        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
-            with open(f"/tmp/{user}/{name}.lock") as f:
-                pid = int(f.readlines()[-1].strip())
-            #: Kill old process if stalling.
-            try:
+        user = os.getenv("USER", "mta")
+        lock = Path("/tmp", user, f"{name}.lock")
+
+        #: If lock file exists, read the pid and kill the process, then remove the lock file
+        if os.path.isfile(lock):
+            with open(lock) as f:
+                pid = int(f.read().strip())
+            if psutil.pid_exists(pid):
                 os.kill(pid, signal.SIGTERM)
-            except ProcessLookupError:
-                pass
-            os.system(
-                f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock"
-            )
-        else:
-            os.system(
-                f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock"
-            )
+            os.remove(lock)
+        
+        #: Lock file with current pid
+        pid = os.getpid()
+        os.makedirs(os.path.dirname(lock), exist_ok = True)
+        with open(lock, 'w') as f:
+            f.write(str(pid))
 
         create_crm_summary()
-        #: Make available on the web.
-        os.system(
-            f"cp {OUT_CRM_DATA_DIR}/CRMsummary.json {OUT_CRM_WEB_DIR}/CRMsummary.json"
-        )
-        #
-        # --- Remove lock file once process is completed.
-        #
-        os.system(f"rm /tmp/{user}/{name}.lock")
+        #: Make data available on the web.
+        shutil.copyfile(CRM_DATA_DIR / "CRMsummary.json", CRM_WEB_DIR / "CRMsummary.json")
+        
+        #: Remove lock file once process is completed
+        os.remove(lock)
