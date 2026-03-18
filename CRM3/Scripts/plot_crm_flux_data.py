@@ -21,9 +21,6 @@ import numpy
 import json
 from cxotime import CxoTime
 import matplotlib as mpl
-if __name__ == '__main__':
-    mpl.use('Agg')
-from pylab import *
 import matplotlib.pyplot       as plt
 import matplotlib.font_manager as font_manager
 from datetime import datetime, timezone, time, timedelta
@@ -31,6 +28,9 @@ import kadi.events
 import getpass
 import signal
 from pathlib import Path
+import psutil
+if __name__ == '__main__':
+    mpl.use('Agg')
 #
 # --- Define Directory Pathing
 #
@@ -963,32 +963,26 @@ if __name__ == "__main__":
         plot_crm_flux_data()
     
     elif opt.mode == 'flight':
-        #
-        # --- Create a lock file and exit strategy in case of race conditions.
-        #
+        #: Create a lock file and exit strategy in case of race conditions.
         name = os.path.basename(__file__).split(".")[0]
-        user = getpass.getuser()
-        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
-            with open(f"/tmp/{user}/{name}.lock") as f:
-                pid = int(f.readlines()[-1].strip())
-                #: Kill old stalling process and remove corresponding lock file.
-                os.remove(f"/tmp/{user}/{name}.lock")
-                try:
-                    os.kill(pid, signal.SIGTERM)
-                except ProcessLookupError:
-                    pass
-                #: Generate lock file for the current corresponding process
-                os.system(
-                    f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock"
-                )
-        else:
-            #: Previous script run must have completed successfully. Prepare lock file for this script run.
-            os.system(
-                f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock"
-            )
+        user = os.getenv("USER", "mta")
+        lock = Path("/tmp", user, f"{name}.lock")
+
+        #: If lock file exists, read the pid and kill the process, then remove the lock file
+        if os.path.isfile(lock):
+            with open(lock) as f:
+                pid = int(f.read().strip())
+            if psutil.pid_exists(pid):
+                os.kill(pid, signal.SIGTERM)
+            os.remove(lock)
         
+        #: Lock file with current pid
+        pid = os.getpid()
+        os.makedirs(os.path.dirname(lock), exist_ok = True)
+        with open(lock, 'w') as f:
+            f.write(str(pid))
+
         plot_crm_flux_data()
-        #
-        # --- Remove lock file once process is completed.
-        #
-        os.system(f"rm /tmp/{user}/{name}.lock")
+        
+        #: Remove lock file once process is completed
+        os.remove(lock)
