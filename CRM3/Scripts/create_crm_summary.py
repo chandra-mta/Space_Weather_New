@@ -22,16 +22,17 @@ import getpass
 import signal
 from astropy.io import ascii
 from cxotime import CxoTime
-
+from pathlib import Path
 #
 # --- Define Directory Pathing
 #
-CRM_WEB_DIR = "/data/mta4/www/RADIATION/CRM3"
-CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
-OUT_CRM_WEB_DIR = "/data/mta4/www/RADIATION/CRM3"
-OUT_CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
-EPHEM_DATA_DIR = "/data/mta4/Space_Weather/EPHEM/Data"
-GOES_DATA_DIR = "/data/mta4/Space_Weather/GOES/Data"
+SPACE_WEATHER = Path(os.getenv('SPACE_WEATHER', "/data/mta4/Space_Weather"))
+SPACE_WEATHER_WEB = Path(os.environ.get('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION"))
+
+CRM_DATA_DIR : Path = SPACE_WEATHER / "CRM3" / "Data"
+CRM_WEB_DIR : Path = SPACE_WEATHER_WEB / "CRM3"
+GOES_DATA_DIR : Path = SPACE_WEATHER / "GOES" / "Data"
+EPHEM_DATA_DIR : Path = SPACE_WEATHER / "EPHEM" / "Data"
 #
 # --- Globals
 #
@@ -65,14 +66,17 @@ def create_crm_summary():
     summary.update(orbit_meta)
     summary = _coerce_json_serialize(summary)
 
-    with open(f"{OUT_CRM_DATA_DIR}/CRMsummary.json", "w") as f:
+    _summary_json = CRM_DATA_DIR / "CRMsummary.json"
+    with open(_summary_json, "w") as f:
         json.dump(summary, f, indent=4)
 
 def read_crm_flux_table():
     """
     Read from the crm_flux_table.ecsv
     """
-    crm_flux_table = ascii.read(f"{OUT_CRM_DATA_DIR}/crm_flux_table.ecsv")
+    _table_file = CRM_DATA_DIR / "crm_flux_table.ecsv"
+    #: Astropy file format guesser can sometimes mistreat a Path() instance. Avoid by specifying format.
+    crm_flux_table = ascii.read(_table_file, format="ecsv")
 
     corrected_crm_fluence = sum(crm_flux_table["corrected_crm_flux"] * TDELTA)
     attenuated_crm_fluence = sum(crm_flux_table["attenuated_crm_flux"] * TDELTA)
@@ -110,8 +114,11 @@ def read_goes():
         "goes_p7_flux": None,
         "goes_e2_flux": None,
     }
-    diff_proton_table = ascii.read(f"{GOES_DATA_DIR}/goes_differential_protons.ecsv")
-    intg_electron_table = ascii.read(f"{GOES_DATA_DIR}/goes_integral_electrons.ecsv")
+    _diff_table = GOES_DATA_DIR / "goes_differential_protons.ecsv"
+    _intg_table = GOES_DATA_DIR / "goes_integral_electrons.ecsv"
+    #: Astropy file format guesser can sometimes mistreat a Path() instance. Avoid by specifying format.
+    diff_proton_table = ascii.read(_diff_table, format="ecsv")
+    intg_electron_table = ascii.read(_intg_table, format="ecsv")
 
     #: In case the most recent flux for the target channel is missing,
     #: record the last known values by iterating backwards.
@@ -146,7 +153,8 @@ def read_ephem():
 
     The EPHEM file records altitude in meters. This fetch returns in km.
     """
-    with open(f"{EPHEM_DATA_DIR}/gephem.dat") as f:
+    _gephem = EPHEM_DATA_DIR / "gephem.dat"
+    with open(_gephem) as f:
         data = f.read().split()  #: Located on the first and only line.
         alt = int(float(data[0]) / 1000)
         leg = data[1]
@@ -172,20 +180,8 @@ def _coerce_json_serialize(obj):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        "-m",
-        "--mode",
-        choices=["flight", "test"],
-        required=True,
-        help="Determine running mode.",
-    )
-    parser.add_argument(
-        "-p",
-        "--path",
-        required=False,
-        help="Directory path to determine output location of plot.",
-    )
+    parser.add_argument("-m", "--mode", choices=["flight", "test"], required=True, help="Determine running mode.")
+    parser.add_argument("-p", "--path", required=False, help="Directory path to determine output location of summary.")
     args = parser.parse_args()
     #
     # --- Determine if running in test mode and change pathing if so.
@@ -194,10 +190,11 @@ if __name__ == "__main__":
         #
         # --- Path output to same location as unit tests.
         #
-        OUT_CRM_DATA_DIR = f"{os.getcwd()}/test/_outTest"
         if args.path:
-            OUT_CRM_DATA_DIR = args.path
-        os.makedirs(OUT_CRM_DATA_DIR, exist_ok=True)
+            CRM_DATA_DIR = Path(args.path)
+        else:
+            CRM_DATA_DIR = Path(os.getcwd(), "test", "_outTest")
+        
         create_crm_summary()
 
     elif args.mode == "flight":
