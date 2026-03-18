@@ -1,9 +1,9 @@
-#!/proj/sot/ska3/flight/bin/python
+#!/usr/bin/env python
 """
 **create_crm_summary_table.py**: Summarize the CRM flux table into different data files.
 
 :Author: w. aaron (William.aaron@cfa.harvard.edu)
-:Last Updated: Aug 11, 2025
+:Last Updated: Mar 11, 2026
 
 # /// script
 # requires-python = ">=3.12"
