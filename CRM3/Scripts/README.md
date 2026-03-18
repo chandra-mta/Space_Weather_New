@@ -117,10 +117,32 @@ The binary data files are:
 The ascii versions are already in:
 /data/mta4/Space_Weather/CRMFLX/CRMFLX_V33/Data/
 
+## Cron Variables:
+###### Primary
+```
+SPACE_WEATHER=/data/mta4/Space_Weather
+SPACE_WEATHER_WEB=/data/mta4/www/RADIATION
+SPACE_WEATHER_URL=https://cxc.cfa.harvard.edu/mta/RADIATION
+ENV_FLIGHT=/proj/sot/ska3/flight
+```
+###### Secondary
+```
+SPACE_WEATHER=/data/mta/Script/Space_Weather
+SPACE_WEATHER_WEB=/data/mta/www/MIRROR/Space_Weather
+SPACE_WEATHER_URL=https://ops-web.cfa.harvard.edu/mta/Space_Weather
+ENV_FLIGHT=/proj/sot/ska3/flight
+```
+
 ## Cron Jobs
-- **mta@boba-v**
-- 21 3,6,9,12,18,21 * * *                    /data/mta4/Space_Weather/CRM3/Scripts/crm_wrap_script       >> $HOME/Logs/crm3_runcrm_new.cron       2>&1
-- 4,9,14,19,24,29,34,39,44,49,54,59 * * * *  /data/mta4/Space_Weather/CRM3/Scripts/crm_table_wrap_script >> $HOME/Logs/crm3_create_table_new.cron 2>&1
-- **mta@r2d2-v**
-- 21 3,6,9,12,18,21 * * * /data/mta/Script/Space_Weather/CRM3/Scripts/crm_wrap_script
-- 2,7,12,17,22,27,32,37,42,47,52,57 * * * * /data/mta/Script/Space_Weather/CRM3/Scripts/crm_table_wrap_script
+###### Primary (mta@boba-v)
+```
+21 3,6,9,12,18,21 * * *                    /data/mta4/Space_Weather/CRM3/Scripts/crm_wrap_script       >> $HOME/Logs/crm3_runcrm_new.cron       2>&1
+4,9,14,19,24,29,34,39,44,49,54,59 * * * *  /data/mta4/Space_Weather/CRM3/Scripts/crm_table_wrap_script >> $HOME/Logs/crm3_create_table_new.cron 2>&1
+*/5 * * * * cd ${SPACE_WEATHER}/CRM3/Scripts ; ${ENV_FLIGHT}/bin/skare python create_crm_dat_file.py >> ${HOME}/Logs/crm3_create_table_new.cron 2>&1
+```
+###### Secondary (mta@r2d2-v)
+```
+21 3,6,9,12,18,21 * * * /data/mta/Script/Space_Weather/CRM3/Scripts/crm_wrap_script
+2,7,12,17,22,27,32,37,42,47,52,57 * * * * /data/mta/Script/Space_Weather/CRM3/Scripts/crm_table_wrap_script
+*/5 * * * * cd ${SPACE_WEATHER}/CRM3/Scripts ; ${ENV_FLIGHT}/bin/skare python create_crm_dat_file.py >> ${HOME}/Logs/crm3_create_table_mirror.cron 2>&1
+```
