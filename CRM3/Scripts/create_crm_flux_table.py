@@ -16,6 +16,7 @@
 
 import os
 import bisect
+import shutil
 from astropy.io import ascii
 from astropy.table import Table, unique, vstack
 from kadi import events
@@ -24,11 +25,10 @@ from datetime import datetime, timedelta
 import numpy as np
 from django.db import close_old_connections, utils
 import argparse
-import getpass
 import signal
 import glob
 from pathlib import Path
-
+import psutil
 #
 # --- Define Directory Pathing
 #
@@ -198,7 +198,7 @@ def reconnect(func):
     _errors = utils.OperationalError
 
     def wrapper_func(*args, **kwargs):
-        _last_exception = None
+        _last_exception = Exception()
         for i in range(_freq):
             try:
                 return func(*args, **kwargs)
@@ -559,44 +559,35 @@ if __name__ == "__main__":
         create_crm_flux_table()
 
     elif args.mode == "flight":
-        #
-        # --- Create a lock file and exit strategy in case of race conditions.
-        #
+        #: Create a lock file and exit strategy in case of race conditions.
         name = os.path.basename(__file__).split(".")[0]
-        user = getpass.getuser()
-        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
-            with open(f"/tmp/{user}/{name}.lock") as f:
-                pid = int(f.readlines()[-1].strip())
-                #: Kill old stalling process and remove corresponding lock file.
-                os.remove(f"/tmp/{user}/{name}.lock")
-                try:
-                    os.kill(pid, signal.SIGTERM)
-                except ProcessLookupError:
-                    pass
-                #: Generate lock file for the current corresponding process
-                os.system(
-                    f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock"
-                )
-        else:
-            #: Previous script run must have completed successfully. Prepare lock file for this script run.
-            os.system(
-                f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock"
-            )
+        user = os.getenv("USER", "mta")
+        lock = Path("/tmp", user, f"{name}.lock")
+
+        #: If lock file exists, read the pid and kill the process, then remove the lock file
+        if os.path.isfile(lock):
+            with open(lock) as f:
+                pid = int(f.read().strip())
+            if psutil.pid_exists(pid):
+                os.kill(pid, signal.SIGTERM)
+            os.remove(lock)
+        
+        #: Lock file with current pid
+        pid = os.getpid()
+        os.makedirs(os.path.dirname(lock), exist_ok = True)
+        with open(lock, 'w') as f:
+            f.write(str(pid))
 
         create_crm_flux_table()
         #: Make data available on the web.
-        os.system(
-            f"cp {OUT_CRM_DATA_DIR}/crm_flux_table.ecsv {OUT_CRM_WEB_DIR}/crm_flux_table.ecsv"
-        )
-        if (
-            os.stat(f"{OUT_CRM_DATA_DIR}/CRMarchive.ecsv").st_mtime
-            > os.stat(f"{OUT_CRM_WEB_DIR}/CRMarchive.ecsv").st_mtime
-        ):
-            #: If archive has been modified recently, update available web copy.
-            os.system(
-                f"cp {OUT_CRM_DATA_DIR}/CRMarchive.ecsv {OUT_CRM_WEB_DIR}/CRMarchive.ecsv"
-            )
-        #
-        # --- Remove lock file once process is completed.
-        #
-        os.system(f"rm /tmp/{user}/{name}.lock")
+        _table = CRM_DATA_DIR / "crm_flux_table.ecsv"
+        _table_web = CRM_WEB_DIR / "crm_flux_table.ecsv"
+        _archive = CRM_DATA_DIR / "CRMarchive.ecsv"
+        _archive_web = CRM_WEB_DIR / "CRMarchive.ecsv"
+        shutil.copyfile(_table, _table_web)
+        if _archive.stat().st_mtime > _archive_web.stat().st_mtime:
+            shutil.copyfile(_archive, _archive_web)
+
+
+        #: Remove lock file once process is completed
+        os.remove(lock)
