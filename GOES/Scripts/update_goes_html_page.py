@@ -75,6 +75,23 @@ for key in DE.keys():
 #
 _JINJA_ENV = Environment(loader = FileSystemLoader('Template', followlinks = True))
 
+def _class_to_flux_scalar(s):
+    """Convert GOES class string like 'M1.2' to flux (W/m^2). Returns np.nan for bad inputs."""
+    if s is None or s == np.ma.masked:
+        return np.nan
+    s = str(s).strip().upper()
+    letter = s[0]
+    scale = {"A": 1e-8, "B": 1e-7, "C": 1e-6, "M": 1e-5, "X": 1e-4}.get(letter)
+    if scale is None:
+        return np.nan
+    try:
+        value = float(s[1:])
+    except (ValueError, IndexError):
+        return np.nan
+    
+    return scale * value
+class_to_flux = np.vectorize(_class_to_flux_scalar)
+
 def update_goes_html_page():
     """Update goes differential and integral html pages
     
@@ -352,7 +369,7 @@ def make_xray_table():
     """
     flare_table = ascii.read(f"{GOES_DATA_DIR}/goes_flares.ecsv")
     #: Only select and compare noteworthy flares
-    sel = flare_table['max_class'] > 'M1'
+    sel = class_to_flux(flare_table['max_class'].data) > 1e-5
     flare_table = flare_table[sel]
     
     if len(flare_table) == 0:
