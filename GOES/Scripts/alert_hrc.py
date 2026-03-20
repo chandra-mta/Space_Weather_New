@@ -130,7 +130,7 @@ def send_mail(subject, content, address):
     elif isinstance(address,str):
         msg['To'] = address
     else:
-        raise Exception("Please provide an address string or a lsit of address strings")
+        raise Exception("Please provide an address string or a list of address strings")
 
     if TESTMAIL:
         print(msg)
