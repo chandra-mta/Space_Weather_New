@@ -1,10 +1,10 @@
-#!/proj/sot/ska3/flight/bin/python
+#!/usr/bin/env python
 """
 **plot_crm_flux_data.py**: create crm predicted flux plot
 
 :Author: t. isobe  (tisobe@cfa.harvard.edu)
 :Maintainer: w. aaron (william.aaron@cfa.harvard.edu)
-:Last Updated: Jan 22, 2026
+:Last Updated: Mar 18, 2026
 
 # /// script
 # requires-python = ">=3.12"
@@ -16,26 +16,28 @@
 """
 import os
 import argparse
-import re
 import numpy
 import json
 from cxotime import CxoTime
 import matplotlib as mpl
-if __name__ == '__main__':
-    mpl.use('Agg')
-from pylab import *
 import matplotlib.pyplot       as plt
 import matplotlib.font_manager as font_manager
 from datetime import datetime, timezone, time, timedelta
 import kadi.events
-import getpass
 import signal
+from pathlib import Path
+import psutil
+if __name__ == '__main__':
+    mpl.use('Agg')
 #
 # --- Define Directory Pathing
 #
-CRM3_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
-EPHEM_DATA_DIR = "/data/mta4/Space_Weather/EPHEM/Data"
-HTML_DIR = "/data/mta4/www/RADIATION/Orbit/Plots"
+SPACE_WEATHER = Path(os.getenv('SPACE_WEATHER', "/data/mta4/Space_Weather"))
+SPACE_WEATHER_WEB = Path(os.environ.get('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION"))
+
+CRM_DATA_DIR : Path = SPACE_WEATHER / "CRM3" / "Data"
+ORBIT_PLOT_DIR : Path = SPACE_WEATHER_WEB / "Orbit" / "Plots" #: A quirk of our web setup. No CRM page, just a collated orbit page
+EPEHM_DATA_DIR : Path = SPACE_WEATHER / "EPHEM" / "Data"
 
 UTC_NOW = datetime.now(timezone.utc)
 TODAY_CHANDRA_TIME = round(CxoTime(UTC_NOW.replace(hour=0, minute=0, second=0, microsecond=0)).secs)
@@ -44,6 +46,7 @@ YEAR_START = CxoTime(f"{UTC_NOW.year}:001:00:00:00").secs
 def get_options(args=None):
     parser = argparse.ArgumentParser(description="Plot CRM Flux")
     parser.add_argument("-m", "--mode", choices = ['flight','test'], required = True, help = "Determine running mode.")
+    parser.add_argument("-p", "--path", help="Determine output path for plots")
     opt = parser.parse_args(args)
     return opt
 
@@ -66,7 +69,8 @@ def plot_crm_flux_data():
 #
 #--- read crm summary data table
 #
-    with open(f"{CRM3_DATA_DIR}/CRMsummary.json") as f:
+    _summary_json = CRM_DATA_DIR / "CRMsummary.json"
+    with open(_summary_json) as f:
         crm_summary = json.load(f)
     kp = crm_summary.get('kp')
     ace = crm_summary.get('ace_p3_flux')
@@ -119,12 +123,12 @@ def plot_crm_flux_data():
 #--- plot data: exteranl flux
 #
     plot_crm(otime, altitude, orbit_color_list, dsn_start, dsn_stop, inst_start, inst_stop, \
-             otg_start, otg_stop, ftime_list, flux, color_list, kp, atten=0)
+             otg_start, otg_stop, ftime_list, flux, color_list, kp, atten=False)
 #
 #--- plot data: attenuated flux
 #
     plot_crm(otime, altitude, orbit_color_list, dsn_start, dsn_stop, inst_start, inst_stop, \
-             otg_start, otg_stop, ftime_list, flux_atten, color_list, kp, atten=1)
+             otg_start, otg_stop, ftime_list, flux_atten, color_list, kp, atten=True)
 
 #--------------------------------------------------------------------------------
 #-- read_coord_data: read spherical gsm and dse data from ephem site           ---
@@ -145,7 +149,8 @@ def read_coord_data():
 #
 #--- read data
 #
-    with open(f"{EPHEM_DATA_DIR}/PE.EPH.gsme_spherical_short") as f:
+    _gsme_spherical_short = EPEHM_DATA_DIR / "PE.EPH.gsme_spherical_short"
+    with open(_gsme_spherical_short) as f:
         data = [line.strip() for line in f.readlines()]
     
     otime  = []
@@ -156,7 +161,7 @@ def read_coord_data():
     latgse = []
     longse = []
     for ent in data:
-        atemp = re.split(r'\s+', ent)
+        atemp = ent.split()
         atime = float(atemp[0])
         if atime < start:
             continue
@@ -179,7 +184,7 @@ def read_coord_data():
 
     return [otime, radgsm, latgsm, longsm, radgse, latgse, longse]
 
-def translate(dsn_comm):
+def translate(dsn_comm) -> dict[str,CxoTime]:
         """
         Translate the Kadi Event DSN Comm query result into CxoTime
         :NOTE: Take from msid_plotting.comm_check.translate() v0.4.0,
@@ -192,7 +197,7 @@ def translate(dsn_comm):
         dt_start = support_start.datetime
         track_start = CxoTime(
             datetime.combine(
-                dt_start.date(), # type: ignore
+                dt_start.date(),
                 time(hour=int(dsn_comm.bot[:2]), minute=int(dsn_comm.bot[2:])),
             )
         )
@@ -204,7 +209,7 @@ def translate(dsn_comm):
         dt_stop = support_stop.datetime
         track_stop = CxoTime(
             datetime.combine(
-                dt_stop.date(), # type: ignore
+                dt_stop.date(),
                 time(hour=int(dsn_comm.eot[:2]), minute=int(dsn_comm.eot[2:])),
             )
         )
@@ -231,8 +236,8 @@ def read_contact_data():
     dsn_stop  = []
     for dsn_comm in dsn_query:
         x = translate(dsn_comm)
-        dsn_start.append(round(x.get('track_start').secs)) # type: ignore
-        dsn_stop.append(round(x.get('track_stop').secs)) # type: ignore
+        dsn_start.append(round(x.get('track_start').secs))
+        dsn_stop.append(round(x.get('track_stop').secs))
     
     return [dsn_start, dsn_stop]
 
@@ -258,12 +263,13 @@ def read_region_data(time_list, cre=0):
 #
 #--- read data 
 #
-    with open(f"{CRM3_DATA_DIR}/CRM3_p.dat30") as f:
+    _crm_data_file = CRM_DATA_DIR / "CRM3_p.dat30" #: Is there a strict reason to use the kp=3.0 model instead of preduicted flux for varibable kp?
+    with open(_crm_data_file) as f:
         data = [line.strip() for line in f.readlines()]
     ctime  = []
     region = []
     for ent in data:
-        atemp = re.split(r'\s+', ent)
+        atemp = ent.split()
         rtime = float(atemp[0])
         if rtime < start:
             continue
@@ -337,6 +343,12 @@ def read_region_data(time_list, cre=0):
 #-- read_flux_model: read CRM flux model                                       --
 #--------------------------------------------------------------------------------
 
+def _kpi(kp):
+    """
+    Corrective KP index float to CRM filename format
+    """
+    return f"{kp:.1f}".replace(".", "")
+
 def read_flux_model(kp):
     """
     read CRM flux model
@@ -348,13 +360,7 @@ def read_flux_model(kp):
             note, there are 11 sub lists in all three lists. the last list is
                   based on the current kp value
     """
-#
-#--- find the model # corresponding to kp value
-#
-    ikp = int(10 * kp)
-    lkp = str(ikp)
-    if ikp < 10:
-        lkp = '0' + lkp
+
 #
 #--- set start and stop time
 #
@@ -363,7 +369,7 @@ def read_flux_model(kp):
 #
 #--- select 10 models + kp correspoinding flux
 #
-    tail_list  = ['00', '10', '20', '30', '40', '50', '60', '70', '80', '90', lkp]
+    tail_list  = ['00', '10', '20', '30', '40', '50', '60', '70', '80', '90', _kpi(kp)]
     time_list  = [[], [], [], [], [], [], [], [], [], [], []]
     color_list = [[], [], [], [], [], [], [], [], [], [], []]
     flux_list  = [[], [], [], [], [], [], [], [], [], [], []]
@@ -371,10 +377,11 @@ def read_flux_model(kp):
 #--- read each of them and save the fluxes
 #
     for k in range(0, 11):
-        with open(f"{CRM3_DATA_DIR}/CRM3_p.dat{tail_list[k]}") as f:
+        _crm_data_file = CRM_DATA_DIR / f"CRM3_p.dat{tail_list[k]}"
+        with open(_crm_data_file) as f:
             data = [line.strip() for line in f.readlines()]
         for ent in data:
-            atemp = re.split(r'\s+', ent)
+            atemp = ent.split()
             xtime = float(atemp[0])
             if xtime < start:
                 continue
@@ -439,7 +446,7 @@ def read_inst_list():
 #
     klen  = len(data)
     for k in range(0, klen):
-        atemp = re.split(r'\s+', data[k])
+        atemp = data[k].split()
         try:
             ctime = CxoTime(atemp[0]).secs
         except ValueError:
@@ -509,7 +516,7 @@ def read_otg_list():
 #
 #--- check which otg is on (or off)
 #
-        atemp = re.split(r'\s+', ent)
+        atemp= ent.split()
         try:
             ctime = CxoTime(atemp[0]).secs
         except ValueError:
@@ -670,7 +677,7 @@ def create_attenuation_list(ftime_list, flux_list, inst_start, inst_stop, otg_st
 #--------------------------------------------------------------------------------
 
 def plot_crm(otime, altitude, orbit_color_list, dsn_start, dsn_stop, inst_start, inst_stop,\
-             otg_start, otg_stop, ftime_list, flux_list, color_list, kp, atten=0):
+             otg_start, otg_stop, ftime_list, flux_list, color_list, kp, atten=False):
     """
     plot predictive CRM fluence model
     input:  otime       --- a list of time related to orbits
@@ -686,7 +693,7 @@ def plot_crm(otime, altitude, orbit_color_list, dsn_start, dsn_stop, inst_start,
             flux_list   --- a list of lists of flux(fluence)
             color_list  --- a list of lists of color related to flux
             kp          --- a current kp value
-            atten       --- whether this is external (0) or attenuated (1) plot
+            atten       --- whether this is external (False) or attenuated (True) plot
     output: <html_dir>/Orbit/Plots/crmpl.png or crmplatt.png
     """
 #
@@ -713,7 +720,7 @@ def plot_crm(otime, altitude, orbit_color_list, dsn_start, dsn_stop, inst_start,
 #
     plt.close('all')
     mpl.rcParams['font.size'] = 6
-    props = font_manager.FontProperties(size=6)
+    font_manager.FontProperties(size=6)
     f, (ax0, ax1, ax2) = plt.subplots(3, 1, sharex=True, gridspec_kw={'height_ratios': [1, 1, 3]})
     plt.subplots_adjust(hspace=0.02)
 #
@@ -726,7 +733,6 @@ def plot_crm(otime, altitude, orbit_color_list, dsn_start, dsn_stop, inst_start,
     ax0.set_facecolor('xkcd:black')
 
     x1 = len(otime)
-    x2 = len(altitude)
     x3 = len(orbit_color_list)
     ot_list = otime
     at_list = altitude
@@ -883,11 +889,11 @@ def plot_crm(otime, altitude, orbit_color_list, dsn_start, dsn_stop, inst_start,
 #
 #--- save the plot in png format
 #
-    if atten == 0:
+    if atten:
         outname = 'crmpl.png'
     else:
         outname = 'crmplatt.png'
-    outfile = f"{HTML_DIR}/{outname}"
+    outfile = ORBIT_PLOT_DIR / outname
     plt.savefig(outfile, format='png', dpi=300)
 
     plt.close('all')
@@ -944,38 +950,36 @@ def convert_to_doy(ctime):
 if __name__ == "__main__":
     opt = get_options()
     if opt.mode == 'test':
-        HTML_DIR = f"{os.getcwd()}/test/_outTest"
-        os.makedirs(HTML_DIR, exist_ok = True)
+
+        if opt.path:
+            ORBIT_PLOT_DIR = Path(opt.path)
+        else:
+            ORBIT_PLOT_DIR = Path(os.getcwd(), "test", "_outTest")
+        os.makedirs(ORBIT_PLOT_DIR, exist_ok = True)
 
         plot_crm_flux_data()
     
     elif opt.mode == 'flight':
-        #
-        # --- Create a lock file and exit strategy in case of race conditions.
-        #
+        #: Create a lock file and exit strategy in case of race conditions.
         name = os.path.basename(__file__).split(".")[0]
-        user = getpass.getuser()
-        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
-            with open(f"/tmp/{user}/{name}.lock") as f:
-                pid = int(f.readlines()[-1].strip())
-                #: Kill old stalling process and remove corresponding lock file.
-                os.remove(f"/tmp/{user}/{name}.lock")
-                try:
-                    os.kill(pid, signal.SIGTERM)
-                except ProcessLookupError:
-                    pass
-                #: Generate lock file for the current corresponding process
-                os.system(
-                    f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock"
-                )
-        else:
-            #: Previous script run must have completed successfully. Prepare lock file for this script run.
-            os.system(
-                f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock"
-            )
+        user = os.getenv("USER", "mta")
+        lock = Path("/tmp", user, f"{name}.lock")
+
+        #: If lock file exists, read the pid and kill the process, then remove the lock file
+        if os.path.isfile(lock):
+            with open(lock) as f:
+                pid = int(f.read().strip())
+            if psutil.pid_exists(pid):
+                os.kill(pid, signal.SIGTERM)
+            os.remove(lock)
         
+        #: Lock file with current pid
+        pid = os.getpid()
+        os.makedirs(os.path.dirname(lock), exist_ok = True)
+        with open(lock, 'w') as f:
+            f.write(str(pid))
+
         plot_crm_flux_data()
-        #
-        # --- Remove lock file once process is completed.
-        #
-        os.system(f"rm /tmp/{user}/{name}.lock")
+        
+        #: Remove lock file once process is completed
+        os.remove(lock)
