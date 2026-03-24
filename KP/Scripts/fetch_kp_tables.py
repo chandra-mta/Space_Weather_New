@@ -1,11 +1,9 @@
-#!/proj/sot/ska3/flight/bin/python
+#! /usr/bin/env python
 """
-
 **fetch_kp_tables.py**: Fetch KP index forecast tables and data from SWPC NOAA
 
 :Author: W. Aaron (william.aaron@cfa.harvard.edu)
 :Last Updated: Feb 09, 2026
-
 
 :NOTE:
     - https://kp.gfz.de/en/
@@ -29,14 +27,16 @@ import urllib.error
 from astropy.table import Table
 from cxotime import CxoTime
 import argparse
-import getpass
 import signal
 import numpy as np
+import psutil
 import file_readers as fr
+from pathlib import Path
 #
 # --- Define Directory Pathing
 #
-KP_DATA_DIR = "/data/mta4/Space_Weather/KP/Data"
+SPACE_WEATHER = Path(os.getenv('SPACE_WEATHER', "/data/mta4/Space_Weather"))
+KP_DATA_DIR : Path = SPACE_WEATHER / "KP" / "Data"
 #
 # --- Globals
 #
@@ -70,26 +70,26 @@ def fetch_kp_tables():
     swpc_kp = fetch_SWPC_KP()
     iaga_kp = fetch_IAGA_KP()
 
-    swpc_filename = f"{KP_DATA_DIR}/kp_swpc.ecsv"
+    swpc_filename = KP_DATA_DIR / "kp_swpc.ecsv"
     swpc_kp.meta['description'] = "Forecast of the planetary KP index as sourced from the SWPC. Includes observed, estimated, and predicted values. https://www.swpc.noaa.gov/products/planetary-k-index."
     swpc_kp.meta['sources'] = [
         {'origin_link': SOURCE_SWPC,
          'origin_script': os.path.abspath(__file__),
          'update_time': CXONOW.date,
          'mta_owned_origin': False,
-         'output_file': swpc_filename
+         'output_file': str(swpc_filename)
         }
     ]
     swpc_kp.write(swpc_filename, overwrite=True, delimiter=',')
 
-    iaga_filename = f"{KP_DATA_DIR}/kp_iaga.ecsv"
+    iaga_filename = KP_DATA_DIR / "kp_iaga.ecsv"
     iaga_kp.meta['description'] = "Observations of the planetary KP index as compiled by the IAGA. https://www-app3.gfz-potsdam.de/kp_index/qlyymm.html."
     iaga_kp.meta['sources'] = [
         {'origin_link': SOURCE_IAGA,
          'origin_script': os.path.abspath(__file__),
          'update_time': CXONOW.date,
          'mta_owned_origin': False,
-         'output_file': iaga_filename
+         'output_file': str(iaga_filename)
         }
     ]
     iaga_kp.write(iaga_filename, overwrite=True, delimiter=',')
@@ -202,6 +202,12 @@ def write_legacy_files(swpc_kp):
     """
     Function to write the legacy formats of KP index data file used by other scripts.
     Note that these use cases should be deprecated in favor of using the ECSV format.
+
+    Many disparate sources independently create similar to exact file copies of these legacy files.
+    To assist in progressive deprecation of unneeded scripts and data sources, symlinks to these 
+    primary copies of legacy files are recorded here if in use, and removed upon deprecation.
+        - /data/mta4/proj/rac/ops/ACE/kp.dat
+        - /data/mta_www/MIRROR/OPS/ACE/kp.dat
     """
     
     def _format_sol(row):
@@ -212,7 +218,7 @@ def write_legacy_files(swpc_kp):
         return line
     
     #: Only write up to the current time block, either observed or estimated.
-    past_archive = f"{KP_DATA_DIR}/k_index_data_past"
+    past_archive = KP_DATA_DIR / "k_index_data_past"
     past_archive_line = fr.get_last_text_line(past_archive)
     start = CxoTime(int(past_archive_line.split('\t')[0]))
     stop = CxoTime()
@@ -226,20 +232,20 @@ def write_legacy_files(swpc_kp):
     
     with open(past_archive,'a') as f:
         f.write(append_past_archive)
-    with open(f"{KP_DATA_DIR}/solar_wind_data_past.txt",'a') as f:
+    with open(KP_DATA_DIR / "solar_wind_data_past.txt", 'a') as f:
         f.write(append_past_solar)
     
     #: Of the most recent data, write the most recent entry if one exists to update
     if len(swpc_kp[sel]) > 0:
         current_entry = swpc_kp[sel][-1]
         line = _format_sol(current_entry)
-        with open(f"{KP_DATA_DIR}/kp.dat",'w') as f:
+        with open(KP_DATA_DIR / "kp.dat",'w') as f:
             f.write(HEADER+line)
     
     #: Now write the forecast archive.
-    forecast_archive = f"{KP_DATA_DIR}/k_index_data"
+    forecast_archive = KP_DATA_DIR / "k_index_data"
     forecast_archive_line = fr.get_last_text_line(forecast_archive)
-    start = CxoTime(int(past_archive_line.split('\t')[0]))
+    start = CxoTime(int(forecast_archive_line.split('\t')[0]))
     sel = start <= CxoTime(swpc_kp['time_tag'].data)
     append_forecast_archive = ''
     append_forecast_solar = ''
@@ -250,7 +256,7 @@ def write_legacy_files(swpc_kp):
     
     with open(forecast_archive,'a') as f:
         f.write(append_forecast_archive)
-    with open(f"{KP_DATA_DIR}/solar_wind_data.txt",'a') as f:
+    with open(KP_DATA_DIR / "solar_wind_data.txt", 'a') as f:
         f.write(append_forecast_solar)
 
 if __name__ == "__main__":
@@ -261,36 +267,34 @@ if __name__ == "__main__":
 
     if args.mode == 'test':
         if args.path:
-            KP_DATA_DIR = args.path
+            KP_DATA_DIR = Path(args.path)
         else:
-            KP_DATA_DIR = f"{os.getcwd()}/test/_outTest"
+            KP_DATA_DIR = Path(os.getcwd(), "test", "_outTest")
         os.makedirs(KP_DATA_DIR, exist_ok=True)
-
+        
         fetch_kp_tables()
 
-    elif args.mode == "flight":
-#
-#--- Create a lock file and exit strategy in case of race conditions
-#
+    elif args.mode == 'flight':
+    #: Create a lock file and exit strategy in case of stall.
         name = os.path.basename(__file__).split(".")[0]
-        user = getpass.getuser()
-        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
-            with open(f"/tmp/{user}/{name}.lock") as f:
-                pid = int(f.readlines()[-1].strip())
-                #Kill old stalling process and remove corresponding lock file.
-                os.remove(f"/tmp/{user}/{name}.lock")
-                try:
-                    os.kill(pid,signal.SIGTERM)
-                except ProcessLookupError:
-                    pass
-                #Generate lock file for the current corresponding process
-                os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
-        else:
-            #Previous script run must have completed successfully. Prepare lock file for this script run.
-            os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
+        user = os.getenv("USER", "mta")
+        lock = Path("/tmp", user, f"{name}.lock")
+
+        #: If lock file exists, read the pid and kill the process, then remove the lock file
+        if os.path.isfile(lock):
+            with open(lock) as f:
+                pid = int(f.read().strip())
+            if psutil.pid_exists(pid):
+                os.kill(pid, signal.SIGTERM)
+            os.remove(lock)
+        
+        #: Lock file with current pid
+        pid = os.getpid()
+        os.makedirs(lock.parent, exist_ok = True)
+        with open(lock, 'w') as f:
+            f.write(str(pid))
 
         fetch_kp_tables()
-#
-#--- Remove lock file once process is completed
-#
-        os.system(f"rm /tmp/{user}/{name}.lock")
+
+        #: Remove lock file once process is completed
+        os.remove(lock)
