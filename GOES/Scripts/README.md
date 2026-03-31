@@ -97,6 +97,21 @@ http://cxc.cfa.harvard.edu/mta/RADIATION/GOES/goes_part_p.html
 http://cxc.cfa.harvard.edu/mta/RADIATION/GOES/goes_pchan_p.html
 ( /data/mta4/www/RADIATION/GOES/)
 
+## Cron Variables:
+###### Primary
+```
+SPACE_WEATHER=/data/mta4/Space_Weather
+ENV_FLIGHT=/proj/sot/ska3/flight
+SPACE_WEATHER_WEB=/data/mta4/www/RADIATION
+SPACE_WEATHER_URL=https://cxc.cfa.harvard.edu/mta/RADIATION
+```
+###### Secondary
+```
+SPACE_WEATHER=/data/mta/Script/Space_Weather
+ENV_FLIGHT=/proj/sot/ska3/flight
+SPACE_WEATHER_WEB=/data/mta/www/MIRROR/Space_Weather
+SPACE_WEATHER_URL=https://ops-web.cfa.harvard.edu/mta/Space_Weather
+```
 
 Cron job
 --------
@@ -135,3 +150,13 @@ P8B         99900-118000 keV
 P8C         115000-143000 keV
 P9          160000-242000 keV
 P10         276000-404000 keV
+
+###### Primary (mta@boba-v):
+```
+3-59/5 * * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python alert_hrc.py -m flight >> ${HOME}/Logs/goes_main_new.cron 2>&1
+```
+
+###### Secondary (mta@r2d2-v):
+```
+3-59/5 * * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python alert_hrc.py -m flight >> ${HOME}/Logs/goes_main_mirror.cron 2>&1
+```
