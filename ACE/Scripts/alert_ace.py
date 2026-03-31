@@ -1,4 +1,4 @@
-#!/proj/sot/ska3/flight/bin/python
+#!/usr/bin/env python
 """
 **alert_ace.py**: Run ACE alerts.
 
@@ -11,25 +11,32 @@
 """
 import os
 from email.mime.text import MIMEText
+import shutil
 from subprocess import Popen, PIPE
 from astropy.io import ascii
 from astropy.table import Column, unique, Table
 import argparse
 from cxotime import CxoTime
-from datetime import datetime, timedelta
+from datetime import timedelta
 import numpy as np
-import getpass
 import json
 import signal
+from pathlib import Path
+from urllib.parse import urljoin
+import psutil
 
 #
 # --- Define Directory Pathing and Globals
 #
-ACE_URL = "https://cxc.cfa.harvard.edu/mta/RADIATION/ACE/ace.html"
-ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
-CRM_DATA_DIR = "/data/mta4/Space_Weather/CRM3/Data"
-COMM_DATA_DIR = "/data/mta4/Space_Weather/Comm_data/Data"
-SNAPSHOT_DIR = "/data/mta4/www/Snapshot"
+SPACE_WEATHER = Path(os.getenv("SPACE_WEATHER", "/data/mta4/Space_Weather"))
+SPACE_WEATHER_WEB = Path(os.environ.get('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION"))
+SPACE_WEATHER_URL = os.environ.get('SPACE_WEATHER_URL', "https://cxc.cfa.harvard.edu/mta/RADIATION")
+
+ACE_DATA_DIR : Path = SPACE_WEATHER / "ACE" / "Data"
+ACE_HTML_DIR : Path = SPACE_WEATHER_WEB / "ACE"
+ACE_URL = urljoin(SPACE_WEATHER_URL, "ACE/ace.html")
+
+SNAPSHOT_DIR = Path("/data/mta4/www/Snapshot") #: Use primary run across instances
 _ADMIN = "mtadude@cfa.harvard.edu"
 _INPUT_ACE_COLUMNS = [
     "year",
@@ -50,22 +57,29 @@ _INPUT_ACE_COLUMNS = [
     "aniso",
 ]  #: For reading in ACE data file.
 _P3_CHANNEL = "proton115-195"  #: Channel selection for P3 alert.
+_P5_CHANNEL = "proton310-580"
+_P6_CHANNEL = "proton795-1193" #: Channel selection for the P5/P6 spectral index violation.
 ACE_P3_LIMIT = 3.6e8  #: Fluence of 3.6e8 particles/cm2-ster-MeV within 2 hours.
+ACE_P5_P6_LIM = 1.0e10
 _DEFAULT_VIOLATION = {
-    "ace_p3": {"cxotime": 0, "val": 0}
+    "ace_p3": {"cxotime": 0, "val": 0},
+    "ace_invalid": {"cxotime": 0, "val": False},
+    "ace_p5_p6_spectral": {"cxotime": 0, "val": 0}
 }  #: If cannot find file of previous violations, then assume issue involving them not being sent and rebuild file. Built for multiple alert types
 _TESTMAIL = False
 _BOGUS_P3 = 500000
+_BOGUS_P5 = 40000
+_BOGUS_P6 = 20000
 
-def alert_ace():
+HOURS_MISSING = 12 #: Count of consecutive hours missing valid ACE data.
+_ALERT = "sot_ace_alert@cfa.harvard.edu" #: Alert email address
+_NOW = CxoTime()
+
+def _read_ace_file(file):
     """
-    Intake the last two hours worth of ACE data and calculate P3 fluence. If over the limit, send alert.
+    Read in the ACE Data file and format into astropy table.
     """
-    #
-    # --- Source Data File
-    #
-    data_file = f"{ACE_DATA_DIR}/ace_12h_archive"
-    ace_table = unique(ascii.read(data_file, names=_INPUT_ACE_COLUMNS))
+    ace_table = unique(ascii.read(file,names=_INPUT_ACE_COLUMNS))
     cxotime_col = Column(
         _convert_time_format(
             ace_table["year"], ace_table["month"], ace_table["day"], ace_table["hhmm"]
@@ -73,6 +87,12 @@ def alert_ace():
         name="cxotime",
     )
     ace_table.add_column(cxotime_col)
+    return ace_table
+
+def parse_p3(ace_table):
+    """
+    Parse ACE P3 data and return alert information if fluence over limit.
+    """
     no_outlier = Table(names = ace_table.colnames, dtype=ace_table.dtype)
     no_outlier.add_row(ace_table[0])
     for i in range(1,len(ace_table)):
@@ -91,60 +111,150 @@ def alert_ace():
         p130f = (
             np.mean(data_select[_P3_CHANNEL].data) * 7200
         )  #: Calculates the fluence with available data.
+        _cxotime = data_select[-1]["cxotime"]
     else:
         p130f = -1e5 #: No valid data to send alert.
+        _cxotime = _NOW
+    
+    ace_p3 = {
+        "cxotime": _cxotime,
+        "val": p130f,
+    }
+    return ace_p3
 
-    #
-    # ---Determine if Alerting
-    #
-    if p130f > ACE_P3_LIMIT:
-        #
-        # --- Pull current violation information to avoid repeated alerts
-        #
-        if os.path.isfile(f"{ACE_DATA_DIR}/ace_alert.json"):
-            with open(f"{ACE_DATA_DIR}/ace_alert.json") as f:
-                curr_viol = json.load(f)
-            if "ace_p3" not in curr_viol.keys():
-                curr_viol["ace_p3"] = _DEFAULT_VIOLATION["ace_p3"]
-        else:
-            curr_viol = _DEFAULT_VIOLATION
-        if (
-            data_select[-1]["cxotime"].datetime
-            - CxoTime(curr_viol["ace_p3"]["cxotime"]).datetime
-        ).days > 1:
-            #
-            # --- Last alert was more than one day ago. Therefore this is a new alerting instance
-            #
-            curr_viol["ace_p3"] = {
-                "cxotime": int(data_select[-1]["cxotime"].secs),
-                "val": p130f,
+def parse_invalid(ace_table):
+    """
+    Parse ACE data for invalid data and return alert information if over limit.
+    """
+    #: Slice table to search for consecutive data points for a set
+    #: number of hours ago. Number of hours is HOURS_MISSING variable.
+    _start = ace_table['cxotime'][-1] - timedelta(hours=HOURS_MISSING)
+    ace_table = ace_table[ace_table['cxotime'] >= _start]
+    
+    #: Select missing table values.
+    missing_selection = ace_table['proton_status'] == -1
+    #: If all consecutive data points minus the leeway (5) are less than those missing,
+    #: then check for sending notification.
+    #: Sporadically valid data might be available. Send alert if number of valid point's doesn't exceed the leeway
+    invalid = False
+    if len(ace_table) - 5 <= sum(missing_selection):
+        if 8 <= _NOW.datetime.hour <= 22:
+            invalid = True
+    return {'cxotime': _NOW, 'val': invalid}
+
+def parse_p5_p6_spectral(ace_table):
+    """
+    Parse ACE data for a violation of the spectral index of P5/P6, indicating a possibly invalid P5 channel.
+    """
+    no_outlier = Table(names = ace_table.colnames, dtype=ace_table.dtype)
+    no_outlier.add_row(ace_table[0])
+    for i in range(1,len(ace_table)):
+        if (ace_table[i][_P5_CHANNEL] - no_outlier[-1][_P5_CHANNEL] < _BOGUS_P5) \
+            and (ace_table[i][_P6_CHANNEL] - no_outlier[-1][_P6_CHANNEL] < _BOGUS_P6):
+            no_outlier.add_row(ace_table[i])
+
+    two_hours_ago = no_outlier["cxotime"][-1] - timedelta(hours=2)
+    sel = no_outlier["cxotime"].data >= two_hours_ago
+    sel = np.logical_and(
+        sel, no_outlier[_P5_CHANNEL] > 0
+    )
+    sel = np.logical_and(
+        sel, no_outlier[_P6_CHANNEL] > 0
+    )
+    sel = np.logical_and(
+        sel, no_outlier['proton_status'] == 0
+    )
+    data_select = no_outlier[sel]
+    if len(data_select) > 0:
+        p5_avg = np.mean(data_select[_P5_CHANNEL].data) #: Calculates the fluence with available data.
+        p6_avg = np.mean(data_select[_P6_CHANNEL].data)
+        p5_p6 = p5_avg / p6_avg
+        _cxotime = data_select[-1]["cxotime"]
+    else:
+        p5_p6 = -1e5 #: No valid data to send alert.
+        _cxotime = _NOW
+    
+    ace_p5_p6_spectral = {
+        "cxotime": _cxotime,
+        "val": p5_p6,
+    }
+    return ace_p5_p6_spectral
+
+
+def check_alert_triggers():
+
+    _12h_file = ACE_DATA_DIR / "ace_12h_archive"
+    ace_table = _read_ace_file(_12h_file)
+    #: Pull Alert information
+    ace_p3 = parse_p3(ace_table)
+    ace_invalid = parse_invalid(ace_table)
+    ace_p5_p6_spectral = parse_p5_p6_spectral(ace_table)
+    #: Pull current violation information
+    alert_file = ACE_DATA_DIR / "ace_alert.json"
+    if not alert_file.is_file():
+        curr_viol = _DEFAULT_VIOLATION
+    else:
+        with open(alert_file) as f:
+            curr_viol = json.load(f)
+
+    #: Check for P3 alert trigger
+    if ace_p3["val"] > ACE_P3_LIMIT:
+        #: P3 triggered. Check to prevent repeat alerting.
+        if (ace_p3.get("cxotime").datetime - CxoTime(curr_viol["ace_p3"]["cxotime"]).datetime).days > 1:
+            #: New triggering instance. Send alert and update violation file.
+            curr_viol['ace_p3'] = {
+                "cxotime": int(ace_p3["cxotime"].secs),
+                "val": ace_p3["val"]
             }
-
-            text_body = (
+            p3_message = (
                 "A Radiation violation of P3 (130KeV) has been observed by ACE\n"
             )
-            text_body += f"Observed = {p130f:.4e}\n"
-            text_body += (
+            p3_message += f"Observed = {ace_p3['val']:.4e}\n"
+            p3_message += (
                 "(limit = fluence of 3.6e8 particles/cm2-ster-MeV within 2 hours)\n"
             )
-            text_body += f"see {ACE_URL}\n"
-            if os.path.isfile(f"{SNAPSHOT_DIR}/.scs107alert"):
+            p3_message += f"see {ACE_URL}\n"
+            _snap_file = SNAPSHOT_DIR / ".scs107alert"
+            if _snap_file.is_file():
                 recipients = "sot_yellow_alert@cfa.harvard.edu"
-                text_body += "SCS107 is listed as alerted.\n"
+                p3_message += "SCS107 is listed as alerted.\n"
             else:
                 recipients = "sot_ace_alert@cfa.harvard.edu"
-                text_body += "The ACIS on-call person should review the data and call a telecon if necessary.\n"
-            #
-            # --- Include additional CRM and Comm data
-            #
-            #with open(f"{CRM_DATA_DIR}/CRMsummary.dat") as f:
-            #    text_body += f"CRM:\n{f.read()}\n"
-            #with open(f"{COMM_DATA_DIR}/dsn_summary.dat") as f:
-            #    text_body += f"DSN:\n{f.read()}\n"
-            text_body += f"This message sent to {recipients.split('@')[0]}"
-            send_mail("ACE_p3", recipients, text_body)
-            with open(f"{ACE_DATA_DIR}/ace_alert.json", "w") as f:
-                json.dump(curr_viol, f, indent=4)
+                p3_message += "The ACIS on-call person should review the data and call a telecon if necessary.\n"
+            p3_message += f"This message sent to {recipients.split('@')[0]}"
+            send_mail("ACE_p3", recipients, p3_message)
+    
+    #: Check for invalid data alert trigger
+    if ace_invalid['val']:
+        #: Invalid triggered. Check to prevent repeat alerting
+        if (ace_invalid.get("cxotime").datetime - CxoTime(curr_viol["ace_invalid"]["cxotime"]).datetime).days > 1:
+            curr_viol['ace_invalid'] = {
+                "cxotime": int(ace_invalid["cxotime"].secs),
+                "val": ace_invalid["val"]
+            }
+            invalid_message = f'Alert in file: {_12h_file}\n'
+            invalid_message += f'No valid ACE data for at least {HOURS_MISSING} hours.\n'
+            invalid_message += "Radiation team should investigate.\n"
+            invalid_message += f"This message was sent to {_ALERT}\n"
+            send_mail(f"ACE no valid data for >{HOURS_MISSING}h", _ALERT, invalid_message)
+    
+    #: Check for ACE P5 P6 spectral violation alert trigger
+    if ace_p5_p6_spectral['val'] > ACE_P5_P6_LIM:
+        #: Spectral Violation triggered. Check to prevent repeat alerting
+        if (ace_p5_p6_spectral.get("cxotime").datetime - CxoTime(curr_viol["ace_p5_p6_spectral"]["cxotime"]).datetime).days > 1:
+            curr_viol['ace_p5_p6_spectral'] = {
+                "cxotime": int(ace_p5_p6_spectral["cxotime"].secs),
+                "val": ace_p5_p6_spectral["val"]
+            }
+            spectral_message = "A spectral index violation of P5/P6 has been observed by ACE, indicating a possibly invalid P5 channel.\n"
+            spectral_message += f"Observed = {ace_p5_p6_spectral['val']:.4e}\n"
+            spectral_message += "(limit = ratio of averages of 1e10 within 2 hours)\n"
+            spectral_message += f"See {ACE_URL} for more details.\n"
+            send_mail("ACE_p5/p6", _ADMIN, spectral_message)
+
+    #: Update the current violation information
+    with open(alert_file, "w") as f:
+        json.dump(curr_viol, f, indent=4)
 
 
 def send_mail(subject, recipients, text_body, cc=""):
@@ -196,12 +306,11 @@ def _convert_time_format(year, month, day, hhmm):
     :rtype: ``numpy.ndarray(dtype = 'object')``
 
     """
-    hh = hhmm // 100  #: hours in hundreds and thousands place
-    mm = hhmm % 100  #: minutes in tens and ones place
-    time = datetime.strptime(
-        f"{year:04}:{month:02}:{day:02}:{hh:02}:{mm:02}", "%Y:%m:%d:%H:%M"
-    )
-    return CxoTime(time, format="datetime")
+    hh = hhmm // 100  #: Hours in hundreds and thousands place.
+    mm = hhmm % 100  #: Minutes in tens and ones place.
+    #: CxoTime accepts ISOT format
+    time = f"{year:04}-{month:02}-{day:02}T{hh:02}:{mm:02}:00"
+    return CxoTime(time)
 
 
 if __name__ == "__main__":
@@ -218,39 +327,42 @@ if __name__ == "__main__":
 
     if args.mode == "test":
         _TESTMAIL = True
+        _copy_of_old = Path(str(ACE_DATA_DIR))
         if args.path:
-            ACE_DATA_DIR = args.path
+            ACE_DATA_DIR = Path(args.path)
         else:
-            ACE_DATA_DIR = f"{os.getcwd()}/test/_outTest"
+            ACE_DATA_DIR = Path(os.getcwd(), "test", "_outTest")
         os.makedirs(ACE_DATA_DIR, exist_ok=True)
-        if not os.path.isfile(f"{ACE_DATA_DIR}/ace_12h_archive"):
-            os.system(
-                f"cp /data/mta4/Space_Weather/ACE/Data/ace_12h_archive {ACE_DATA_DIR}"
-            )
-        alert_ace()
+        _12h_archive = ACE_DATA_DIR / "ace_12h_archive"
+        if not _12h_archive.is_file():
+            shutil.copyfile(_copy_of_old / "ace_12h_archive" , ACE_DATA_DIR / "ace_12h_archive")
+        
+        check_alert_triggers()
 
     elif args.mode == "flight":
-        #
-        # --- Create a lock file and exit strategy in case of race conditions
-        #
+        #: Create a lock file and exit strategy in case of race conditions.
         name = os.path.basename(__file__).split(".")[0]
-        user = getpass.getuser()
-        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
-            notification = f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog."
-            send_mail(notification, f"Stalled Script: {name}", _ADMIN)
-            with open(f"/tmp/{user}/{name}.lock") as f:
-                pid = int(f.readlines()[-1].strip())
-            os.remove(f"/tmp/{user}/{name}.lock")
-            os.kill(pid, signal.SIGTERM)
-            os.system(
-                f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock"
-            )
-        else:
-            os.system(
-                f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock"
-            )
-        alert_ace()
-        #
-        # --- Remove lock file once process is completed
-        #
-        os.system(f"rm /tmp/{user}/{name}.lock")
+        user = os.getenv("USER", "mta")
+        lock = Path("/tmp", user, f"{name}.lock")
+
+        #: If lock file exists, read the pid and kill the process, then remove the lock file
+        if os.path.isfile(lock):
+            #: Notify stall in alerting process
+            notification = f"Lock file exists as {str(lock)} Process already running/errored out. Check calling scripts/cronjob/cronlog."
+            send_mail(notification, f"ACE ALERT: Stalled Script: {name}", _ADMIN)
+            with open(lock) as f:
+                pid = int(f.read().strip())
+            if psutil.pid_exists(pid):
+                os.kill(pid, signal.SIGTERM)
+            os.remove(lock)
+        
+        #: Lock file with current pid
+        pid = os.getpid()
+        os.makedirs(os.path.dirname(lock), exist_ok = True)
+        with open(lock, 'w') as f:
+            f.write(str(pid))
+
+        check_alert_triggers()
+
+        #: Remove lock file once process is completed
+        os.remove(lock)

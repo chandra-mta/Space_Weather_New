@@ -1,0 +1,2 @@
+A test run of the ACE alerts must operate on manufactured data values with the most up-to-date time values.
+The Jupyter Notebook is a convenience notebook for generating and up-to-date test file.
