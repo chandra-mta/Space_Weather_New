@@ -129,25 +129,6 @@ def read_json(link):
             data = json.loads(url.read().decode())
     return data
 
-def reorient_forecast(forecast):
-    """
-    Reorient the KP SWPC forecast into an astropy table format
-    """
-    rows = []
-    #:First list is the column headers
-    for i in range(1,len(forecast)):
-        new_row = {}
-        #: We don't need the NOAA scale for radio blackouts,
-        #: and we want to store time values in ISO 8601 format.
-        a = forecast[i][0].split()
-        new_row['time_tag'] = f"{a[0]}T{a[1]}Z"
-        new_row['kp'] = float(forecast[i][1])
-        new_row['observed'] = forecast[i][2]
-        rows.append(new_row)
-    
-    kp_forecast_table = Table(rows=rows)
-    return kp_forecast_table
-
 def fetch_SWPC_KP():
     """
     Fetch the KP forecast data from the SWPC and orient into a workable astropy table
@@ -155,7 +136,11 @@ def fetch_SWPC_KP():
     :Links: https://www.swpc.noaa.gov/products/planetary-k-index
     """
     forecast = read_json(SOURCE_SWPC)
-    kp_forecast_table = reorient_forecast(forecast)
+    kp_forecast_table = Table(rows=forecast)
+    #: We don't need the NOAA scale for radio blackouts,
+    #: and we want to store time values in ISO 8601 format.
+    kp_forecast_table['time_tag'] = kp_forecast_table['time_tag'] + 'Z'
+    kp_forecast_table.remove_column('noaa_scale')
     return kp_forecast_table
 
 @rerun
