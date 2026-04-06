@@ -1,4 +1,4 @@
-#!/proj/sot/ska3/flight/bin/python
+#! /usr/bin/env python
 """
 **create_ace_html_page.py**: Read ACE data and update html page
 
@@ -13,28 +13,37 @@
 # tested-ska-release = "2026.1"
 # ///
 """
+from datetime import timedelta
 import os
-import sys
-import re
-import time
+import shutil
+import signal
+import traceback
 import numpy
 from cxotime import CxoTime
 import argparse
 from jinja2 import Environment, FileSystemLoader
+from pathlib import Path
+import psutil
+#: Third-party libraries used for image downloading and manipulation
+import requests
+from PIL import Image, ImageOps
+import io
+
 #
 #---Define Directory Pathing
 #
-HTTP_EPAM = "http://services.swpc.noaa.gov/images/ace-epam-7-day.gif"
-HTTP_MAG = "http://services.swpc.noaa.gov/images/ace-mag-swepam-7-day.gif"
-ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
-TEMPLATE_DIR = "/data/mta4/Space_Weather/ACE/Scripts/Template"
-ACE_HTML_DIR = "/data/mta4/www/RADIATION/ACE"
-ACE_PLOT_DIR = "/data/mta4/www/RADIATION/ACE/Plots"
-HOUSE_KEEPING = "/data/mta4/Space_Weather/house_keeping"
-TMP_DIR = "/tmp/mta"
+SPACE_WEATHER = Path(os.getenv("SPACE_WEATHER", "/data/mta4/Space_Weather"))
+SPACE_WEATHER_WEB = Path(os.environ.get('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION"))
+ACE_DATA_DIR : Path = SPACE_WEATHER / "ACE" / "Data"
+ACE_HTML_DIR : Path = SPACE_WEATHER_WEB / "ACE"
+ACE_PLOT_DIR : Path = SPACE_WEATHER_WEB / "ACE" / "Plots"
+SCRIPT_DIR : Path = Path(__file__).parent
+HOUSE_KEEPING : Path = SCRIPT_DIR.parent.parent/ "house_keeping"
 #
 #--- Defining other Globals
 #
+HTTP_EPAM = "http://services.swpc.noaa.gov/images/ace-epam-7-day.gif" #: Image Metadata : mode = 'P', size = (640, 512)
+HTTP_MAG = "http://services.swpc.noaa.gov/images/ace-mag-swepam-7-day.gif" #: Image Metadata :  mode = 'P', size = (640, 512)
 
 P5_P3_SCALE  = 7.           #--- scale P5 to P3 values, while P3 is broke
 P6_P3_SCALE  = 36.          #--- scale P6 to P3 values, while P3 is broke
@@ -57,7 +66,8 @@ def create_ace_html_page():
 #
 #---- read 12h_archive data
 #
-    with open(f"{ACE_DATA_DIR}/ace_12h_archive") as f:
+    _12h_archive = ACE_DATA_DIR / "ace_12h_archive"
+    with open(_12h_archive) as f:
         cdata = [line.strip() for line in f.readlines()]
 #
 #--- cdata:     a list of lists of electron/proton flux data 
@@ -80,7 +90,8 @@ def create_ace_html_page():
     ace_template = _JINJA_ENV.get_template('ace.jinja')
     ace_render = ace_template.render(ace_table = ace_table, summary_table = summary_table)
 
-    with open(f"{ACE_HTML_DIR}/ace.html", 'w') as fo:
+    _web = ACE_HTML_DIR / "ace.html"
+    with open(_web, 'w') as fo:
         fo.write(ace_render)
 
 def create_ace_data_table(cdata, l_vals):
@@ -272,9 +283,9 @@ def create_ace_data_table(cdata, l_vals):
     chk2   = len(echk[ind2])
 
     if (chk == 0) or (chk2 == 0):
-        ace_table = ace_table + '<p style="padding-top:40px;padding-bottom:40px;">'
-        ace_table = ace_table + " No Valid data for last 2 hours."
-        ace_table = ace_table + '</p>\n'
+        ace_table += '<p style="padding-top:40px;padding-bottom:40px;">'
+        ace_table += " No Valid data for last 2 hours."
+        ace_table += '</p>\n'
         return  ace_table, None
 #
 #--- there are good data
@@ -362,57 +373,24 @@ def create_ace_data_table(cdata, l_vals):
 
     return ace_table, summary_table
 
-def convert_to_stime(year, yday):
-
-    atemp = re.split(r'\.', yday)
-    frac  = float(f"0.{atemp[1]}") 
-    val   = 24 * frac
-    hh    = int(val)
-    diff  = val - hh
-    val   = 60 * diff
-    mm    = int(val)
-    diff  = val - mm
-    ss    = int(60 *diff)
-
-    htime = f"{year:04}:{atemp[0]:03}:{hh:02}:{mm:02}:{ss:02}"
-    stime = CxoTime(htime).secs 
-
-    return stime
-
-def download_img(file, chg=1):
+def download_img(file):
     """
-    down load an image from web site
-    input:  file    --- image file address
-            chg     --- if >0, reverse the color
-    output: <plot_dir>/<name of the image>
+    Download ACE plots from SWPC
     """
-#
-#--- get the name of output img file name
-#
+
     ofile = os.path.basename(file)
-    oimg = f"{ACE_PLOT_DIR}/{ofile}"
-#
-#--- download the img
-#
-    #cmd   = 'lynx -source ' + file + '>' + oimg
-    try:
-        cmd  = 'wget -q -O' + oimg + ' ' + file
-        os.system(cmd)
-    except:
-        mc   = re.search('gif', oimg)
-        if mc is not None:
-            cmd = f"cp {HOUSE_KEEPING}/no_plot.gif {oimg}"
-        else:
-            cmd = f"cp {HOUSE_KEEPING}/no_data.png {oimg}"
-        os.system(cmd)
+    oimg = ACE_PLOT_DIR / ofile
 
-        return
-#
-#--- reverse the color of the image
-#
-    if chg == 1:
-        cmd   = 'convert -negate ' +  oimg + ' ' + oimg
-        os.system(cmd)
+    try:
+        resp = requests.get(file, timeout=30)
+        resp.raise_for_status()
+        img = Image.open(io.BytesIO(resp.content))
+        img = ImageOps.invert(img.convert('RGB'))
+        img.save(oimg)
+    except Exception:
+        traceback.print_exc()
+        #: network or decoding failure, use placeholder
+        shutil.copyfile(HOUSE_KEEPING / 'no_plot.gif', oimg)
 
 def convert_to_col_data(data):
     """
@@ -437,11 +415,9 @@ def convert_to_col_data(data):
 #
 #--- find the most recent entry time and set the cutting time to 2 hrs before that
 #
-    atemp   = re.split(r'\s+', data[-1])
-    ltime = atemp[0] + ':' + atemp[1] + ':' + atemp[2] + ':' + atemp[3][0] + atemp[3][1] + ':'
-    ltime = ltime    + atemp[3][2] + atemp[3][3] + ':00' 
-    ltime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(ltime, '%Y:%m:%d:%H:%M:%S'))
-    cut   = int(CxoTime(ltime).secs) - 2 * 3600.0 - 60.0
+    atemp = data[-1].split()
+    ltime = CxoTime(f"{atemp[0]}-{atemp[1]}-{atemp[2]}T{atemp[3][0]}{atemp[3][1]}:{atemp[3][2]}{atemp[3][3]}:00") #: isot format input.
+    cut = (ltime - timedelta(hours = 2, minutes = 1)).secs
 
     atime = []
     jtime = []
@@ -456,14 +432,8 @@ def convert_to_col_data(data):
     pch7  = []
     ptime = 0
     for ent in data:
-        atemp = re.split(r'\s+', ent)
-#
-#--- convert time in Chandra Time
-#
-        ltime = atemp[0] + ':' + atemp[1] + ':' + atemp[2] + ':' + atemp[3][0] + atemp[3][1] + ':'
-        ltime = ltime    + atemp[3][2] + atemp[3][3] + ':00' 
-        ltime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(ltime, '%Y:%m:%d:%H:%M:%S'))
-        stime = int(CxoTime(ltime).secs)
+        atemp = ent.split()
+        stime = CxoTime(f"{atemp[0]}-{atemp[1]}-{atemp[2]}T{atemp[3][0]}{atemp[3][1]}:{atemp[3][2]}{atemp[3][3]}:00").secs #: isot format input.
 #
 #--- sometime, there are double entries; so remove those
 #
@@ -489,8 +459,7 @@ def convert_to_col_data(data):
 #
 #--- save time part in a string format (YR MO DA  HHMM    Day    Day)
 #
-        ftime = atemp[0] + ' '  + atemp[1] + ' ' + atemp[2] + '  ' + atemp[3]
-#        ftime = ftime    + '%8d%8d' % (float(atemp[4]), float(atemp[5]))
+        ftime = f"{atemp[0]} {atemp[1]} {atemp[2]} {atemp[3]}"
 
         atime.append(stime)
         jtime.append(ftime)
@@ -521,43 +490,45 @@ if __name__ == "__main__":
 #
 #--- Path output to same location as unit tests
 #
-        TEMPLATE_DIR = f"{os.getcwd()}/Template"
-        TMP_DIR =  f"{os.getcwd()}/test/_outTest"
         if args.data:
-            ACE_DATA_DIR = args.data
+            ACE_DATA_DIR = Path(args.data)
         else:
-            ACE_DATA_DIR = f"{os.getcwd()}/test/_outTest"
+            ACE_DATA_DIR = Path(os.getcwd(), "test", "_outTest")
 
         if args.path:
-            ACE_PLOT_DIR = args.path
+            ACE_PLOT_DIR = Path(args.path)
         else:
-            ACE_PLOT_DIR = f"{os.getcwd()}/test/_outTest/Plots"
-        
+            ACE_PLOT_DIR = Path(os.getcwd(), "test", "_outTest", "Plots")
+
         if args.web:
-            ACE_HTML_DIR = args.web
+            ACE_HTML_DIR = Path(args.web)
         else:
-            ACE_HTML_DIR = f"{os.getcwd()}/test/_outTest"
+            ACE_HTML_DIR = Path(os.getcwd(), "test", "_outTest")
         os.makedirs(ACE_PLOT_DIR, exist_ok = True)
         os.makedirs(ACE_HTML_DIR, exist_ok = True)
-        print(f"ACE_DATA_DIR: {ACE_DATA_DIR}")
-        print(f"ACE_PLOT_DIR: {ACE_PLOT_DIR}")
-        print(f"ACE_HTML_DIR: {ACE_HTML_DIR}")
-        print(f"TEMPLATE_DIR: {TEMPLATE_DIR}")
-        print(f"TMP_DIR: {TMP_DIR}")
+
         create_ace_html_page()
     elif args.mode == "flight":
-#
-#--- Create a lock file and exit strategy in case of race conditions.
-#
-        import getpass
+        #: Create a lock file and exit strategy in case of race conditions.
         name = os.path.basename(__file__).split(".")[0]
-        user = getpass.getuser()
-        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
-            sys.exit(f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog.")
-        else:
-            os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
+        user = os.getenv("USER", "mta")
+        lock = Path("/tmp", user, f"{name}.lock")
+
+        #: If lock file exists, read the pid and kill the process, then remove the lock file
+        if os.path.isfile(lock):
+            with open(lock) as f:
+                pid = int(f.read().strip())
+            if psutil.pid_exists(pid):
+                os.kill(pid, signal.SIGTERM)
+            os.remove(lock)
+        
+        #: Lock file with current pid
+        pid = os.getpid()
+        os.makedirs(os.path.dirname(lock), exist_ok = True)
+        with open(lock, 'w') as f:
+            f.write(str(pid))
+
         create_ace_html_page()
-#
-#--- Remove lock file once process is completed
-#
-        os.system(f"rm /tmp/{user}/{name}.lock")
+
+        #: Remove lock file once process is completed
+        os.remove(lock)

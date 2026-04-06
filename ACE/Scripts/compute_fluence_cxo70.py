@@ -1,4 +1,4 @@
-#!/proj/sot/ska3/flight/bin/python
+#! /usr/bin/env python
 """
 **compute_fluence_cxo70.py**: create a html page displaying ace fluence when cxo is above 70kkm
 
@@ -16,12 +16,12 @@
 
 """
 import os
-import sys
-import re
-import time
+import signal
 from cxotime import CxoTime
 import argparse
+from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
+import psutil
 
 #
 # --- Template Globals
@@ -31,11 +31,11 @@ _JINJA_ENV = Environment(loader = FileSystemLoader('Template', followlinks = Tru
 #
 #--- Define Directory Pathing
 #
-EPHEM_DIR = "/data/mta4/Space_Weather/EPHEM"
-ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
-ACE_HTML_DIR = "/data/mta4/www/RADIATION/ACE"
-WEB_LINK = "cxc.cfa.harvard.edu/mta/RADIATION"
-
+SPACE_WEATHER = Path(os.getenv("SPACE_WEATHER", "/data/mta4/Space_Weather"))
+SPACE_WEATHER_WEB = Path(os.environ.get('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION"))
+ACE_DATA_DIR : Path = SPACE_WEATHER / "ACE" / "Data"
+ACE_HTML_DIR : Path = SPACE_WEATHER_WEB / "ACE"
+EPHEM_DATA_DIR : Path = SPACE_WEATHER / "EPHEM" / "Data"
 #
 #--- current time
 #
@@ -56,7 +56,8 @@ def compute_fluence_cxo70():
 #
 #--- read orbital info
 #
-    with open(f"{EPHEM_DIR}/Data/PE.EPH.gsme_spherical") as f:
+    _spherical = EPHEM_DATA_DIR / "PE.EPH.gsme_spherical"
+    with open(f"{_spherical}") as f:
         data = [line.strip() for line in f.readlines()]
     data  = data[::-1]
     start = 0
@@ -65,7 +66,7 @@ def compute_fluence_cxo70():
 #
     stop  = 0
     for ent in data:
-        atemp = re.split(r'\s+', ent)
+        atemp = ent.split()
         stime = float(atemp[0])
 #
 #--- make sure that the span is before the curren time
@@ -84,7 +85,8 @@ def compute_fluence_cxo70():
 #
 #--- read ace data
 #
-    with open(f"{ACE_DATA_DIR}/ace_7day_archive") as f:
+    _archive = ACE_DATA_DIR / "ace_7day_archive"
+    with open(f"{_archive}") as f:
         data = [line.strip() for line in f.readlines()]
     ftime  = "NA"
     e1     = 0.0
@@ -97,14 +99,9 @@ def compute_fluence_cxo70():
     cstart = 0.0
     cstop  = 0.0
     for ent in data:
-        atemp = re.split(r'\s+', ent)
-#
-#--- convert time in Chandra Time
-#
-        ltime = atemp[0] + ':' + atemp[1] + ':' + atemp[2] + ':' + atemp[3][0] + atemp[3][1] + ':'
-        ltime = ltime    + atemp[3][2] + atemp[3][3] + ':00'
-        ltime = time.strftime('%Y:%j:%H:%M:%S', time.strptime(ltime, '%Y:%m:%d:%H:%M:%S'))
-        stime = int(CxoTime(ltime).secs)
+        atemp = ent.split()
+        #: convert time in Chandra Time   
+        stime = CxoTime(f"{atemp[0]}-{atemp[1]}-{atemp[2]}T{atemp[3][0]}{atemp[3][1]}:{atemp[3][2]}{atemp[3][3]}:00").secs #: isot format input.
 #
 #--- compute fluence between the span
 #
@@ -159,15 +156,17 @@ def compute_fluence_cxo70():
 
     template = _JINJA_ENV.get_template('ace_flux.jinja')
     render = template.render(ace_flux = ace_flux, ace_flux_70kkm = ace_flux_70kkm)
-    with open(f"{ACE_HTML_DIR}/ace_flux.dat", 'w') as fo:
+    _flux = ACE_HTML_DIR / "ace_flux.dat"
+    with open(f"{_flux}", 'w') as fo:
         fo.write(render)
 #
 #--- create the html page
 #
     web_template = _JINJA_ENV.get_template('ace_flux_data.jinja')
-    web_render = web_template.render(ace_flux_render = render, WEB_LINK= WEB_LINK)
+    web_render = web_template.render(ace_flux_render = render)
 
-    with open(f"{ACE_HTML_DIR}/ace_flux_data.html" , 'w') as fo:
+    _html = ACE_HTML_DIR / "ace_flux_data.html"
+    with open(f"{_html}" , 'w') as fo:
             fo.write(web_render)
 
 #-----------------------------------------------------------------------------
@@ -182,32 +181,37 @@ if __name__ == '__main__':
 #--- Determine if running in test mode and change pathing if so
 #
     if args.mode == "test":
-        print("Running In Test Mode.")
         if args.data:
-            ACE_DATA_DIR = args.data
+            ACE_DATA_DIR = Path(args.data)
         else:
-            ACE_DATA_DIR = f"{os.getcwd()}/test/_outTest"
+            ACE_DATA_DIR = Path(os.getcwd(), "test", "_outTest")
         if args.web:
-            ACE_HTML_DIR = args.web
+            ACE_HTML_DIR = Path(args.web)
         else:
-            ACE_HTML_DIR = f"{os.getcwd()}/test/_outTest"
+            ACE_HTML_DIR = Path(os.getcwd(), "test", "_outTest")
         os.makedirs(ACE_HTML_DIR, exist_ok = True)
-        print(f"ACE_DATA_DIR: {ACE_DATA_DIR}")
-        print(f"ACE_HTML_DIR: {ACE_HTML_DIR}")
         compute_fluence_cxo70()
     elif args.mode == "flight":
-#
-#--- Create a lock file and exit strategy in case of race conditions.
-#
-        import getpass
+        #: Create a lock file and exit strategy in case of race conditions.
         name = os.path.basename(__file__).split(".")[0]
-        user = getpass.getuser()
-        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
-            sys.exit(f"Lock file exists as /tmp/{user}/{name}.lock. Process already running/errored out. Check calling scripts/cronjob/cronlog.")
-        else:
-            os.system(f"mkdir -p /tmp/{user}; touch /tmp/{user}/{name}.lock")
+        user = os.getenv("USER", "mta")
+        lock = Path("/tmp", user, f"{name}.lock")
+
+        #: If lock file exists, read the pid and kill the process, then remove the lock file
+        if os.path.isfile(lock):
+            with open(lock) as f:
+                pid = int(f.read().strip())
+            if psutil.pid_exists(pid):
+                os.kill(pid, signal.SIGTERM)
+            os.remove(lock)
+        
+        #: Lock file with current pid
+        pid = os.getpid()
+        os.makedirs(os.path.dirname(lock), exist_ok = True)
+        with open(lock, 'w') as f:
+            f.write(str(pid))
+
         compute_fluence_cxo70()
-#
-#--- Remove lock file once process is completed
-#
-        os.system(f"rm /tmp/{user}/{name}.lock")
+
+        #: Remove lock file once process is completed
+        os.remove(lock)

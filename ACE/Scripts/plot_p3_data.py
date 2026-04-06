@@ -1,4 +1,4 @@
-#!/proj/sot/ska3/flight/bin/python
+#! /usr/bin/env python
 """
 **plot_p3_data.py**: create scaled p3 data plot
 
@@ -15,13 +15,14 @@
 # ///
 """
 import os
-import re
 import time
 import numpy
 import matplotlib as mpl
 from calendar import isleap
 import argparse
 import signal
+from pathlib import Path
+import psutil
 
 if __name__ == '__main__':
     mpl.use('Agg')
@@ -31,8 +32,10 @@ import matplotlib.font_manager as font_manager
 #
 #--- Define Directory Pathing
 #
-ACE_DATA_DIR = "/data/mta4/Space_Weather/ACE/Data"
-ACE_PLOT_DIR = "/data/mta4/www/RADIATION/ACE/Plots"
+SPACE_WEATHER = Path(os.getenv('SPACE_WEATHER', "/data/mta4/Space_Weather"))
+SPACE_WEATHER_WEB = Path(os.getenv('SPACE_WEATHER_WEB', "/data/mta4/www/RADIATION"))
+ACE_DATA_DIR : Path = SPACE_WEATHER / "ACE" / "Data"
+ACE_PLOT_DIR : Path = SPACE_WEATHER_WEB / "ACE" / "Plots"
 
 #
 #--- other setting
@@ -59,7 +62,7 @@ def plot_p3_data():
 #
 #--- read data and save in column array data format
 #
-    ifile = f"{ACE_DATA_DIR}/ace_7day_archive"
+    ifile = ACE_DATA_DIR / "ace_7day_archive"
     with open(ifile) as f:
         data = [line.strip() for line in f.readlines()]
     adata = convert_to_arrays(data)
@@ -80,7 +83,7 @@ def convert_to_arrays(data):
 
     chk = 0
     for ent in data:
-        atemp = re.split(r'\s+', ent)
+        atemp = ent.split()
         chk1  = float(atemp[6])
         chk2  = float(atemp[9])
         if (chk1 != 0) or (chk2 != 0):
@@ -90,7 +93,7 @@ def convert_to_arrays(data):
 #
         ltime = atemp[0] + ':' +  atemp[1] + ':' + atemp[2] 
         ltime = time.strftime('%Y:%j', time.strptime(ltime, '%Y:%m:%d'))
-        btemp = re.split(':', ltime)
+        btemp = ltime.split(':')
         year  = int(float(btemp[0]))
         yday  = float(btemp[1])
         hh    = float(atemp[3][0] + atemp[3][1])
@@ -252,7 +255,7 @@ def plot_data(ndata):
 #
 #--- save the plot in png format
 #
-    outname = f"{ACE_PLOT_DIR}/mta_ace_plot_P3.png"
+    outname = ACE_PLOT_DIR / 'mta_ace_plot_P3.png'
     plt.tight_layout()
     plt.savefig(outname, format='png', dpi=300)
 
@@ -270,40 +273,41 @@ if __name__ == "__main__":
 #--- Determine if running in test mode and change pathing if so
 #
     if args.mode == "test":
-        print("Running In Test Mode.")
 #
 #--- Path output to same location as unit tests
 #
         if args.data:
-            ACE_DATA_DIR = args.data
+            ACE_DATA_DIR = Path(args.data)
         else:
-            ACE_DATA_DIR = f"{os.getcwd()}/test/_outTest"
+            ACE_DATA_DIR = Path(os.getcwd(), 'test', '_outTest')
 
         if args.path:
             ACE_PLOT_DIR = args.path
         else:
-            ACE_PLOT_DIR = f"{os.getcwd()}/test/_outTest/Plots"
+            ACE_PLOT_DIR = Path(os.getcwd(), 'test', '_outTest', 'Plots')
         os.makedirs(ACE_PLOT_DIR, exist_ok = True)
-        print(f"ACE_DATA_DIR: {ACE_DATA_DIR}")
-        print(f"ACE_PLOT_DIR: {ACE_PLOT_DIR}")
         plot_p3_data()
-    elif args.mode == 'flight':
-#
-#--- Create a lock file and exit strategy in case of race conditions
-#
-        import getpass
+    elif args.mode == "flight":
+        #: Create a lock file and exit strategy in case of race conditions.
         name = os.path.basename(__file__).split(".")[0]
-        user = getpass.getuser()
-        if os.path.isfile(f"/tmp/{user}/{name}.lock"):
-            with open(f"/tmp/{user}/{name}.lock") as f:
-                pid = int(f.readlines()[-1].strip())
-            os.remove(f"/tmp/{user}/{name}.lock")
-            os.kill(pid,signal.SIGTERM)
-            os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
-        else:
-            os.system(f"mkdir -p /tmp/{user}; echo '{os.getpid()}' > /tmp/{user}/{name}.lock")
+        user = os.getenv("USER", "mta")
+        lock = Path("/tmp", user, f"{name}.lock")
+
+        #: If lock file exists, read the pid and kill the process, then remove the lock file
+        if os.path.isfile(lock):
+            with open(lock) as f:
+                pid = int(f.read().strip())
+            if psutil.pid_exists(pid):
+                os.kill(pid, signal.SIGTERM)
+            os.remove(lock)
+        
+        #: Lock file with current pid
+        pid = os.getpid()
+        os.makedirs(os.path.dirname(lock), exist_ok = True)
+        with open(lock, 'w') as f:
+            f.write(str(pid))
+
         plot_p3_data()
-#
-#--- Remove lock file once process is completed
-#
-        os.system(f"rm /tmp/{user}/{name}.lock")
+
+        #: Remove lock file once process is completed
+        os.remove(lock)

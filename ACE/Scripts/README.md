@@ -40,6 +40,7 @@
 
 - alert_ace.py: Intake the last two hours worth of ACE data and calculate P3 fluence. If over the limit, send alert.
         Additionally parse the last 12 hours with of data to check validity. If invalid, send a warning email to notify a lack of up-to-date ACE rates.
+        Sends a spectral index violation alert if the P5/P6 ratio is too high.
 
         - input: <ace_data_dir>/ace_12h_archive
         - output: alert emails
@@ -63,11 +64,11 @@ ENV_FLIGHT=/proj/sot/ska3/flight
 
 ###### Primary (mta@boba-v):
 ```
-3,8,13,18,23,28,33,38,43,48,53,58 * * * * /data/mta4/Space_Weather/ACE/Scripts/ace_wrap_script >> $HOME/Logs/ace_main_new.cron  2>&1
+3-59/5 * * * * ${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/ACE/Scripts/ace.sh >> ${HOME}/Logs/ace_main_new.cron 2>&1
 4-59/5 * * * * cd ${SPACE_WEATHER}/ACE/Scripts; ${ENV_FLIGHT}/bin/skare python alert_ace.py -m flight >> ${HOME}/Logs/ace_main_new.cron 2>&1
 ```
 ###### Secondary (mta@r2d2-v):
 ```
-3,8,13,18,23,28,33,38,43,48,53,58 * * * * /data/mta/Script/Space_Weather/ACE/Scripts/ace_wrap_script >> $HOME/Logs/ace_main_mirror.cron  2>&1
+3-59/5 * * * * ${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/ACE/Scripts/ace.sh >> ${HOME}/Logs/ace_main_mirror.cron 2>&1
 4-59/5 * * * * cd ${SPACE_WEATHER}/ACE/Scripts; ${ENV_FLIGHT}/bin/skare python alert_ace.py -m flight >> ${HOME}/Logs/ace_main_mirror.cron 2>&1
 ```
