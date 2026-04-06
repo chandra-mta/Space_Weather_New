@@ -117,7 +117,7 @@ Therefore, we do not run the script too early in the day in case the days' activ
 14 2 * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python collect_goes_long.py -m flight >> ${HOME}/Logs/goes_long_term_new.cron 2>&1
 30 2 * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python swpc_media.py -m flight >> ${HOME}/Logs/swpc_media.cron 2>&1
 
-2-59/5 * * * * ${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/goes.sh >> ${HOME}/Logs/goes_main_new.cron 2>&1
+2-59/5 * * * * ${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/GOES/Scripts/goes.sh >> ${HOME}/Logs/goes_main_new.cron 2>&1
 3-59/5 * * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python alert_hrc.py -m flight >> ${HOME}/Logs/goes_main_new.cron 2>&1
 4-59/5 * * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python check_archive.py -m flight >> ${HOME}/Logs/goes_archive_check.cron 2>&1
 ```
@@ -127,7 +127,7 @@ Therefore, we do not run the script too early in the day in case the days' activ
 14 2 * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python collect_goes_long.py -m flight >> ${HOME}/Logs/goes_long_term_mirror.cron 2>&1
 30 2 * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python swpc_media.py -m flight >> ${HOME}/Logs/swpc_media_mirror.cron 2>&1
 
-2-59/5 * * * * ${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/goes.sh >> ${HOME}/Logs/goes_main_mirror.cron 2>&1
+2-59/5 * * * * ${ENV_FLIGHT}/bin/skare ${SPACE_WEATHER}/GOES/Scripts/goes.sh >> ${HOME}/Logs/goes_main_mirror.cron 2>&1
 3-59/5 * * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python alert_hrc.py -m flight >> ${HOME}/Logs/goes_main_mirror.cron 2>&1
 4-59/5 * * * * cd ${SPACE_WEATHER}/GOES/Scripts; ${ENV_FLIGHT}/bin/skare python check_archive.py -m flight >> ${HOME}/Logs/goes_archive_check_mirror.cron 2>&1
 ```
