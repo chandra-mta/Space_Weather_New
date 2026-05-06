@@ -200,7 +200,7 @@ def check_alert_triggers():
             curr_viol = json.load(f)
 
     #: Check for P3 alert trigger
-    if ace_p3["val"] > ACE_P3_LIMIT:
+    if (ace_p3["val"] > ACE_P3_LIMIT) and not (1 <= (_NOW_EASTERN.hour) <= 5):
         #: P3 triggered. Check to prevent repeat alerting.
         if (ace_p3.get("cxotime").datetime - CxoTime(curr_viol["ace_p3"]["cxotime"]).datetime).days > 1:
             #: New triggering instance. Send alert and update violation file.
