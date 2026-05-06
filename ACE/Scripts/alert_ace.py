@@ -140,7 +140,7 @@ def parse_invalid(ace_table):
     #: Sporadically valid data might be available. Send alert if number of valid point's doesn't exceed the leeway
     invalid = False
     if len(ace_table) - 5 <= sum(missing_selection):
-        if 8 <= _NOW.datetime.hour <= 22:
+        if 8 <= _NOW_EASTERN.hour <= 22:
             invalid = True
     return {'cxotime': _NOW, 'val': invalid}
 
