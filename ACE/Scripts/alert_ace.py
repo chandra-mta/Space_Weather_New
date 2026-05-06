@@ -17,7 +17,8 @@ from astropy.io import ascii
 from astropy.table import Column, unique, Table
 import argparse
 from cxotime import CxoTime
-from datetime import timedelta
+from datetime import timedelta, timezone
+from zoneinfo import ZoneInfo
 import numpy as np
 import json
 import signal
@@ -74,6 +75,7 @@ _BOGUS_P6 = 20000
 HOURS_MISSING = 12 #: Count of consecutive hours missing valid ACE data.
 _ALERT = "sot_ace_alert@cfa.harvard.edu" #: Alert email address
 _NOW = CxoTime()
+_NOW_EASTERN = _NOW.datetime.replace(tzinfo=timezone.utc).astimezone(ZoneInfo("America/New_York"))
 
 def _read_ace_file(file):
     """
