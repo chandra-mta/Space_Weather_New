@@ -140,8 +140,7 @@ def parse_invalid(ace_table):
     #: Sporadically valid data might be available. Send alert if number of valid point's doesn't exceed the leeway
     invalid = False
     if len(ace_table) - 5 <= sum(missing_selection):
-        if 8 <= _NOW_EASTERN.hour <= 22:
-            invalid = True
+        invalid = True
     return {'cxotime': _NOW, 'val': invalid}
 
 def parse_p5_p6_spectral(ace_table):
@@ -227,7 +226,7 @@ def check_alert_triggers():
             send_mail("ACE_p3", recipients, p3_message)
     
     #: Check for invalid data alert trigger
-    if ace_invalid['val']:
+    if (ace_invalid['val']) and (8 <= _NOW_EASTERN.hour <= 22):
         #: Invalid triggered. Check to prevent repeat alerting
         if (ace_invalid.get("cxotime").datetime - CxoTime(curr_viol["ace_invalid"]["cxotime"]).datetime).days > 1:
             curr_viol['ace_invalid'] = {
