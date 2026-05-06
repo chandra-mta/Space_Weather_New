@@ -191,8 +191,6 @@ def write_legacy_files(swpc_kp):
     Many disparate sources independently create similar to exact file copies of these legacy files.
     To assist in progressive deprecation of unneeded scripts and data sources, symlinks to these 
     primary copies of legacy files are recorded here if in use, and removed upon deprecation.
-        - /data/mta4/proj/rac/ops/ACE/kp.dat
-        - /data/mta_www/MIRROR/OPS/ACE/kp.dat
     """
     
     def _format_sol(row):
