@@ -732,7 +732,7 @@ def create_plot(otime, alt, lon, lat, dtime,\
 
     outfile = f"{SOHO_PLOT_DIR}/solwin.png"
     plt.savefig(outfile, format='png', dpi=300)
-    os.system(f"convert {outfile} -trim {outfile}")
+    os.system(f"magick {outfile} -trim {outfile}")
     plt.close('all')
 
 #--------------------------------------------------------------------------
