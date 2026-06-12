@@ -32,7 +32,7 @@ import math
 EPHEM_DATA_DIR = "/data/mta4/Space_Weather/EPHEM/Data"
 SOHO_DATA_DIR = "/data/mta4/Space_Weather/SOHO/Data"
 SOHO_PLOT_DIR = "/data/mta4/www/RADIATION/SOHO/Plot"
-ORBIT_PLOT_DIR = "/data/mta4/www/RADIATION/Orbit/Plot"
+ORBIT_PLOT_DIR = "/data/mta4/www/RADIATION/Orbit/Plots"
 #
 #--- current time
 #
