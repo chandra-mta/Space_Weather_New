@@ -17,7 +17,8 @@ from astropy.io import ascii
 from astropy.table import Column, unique, Table
 import argparse
 from cxotime import CxoTime
-from datetime import timedelta
+from datetime import timedelta, timezone
+from zoneinfo import ZoneInfo
 import numpy as np
 import json
 import signal
@@ -74,6 +75,7 @@ _BOGUS_P6 = 20000
 HOURS_MISSING = 12 #: Count of consecutive hours missing valid ACE data.
 _ALERT = "sot_ace_alert@cfa.harvard.edu" #: Alert email address
 _NOW = CxoTime()
+_NOW_EASTERN = _NOW.datetime.replace(tzinfo=timezone.utc).astimezone(ZoneInfo("America/New_York"))
 
 def _read_ace_file(file):
     """
@@ -138,8 +140,7 @@ def parse_invalid(ace_table):
     #: Sporadically valid data might be available. Send alert if number of valid point's doesn't exceed the leeway
     invalid = False
     if len(ace_table) - 5 <= sum(missing_selection):
-        if 8 <= _NOW.datetime.hour <= 22:
-            invalid = True
+        invalid = True
     return {'cxotime': _NOW, 'val': invalid}
 
 def parse_p5_p6_spectral(ace_table):
@@ -198,7 +199,7 @@ def check_alert_triggers():
             curr_viol = json.load(f)
 
     #: Check for P3 alert trigger
-    if ace_p3["val"] > ACE_P3_LIMIT:
+    if (ace_p3["val"] > ACE_P3_LIMIT) and not (1 <= (_NOW_EASTERN.hour) <= 5):
         #: P3 triggered. Check to prevent repeat alerting.
         if (ace_p3.get("cxotime").datetime - CxoTime(curr_viol["ace_p3"]["cxotime"]).datetime).days > 1:
             #: New triggering instance. Send alert and update violation file.
@@ -225,7 +226,7 @@ def check_alert_triggers():
             send_mail("ACE_p3", recipients, p3_message)
     
     #: Check for invalid data alert trigger
-    if ace_invalid['val']:
+    if (ace_invalid['val']) and (8 <= _NOW_EASTERN.hour <= 22):
         #: Invalid triggered. Check to prevent repeat alerting
         if (ace_invalid.get("cxotime").datetime - CxoTime(curr_viol["ace_invalid"]["cxotime"]).datetime).days > 1:
             curr_viol['ace_invalid'] = {
